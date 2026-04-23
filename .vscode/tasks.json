@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "dev",
+			"path": "admin-dashboard",
+			"problemMatcher": [],
+			"label": "npm: dev - admin-dashboard",
+			"detail": "next dev",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
+}

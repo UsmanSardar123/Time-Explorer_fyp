@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "622783495290",
+    "project_id": "timeexplorer-fyp",
+    "storage_bucket": "timeexplorer-fyp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622783495290:android:f57934b4e1af653ffc8fc3",
+        "android_client_info": {
+          "package_name": "com.example.timeexplorer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "622783495290-gd2qtgfibg6mu864cuulj69vfbe01ta0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.timeexplorer",
+            "certificate_hash": "e308c91ddb0569361f9224db1abd66790e7ff12f"
+          }
+        },
+        {
+          "client_id": "622783495290-r1klo7oblg907cs2to1gg29jk29i8jve.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.timeexplorer",
+            "certificate_hash": "37c0ee1c2e82309d6faf8b4de2b70952a4635408"
+          }
+        },
+        {
+          "client_id": "622783495290-rijjv0h9tp41fcujeoh4c9a0lmuoeeif.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByykdHs69QHyWv7Py5_XNi8OJo-6w9hKg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "622783495290-rijjv0h9tp41fcujeoh4c9a0lmuoeeif.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "622783495290-5ltmda1dacn6cecannh459a953vce5nh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.timeexplorer"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

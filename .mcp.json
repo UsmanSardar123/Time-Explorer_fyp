@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "stitch": {
+      "command": "npx",
+      "args": ["-y", "stitch-mcp"],
+      "env": {
+        "GOOGLE_CLOUD_PROJECT": "timeexplorer-fyp",
+        "PATH": "C:\\Users\\Usman\\.claude\\gcloud-mock;${PATH}"
+      }
+    }
+  }
+}

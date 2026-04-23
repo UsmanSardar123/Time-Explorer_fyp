@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__stitch__create_project",
+      "mcp__stitch__list_projects",
+      "Read(//c/Users/Usman/AppData/**)",
+      "Bash(xargs grep *)",
+      "Read(//c/Users/Usman/.config/**)",
+      "Read(//c/Users/Usman/**)",
+      "Bash(npx skills *)",
+      "Bash(cmd.exe /c \"gcloud --version\")",
+      "Bash(cmd.exe /c \"where gcloud\")",
+      "Bash(cmd.exe /c \"dir \\\\\"C:\\\\\\\\Users\\\\\\\\Usman\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Google\\\\\\\\Cloud SDK\\\\\" /b\")",
+      "Bash(cmd.exe /c \"dir \\\\\"C:\\\\\\\\Users\\\\\\\\Usman\\\\\" /b\")",
+      "Bash(powershell.exe -Command \"& 'C:\\\\Program Files \\(x86\\)\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd' auth application-default print-access-token\")",
+      "Bash(npx stitch-mcp *)",
+      "mcp__stitch__generate_screen_from_text"
+    ]
+  }
+}

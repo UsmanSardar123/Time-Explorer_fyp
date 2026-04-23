@@ -1,0 +1,120 @@
+import 'package:timeexplorer/features/places/domain/entities/place.dart';
+import '../../domain/entities/timeline_event.dart';
+
+class PlaceModel extends Place {
+  const PlaceModel({
+    required super.id,
+    required super.name,
+    required super.category,
+    required super.location,
+    required super.description,
+    required super.imageUrl,
+    super.eraId,
+    super.history,
+    super.country,
+    super.civilization,
+    super.builtBy,
+    super.constructionDate,
+    super.architecturalStyle,
+    super.historicalSignificance,
+    super.funFacts,
+    super.visitorInfo,
+    super.createdAt,
+    super.images,
+    super.keyFacts,
+    super.openingHours,
+    super.ticketPrice,
+    super.bestTimeToVisit,
+    super.visitDuration,
+    super.didYouKnow,
+    super.latitude,
+    super.longitude,
+    required super.rating,
+    super.era,
+    super.significance,
+    super.facts,
+    super.timeline,
+    super.quizzes,
+  });
+
+  factory PlaceModel.fromMap(Map<String, dynamic> data, String id) {
+    return PlaceModel(
+      id: id,
+      name: data['name'] ?? '',
+      category: data['category'] ?? '',
+      location: data['location'] ?? '',
+      description: data['description'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
+      eraId: data['eraId'],
+      history: data['history'],
+      country: data['country'],
+      civilization: data['civilization'],
+      builtBy: data['builtBy'],
+      constructionDate: data['constructionDate'],
+      architecturalStyle: data['architecturalStyle'],
+      historicalSignificance: data['historicalSignificance'],
+      funFacts: data['funFacts'] != null ? List<String>.from(data['funFacts']) : null,
+      visitorInfo: data['visitorInfo'],
+      createdAt: data['createdAt']?.toString(),
+      images: data['images'] != null ? List<String>.from(data['images']) : null,
+      keyFacts: data['keyFacts'] != null ? List<String>.from(data['keyFacts']) : null,
+      openingHours: data['openingHours'],
+      ticketPrice: data['ticketPrice'],
+      bestTimeToVisit: data['bestTimeToVisit'],
+      visitDuration: data['visitDuration'],
+      didYouKnow: data['didYouKnow'],
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
+      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
+      era: data['era'] ?? data['eraId'],
+      significance: data['significance'] ?? data['historicalSignificance'],
+      facts: data['facts'] != null 
+          ? List<String>.from(data['facts']) 
+          : (data['funFacts'] != null ? List<String>.from(data['funFacts']) : null),
+      timeline: data['timeline'] != null 
+          ? (data['timeline'] as List).map((x) => TimelineEvent.fromMap(x as Map<String, dynamic>)).toList() 
+          : null,
+      quizzes: data['quizzes'] != null
+          ? (data['quizzes'] as List).map((x) => PlaceQuiz.fromMap(x as Map<String, dynamic>)).toList()
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'category': category,
+      'location': location,
+      'description': description,
+      'imageUrl': imageUrl.isNotEmpty ? imageUrl : 'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=800',
+      'eraId': eraId,
+      'era': era ?? eraId, 
+      'history': history,
+      'country': country,
+      'civilization': civilization,
+      'builtBy': builtBy,
+      'constructionDate': constructionDate,
+      'architecturalStyle': architecturalStyle,
+      'historicalSignificance': historicalSignificance,
+      'significance': significance ?? historicalSignificance,
+      'funFacts': funFacts,
+      'facts': facts ?? funFacts,
+      'visitorInfo': visitorInfo,
+      'createdAt': createdAt ?? DateTime.now().toIso8601String(),
+      'images': images,
+      'galleryImages': images, 
+      'keyFacts': keyFacts,
+      'openingHours': openingHours,
+      'ticketPrice': ticketPrice,
+      'bestTimeToVisit': bestTimeToVisit,
+      'visitDuration': visitDuration,
+      'didYouKnow': didYouKnow,
+      'latitude': latitude,
+      'longitude': longitude,
+      'rating': rating,
+      'timeline': timeline?.map((x) => x.toMap()).toList(),
+      'quizzes': quizzes?.map((x) => x.toMap()).toList(),
+    };
+  }
+}
