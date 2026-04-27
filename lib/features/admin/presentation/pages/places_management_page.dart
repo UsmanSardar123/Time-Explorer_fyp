@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
+import 'package:timeexplorer/core/widgets/app_cached_image.dart';
 import 'package:timeexplorer/features/admin/presentation/manager/admin_provider.dart';
 import 'package:timeexplorer/features/places/domain/entities/place.dart';
 
@@ -102,6 +103,23 @@ class _PlacesManagementPageState extends State<PlacesManagementPage> {
             fontWeight: FontWeight.w800,
           ),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Auto-Fix Legacy Images',
+            icon: const Icon(Icons.auto_fix_high),
+            onPressed: () async {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Starting image fix...')),
+              );
+              await context.read<AdminProvider>().fixLegacyPlaceImages();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Image fix complete!')),
+                );
+              }
+            },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/admin/places/form'),
@@ -213,7 +231,7 @@ class _PlacesManagementPageState extends State<PlacesManagementPage> {
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                         itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (ctx, i) => _PlaceTile(
                           place: filtered[i],
                           onEdit: () => context.push('/admin/places/form', extra: filtered[i]),
@@ -244,7 +262,7 @@ class _PlaceTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -258,15 +276,12 @@ class _PlaceTile extends StatelessWidget {
               topLeft: Radius.circular(16),
               bottomLeft: Radius.circular(16),
             ),
-            child: place.imageUrl.isNotEmpty
-                ? Image.network(
-                    place.imageUrl,
-                    width: 90,
-                    height: 90,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholder(),
-                  )
-                : _placeholder(),
+            child: AppCachedImage(
+              imageUrl: place.imageUrl,
+              width: 90,
+              height: 90,
+              fit: BoxFit.cover,
+            ),
           ),
           // Info
           Expanded(
@@ -349,7 +364,7 @@ class _PlaceTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

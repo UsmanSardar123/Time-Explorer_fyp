@@ -156,7 +156,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: _textDark.withOpacity(0.04),
+                      color: _textDark.withValues(alpha: 0.04),
                       blurRadius: 32,
                       offset: const Offset(0, 16),
                     ),
@@ -267,7 +267,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: _primary.withOpacity(0.3),
+                color: _primary.withValues(alpha: 0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),

@@ -26,7 +26,7 @@ class _FactFormPageState extends State<FactFormPage> {
   @override
   void initState() {
     super.initState();
-    _factCtrl = TextEditingController(text: widget.fact?.fact ?? '');
+    _factCtrl = TextEditingController(text: widget.fact?.description ?? '');
     _categoryCtrl = TextEditingController(text: widget.fact?.category ?? '');
   }
 
@@ -46,7 +46,8 @@ class _FactFormPageState extends State<FactFormPage> {
       final isEdit = widget.fact != null;
       final factModel = FactModel(
         id: isEdit ? widget.fact!.id : const Uuid().v4(),
-        fact: _factCtrl.text.trim(),
+        title: _factCtrl.text.trim().split('.').first,
+        description: _factCtrl.text.trim(),
         category: _categoryCtrl.text.trim(),
       );
 
@@ -164,7 +165,7 @@ class _FactFormPageState extends State<FactFormPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

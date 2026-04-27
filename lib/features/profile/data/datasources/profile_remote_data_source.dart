@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:io' if (dart.library.html) 'dart:html';
+import 'dart:io' as io;
 import 'package:timeexplorer/features/profile/domain/entities/profile_entity.dart';
 import 'package:timeexplorer/features/profile/data/services/profile_image_service.dart';
 
@@ -177,8 +177,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       if (imageData is ProfileImageResult) {
         if (kIsWeb || imageData.bytes != null) {
           // Web path: upload raw bytes
-          final bytes = imageData.bytes!
-              as Uint8List; // always Uint8List from XFile.readAsBytes
+          final bytes = imageData.bytes!;
           uploadTask = ref.putData(
             bytes,
             SettableMetadata(contentType: 'image/jpeg'),
@@ -186,7 +185,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         } else {
           // Mobile path: upload File
           uploadTask = ref.putFile(
-            imageData.file! as File,
+            imageData.file! as io.File,
             SettableMetadata(contentType: 'image/jpeg'),
           );
         }
@@ -196,7 +195,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
           imageData,
           SettableMetadata(contentType: 'image/jpeg'),
         );
-      } else if (!kIsWeb && imageData is File) {
+      } else if (!kIsWeb && imageData is io.File) {
         // Legacy mobile path
         uploadTask = ref.putFile(
           imageData,

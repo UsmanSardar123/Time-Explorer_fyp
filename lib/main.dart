@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +18,8 @@ import 'package:timeexplorer/features/learn/presentation/daily_fact_provider.dar
 import 'package:timeexplorer/features/places/presentation/providers/era_provider.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:timeexplorer/core/config/app_config.dart';
+import 'package:timeexplorer/features/personalities/data/repositories/character_firestore_repository.dart';
+import 'package:timeexplorer/features/personalities/data/services/remote_config_service.dart';
 
 import 'firebase_options.dart';
 
@@ -40,6 +42,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  unawaited(
+    RemoteConfigService.checkForUpdates(CharacterFirestoreRepository()),
+  );
+
   await Hive.initFlutter();
   await Hive.openBox<String>('wikipedia_cache');
 

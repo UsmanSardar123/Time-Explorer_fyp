@@ -2,6 +2,7 @@ import '../../domain/entities/character.dart';
 import '../../domain/entities/character_category.dart';
 
 class CharacterLocalDataSource {
+  static List<Character> get allCharacters => _characters;
   static const List<Character> _characters = [
 
     // ── Scientists ────────────────────────────────────────────────────────────

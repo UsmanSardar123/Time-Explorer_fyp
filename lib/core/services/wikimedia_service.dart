@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class WikimediaService {
@@ -13,65 +14,78 @@ class WikimediaService {
   // Track queries that failed to find an image to avoid redundant calls
   static final Set<String> _failedQueries = {};
 
-  /// Fetches the URL of the main image for a given [query] (e.g., "Eiffel Tower").
+  /// Fetches an 800-px thumbnail URL for [query] via the Wikipedia pageimages API.
+  /// Uses `piprop=thumbnail` which is far more reliable than `piprop=original`
+  /// because every Wikipedia article image always has a generated thumbnail.
   Future<String?> getImageUrl(String query) async {
-    if (_urlCache.containsKey(query)) {
-      return _urlCache[query];
-    }
-    if (_failedQueries.contains(query)) {
-      return null;
+    if (_urlCache.containsKey(query)) return _urlCache[query];
+    if (_failedQueries.contains(query)) return null;
+
+    // Try the exact query first, then a simplified version (remove city/country suffix).
+    final queries = _buildQueryVariants(query);
+
+    for (final q in queries) {
+      final url = await _fetchThumbnail(q);
+      if (url != null) {
+        _urlCache[query] = url;
+        return url;
+      }
     }
 
+    _failedQueries.add(query);
+    return null;
+  }
+
+  List<String> _buildQueryVariants(String query) {
+    final variants = [query];
+    // "Badshahi Mosque, Lahore" → "Badshahi Mosque"
+    final commaIdx = query.indexOf(',');
+    if (commaIdx > 0) variants.add(query.substring(0, commaIdx).trim());
+    return variants;
+  }
+
+  Future<String?> _fetchThumbnail(String query) async {
     try {
       final uri = Uri.parse(_baseUrl).replace(queryParameters: {
         'action': 'query',
         'prop': 'pageimages',
         'format': 'json',
-        'piprop': 'original',
+        'piprop': 'thumbnail',
+        'pithumbsize': '800',
         'titles': query,
-        'origin': '*', // Required for CORS in web/some environments
+        'redirects': '1',
+        'origin': '*',
       });
 
-      print('WikimediaService: Fetching image for "$query"...');
       final response = await http.get(
         uri,
-        headers: {
-          // Authorization is optional for public Wikimedia data; removing if problematic
-          // 'Authorization': 'Bearer $_accessToken', 
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        headers: const {
+          'User-Agent': 'TimeExplorer/1.0 (education-app)',
+          'Accept': 'application/json',
         },
       );
 
-      print('WikimediaService: Response status for "$query": ${response.statusCode}');
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // print('WikimediaService: Response body for "$query": $data'); // Uncomment for full details
-        final pages = data['query']['pages'] as Map<String, dynamic>;
-        
-        if (pages.isNotEmpty) {
-          final pageId = pages.keys.first;
-          if (pageId != '-1') {
-            final pageData = pages[pageId];
-            if (pageData.containsKey('original')) {
-              final url = pageData['original']['source'] as String;
-              print('WikimediaService: Found image URL for "$query": $url');
-              _urlCache[query] = url; // Cache the result
-              return url;
-            } else {
-               print('WikimediaService: No "original" image found for "$query"');
-            }
-          } else {
-             print('WikimediaService: Page not found for "$query" (pageid -1)');
-          }
-        }
-      } else {
-        print('WikimediaService: API Error for "$query": ${response.body}');
-      }
+      if (response.statusCode != 200) return null;
+
+      final data = json.decode(response.body);
+      final pages = data['query']['pages'] as Map<String, dynamic>;
+      if (pages.isEmpty) return null;
+
+      final pageId = pages.keys.first;
+      if (pageId == '-1') return null;
+
+      final thumbnail = pages[pageId]['thumbnail'];
+      if (thumbnail == null) return null;
+
+      final url = thumbnail['source'] as String?;
+      if (url == null || url.isEmpty) return null;
+
+      debugPrint('[WikimediaService] ✅ thumbnail for "$query": $url');
+      return url;
     } catch (e) {
-      print('WikimediaService: Exception fetching image for "$query": $e');
+      debugPrint('[WikimediaService] ❌ error for "$query": $e');
+      return null;
     }
-    _failedQueries.add(query);
-    return null;
   }
   /// Fetches a short description (extract) for a given [query] from Wikipedia.
   Future<String?> getDescription(String query) async {
@@ -90,7 +104,7 @@ class WikimediaService {
         'redirects': '1',
       });
 
-      print('WikimediaService: Fetching description for "$query"...');
+      debugPrint('[WikimediaService] Fetching description for "$query"...');
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
@@ -102,7 +116,7 @@ class WikimediaService {
           if (pageId != '-1') {
             final extract = pages[pageId]['extract'] as String?;
             if (extract != null && extract.isNotEmpty) {
-              print('WikimediaService: Found description for "$query"');
+              debugPrint('[WikimediaService] Found description for "$query"');
               _urlCache['desc_$query'] = extract;
               return extract;
             }
@@ -110,7 +124,7 @@ class WikimediaService {
         }
       }
     } catch (e) {
-      print('WikimediaService: Exception fetching description for "$query": $e');
+      debugPrint('[WikimediaService] Exception fetching description for "$query": $e');
     }
     return null;
   }
@@ -128,7 +142,7 @@ class WikimediaService {
       final uri = Uri.parse(
         'https://en.wikipedia.org/api/rest_v1/page/summary/$encoded',
       );
-      print('WikimediaService: Fetching metadata for "$placeName"...');
+      debugPrint('[WikimediaService] Fetching metadata for "$placeName"...');
       final response = await http.get(
         uri,
         headers: {
@@ -144,17 +158,13 @@ class WikimediaService {
           'yearBuilt': _extractYearBuilt(extract),
           'civilization': _extractCivilization(extract),
         };
-        print('WikimediaService: Metadata for "$placeName": $result');
+        debugPrint('[WikimediaService] Metadata for "$placeName": $result');
         _metadataApiCache[placeName] = result;
         return result;
       }
-      print(
-        'WikimediaService: fetchPlaceMetadata HTTP ${response.statusCode} for "$placeName"',
-      );
+      debugPrint('[WikimediaService] fetchPlaceMetadata HTTP ${response.statusCode} for "$placeName"');
     } catch (e) {
-      print(
-        'WikimediaService: fetchPlaceMetadata exception for "$placeName": $e',
-      );
+      debugPrint('[WikimediaService] fetchPlaceMetadata exception for "$placeName": $e');
     }
     return {'builtBy': null, 'yearBuilt': null, 'civilization': null};
   }

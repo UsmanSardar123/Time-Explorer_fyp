@@ -1,17 +1,17 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io' if (dart.library.html) 'dart:html';
+import 'dart:io' as io;
 import 'package:timeexplorer/features/auth/presentation/providers/auth_provider.dart';
 import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_provider.dart';
 import 'package:timeexplorer/features/profile/presentation/providers/profile_provider.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/core/widgets/gamified_components.dart';
+import 'package:timeexplorer/features/gamification/presentation/widgets/level_badge.dart';
 import 'package:timeexplorer/features/profile/data/services/profile_image_service.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -34,6 +34,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     _imageService = ProfileImageService.create();
     _ringCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 6))..repeat();
     _loadLocalImage();
+    
     final userId = context.read<AuthProvider>().currentUser?.id;
     if (userId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,15 +43,19 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     }
   }
 
-  @override
+@override
   void dispose() {
     _ringCtrl.dispose();
     super.dispose();
   }
 
+  // Load saved local image path from SharedPreferences
   Future<void> _loadLocalImage() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() => _localImagePath = prefs.getString('local_profile_image'));
+    final path = prefs.getString('local_profile_image');
+    if (mounted) {
+      setState(() => _localImagePath = path);
+    }
   }
 
   /// Picks an image via [ProfileImageService], validates JPG/JPEG, compresses,
@@ -92,7 +97,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         setState(() => _webImageBytes = result.bytes);
       } else if (!kIsWeb && result.file != null) {
         final prefs = await SharedPreferences.getInstance();
-        final path = (result.file as File).path;
+        final path = (result.file as io.File).path;
         await prefs.setString('local_profile_image', path);
         setState(() => _localImagePath = path);
       }
@@ -219,8 +224,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     ImageProvider? imageProvider;
     if (_webImageBytes != null) {
       imageProvider = MemoryImage(_webImageBytes!);
-    } else if (!kIsWeb && _localImagePath != null && File(_localImagePath!).existsSync()) {
-      imageProvider = FileImage(File(_localImagePath!));
+    } else if (!kIsWeb && _localImagePath != null && io.File(_localImagePath!).existsSync()) {
+      imageProvider = FileImage(io.File(_localImagePath!));
     } else if (profile?.photoUrl != null) {
       imageProvider = NetworkImage(profile!.photoUrl!);
     }
@@ -304,6 +309,16 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     ),
                     child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
                   ),
+                ),
+              ),
+              // Level badge
+              Positioned(
+                top: 2,
+                right: 2,
+                child: LevelBadge(
+                  level: gam.level,
+                  xpProgress: gam.progressToNextLevel,
+                  size: 32,
                 ),
               ),
             ],

@@ -5,7 +5,6 @@ import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:timeexplorer/features/places/domain/entities/era.dart';
 import 'package:timeexplorer/features/places/presentation/providers/era_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
 import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_provider.dart';
 import 'package:timeexplorer/features/explore/domain/entities/place_entity.dart';
@@ -119,24 +118,13 @@ class _EraDetailsPageState extends State<EraDetailsPage> {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            CachedNetworkImage(
-              imageUrl: widget.era.innerImage,
-              key: ValueKey(widget.era.innerImage),
+            DynamicPlaceImage(
+              query: widget.era.eraName,
+              placeId: 'era_${widget.era.id}',
+              fallbackUrl: widget.era.innerImage.isNotEmpty ? widget.era.innerImage : null,
+              width: double.infinity,
+              height: 320,
               fit: BoxFit.cover,
-              httpHeaders: const {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-                'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-              },
-              placeholder: (context, url) => const ColoredBox(
-                color: AppTheme.surfaceHigh,
-                child: Center(
-                  child: CircularProgressIndicator(color: AppTheme.primaryContainer),
-                ),
-              ),
-              errorWidget: (context, url, error) => const ColoredBox(
-                color: AppTheme.surfaceHigh,
-                child: Icon(Icons.history_edu_rounded, color: AppTheme.onSurfaceVariant, size: 60),
-              ),
             ),
             Container(
               decoration: BoxDecoration(
@@ -178,7 +166,7 @@ class _EraDetailsPageState extends State<EraDetailsPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _textDark.withOpacity(0.04),
+            color: _textDark.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -286,6 +274,7 @@ class _EraDetailsPageState extends State<EraDetailsPage> {
                           children: [
                             DynamicPlaceImage(
                               query: loc.name,
+                              placeId: loc.id,
                               fallbackUrl: loc.imageUrl.isNotEmpty ? loc.imageUrl : null,
                               fit: BoxFit.cover,
                             ),

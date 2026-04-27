@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:timeexplorer/core/services/gamification_service.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/features/quiz/presentation/cubit/quiz_cubit.dart';
 import '../../domain/usecases/get_daily_quiz.dart';
@@ -9,7 +10,6 @@ import '../../domain/usecases/submit_answer.dart';
 import '../../domain/usecases/calculate_score.dart';
 import '../../data/repositories/quiz_repository_impl.dart';
 import '../../data/datasources/quiz_local_data_source.dart';
-import 'package:provider/provider.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 
 class QuizPage extends StatelessWidget {
@@ -43,7 +43,23 @@ class _QuizViewState extends State<QuizView> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: BlocBuilder<QuizCubit, QuizState>(
+      body: BlocConsumer<QuizCubit, QuizState>(
+        // Fire when an answer is submitted (showingExplanation flips to true).
+        listenWhen: (prev, curr) {
+          if (curr is! QuizLoaded || prev is! QuizLoaded) return false;
+          return !prev.showingExplanation && curr.showingExplanation;
+        },
+        listener: (context, state) {
+          if (state is! QuizLoaded) return;
+          final q = state.quiz.questions[state.currentQuestionIndex];
+          final isCorrect = q.correctAnswerIndex == state.lastSelectedAction;
+          final gam = context.read<GamificationProvider>();
+          if (isCorrect) {
+            gam.recordCorrectAnswer();
+          } else {
+            gam.recordWrongAnswer();
+          }
+        },
         builder: (context, state) {
           if (state is QuizLoading) {
             return const Center(child: CircularProgressIndicator(color: AppTheme.primaryContainer));
@@ -234,6 +250,7 @@ class _QuizViewState extends State<QuizView> with TickerProviderStateMixin {
 
   Widget _buildResultView(QuizLoaded state) {
     return _ResultView(
+      quizId: state.quiz.id,
       score: state.score,
       total: state.quiz.questions.length,
     );
@@ -241,9 +258,10 @@ class _QuizViewState extends State<QuizView> with TickerProviderStateMixin {
 }
 
 class _ResultView extends StatefulWidget {
+  final String quizId;
   final int score;
   final int total;
-  const _ResultView({required this.score, required this.total});
+  const _ResultView({required this.quizId, required this.score, required this.total});
 
   @override
   State<_ResultView> createState() => _ResultViewState();
@@ -264,7 +282,15 @@ class _ResultViewState extends State<_ResultView>
       .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeIn));
 
   bool get _isHighScore => widget.total > 0 && widget.score / widget.total >= 0.8;
-  int get _xpEarned => widget.total > 0 ? ((widget.score / widget.total) * 100).round() : 0;
+
+  // Accurate XP this session: per-answer XP + session bonus.
+  // First-time completion bonus (+20) is excluded here (awarded separately, silently).
+  int get _xpEarned {
+    final wrong = widget.total - widget.score;
+    return (widget.score * GamificationService.xpCorrectAnswer) +
+        (wrong * GamificationService.xpWrongAnswer) +
+        GamificationService.xpQuizSessionBonus;
+  }
 
   String get _grade {
     if (widget.total == 0) return '—';
@@ -279,11 +305,12 @@ class _ResultViewState extends State<_ResultView>
   void initState() {
     super.initState();
     _ctrl.forward();
-    // Record quiz completion in gamification system
+    // Award first-time completion bonus (+20 XP, idempotent) and session bonus (+30 XP).
     Future.microtask(() {
-      if (mounted) {
-        context.read<GamificationProvider>().recordQuizCompleted();
-      }
+      if (!mounted) return;
+      final gam = context.read<GamificationProvider>();
+      gam.recordQuizCompleted(widget.quizId);
+      gam.recordQuizSessionComplete();
     });
   }
 

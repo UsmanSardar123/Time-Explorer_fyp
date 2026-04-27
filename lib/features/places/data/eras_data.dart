@@ -27,7 +27,7 @@ const List<EraModel> featuredEras = [
     shortDescription: 'The Middle Ages: a time of castles, knights, empires, and soaring cathedrals.',
     detailedDescription: 'Often called the Middle Ages, this era in human history is positioned between the fall of the Western Roman Empire and the onset of the Renaissance. It saw the rise of Islamic empires, the construction of magnificent gothic cathedrals, the feudal system in Europe, and sweeping global trade routes that reshaped civilizations worldwide.',
     outerImage: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Trakai_Island_Castle_2011.jpg',
-    innerImage: 'https://upload.wikimedia.org/wikipedia/commons/6/6e/Cité_de_Carcassonne_01.jpg',
+    innerImage: 'https://upload.wikimedia.org/wikipedia/commons/6/6e/Cit%C3%A9_de_Carcassonne_01.jpg',
   ),
 ];
 

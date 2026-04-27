@@ -118,7 +118,7 @@ class _UpdateEmailPageState extends State<UpdateEmailPage> {
               ),
               if (provider.isLoading)
                 Container(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   child: const Center(child: CircularProgressIndicator()),
                 ),
             ],
@@ -142,7 +142,7 @@ class _UpdateEmailPageState extends State<UpdateEmailPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

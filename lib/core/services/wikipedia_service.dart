@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 
@@ -33,7 +34,7 @@ class WikipediaService {
         
         // DEEP SEARCH FALLBACK for Civilization
         if (civilization == null || civilization.toLowerCase() == 'unknown') {
-          print('[WikipediaService] Deep searching civilization for "$placeName"...');
+          debugPrint('[WikipediaService] Deep searching civilization for "$placeName"...');
           civilization = await _deepSearchCivilization(placeName);
         }
 
@@ -49,7 +50,7 @@ class WikipediaService {
         return result;
       }
     } catch (e) {
-      print('[WikipediaService] Error for "$placeName": $e');
+      debugPrint('[WikipediaService] Error for "$placeName": $e');
     }
     return {
       'builtBy': null,

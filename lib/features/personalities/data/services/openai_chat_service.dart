@@ -1,16 +1,20 @@
+// FILE: lib/features/personalities/data/services/openai_chat_service.dart
+// PURPOSE: Gemini multi-turn chat service with adaptive token pruning and classified error handling.
+// SPRINT: 3
+
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:timeexplorer/core/config/app_config.dart';
+import 'package:timeexplorer/core/services/gemini_service.dart';
 import 'memory_scorer.dart';
 import '../../domain/entities/character.dart';
 
-/// Gemini-backed chat service for personality conversations.
-/// Uses multi-turn chat with a system prompt to maintain character persona.
 class OpenAIChatService {
   static const _modelName = 'gemini-flash-latest';
   static String get _apiKey => AppConfig.geminiApiKey;
   static const int _tokenThreshold = 3000;
+  static const Duration _streamTimeout = Duration(seconds: 30);
 
   const OpenAIChatService();
 
@@ -20,76 +24,25 @@ class OpenAIChatService {
     required List<Map<String, String>> history,
   }) async {
     final cleanedKey = _apiKey;
-
     if (cleanedKey.isEmpty) {
-      debugPrint('[GeminiChat] ❌ API KEY MISSING');
-      throw const _GeminiException('Error: GEMINI_API_KEY is missing. Run with --dart-define or use .env file');
+      throw const GeminiChatException(
+          GeminiError.unknownError, 'GEMINI_API_KEY is missing.');
     }
 
-    // 1. Aggressive Content Trimming for history
-    final optimizedHistory = history.map((e) => {
-      'role': e['role'] ?? 'user',
-      'content': (e['content'] ?? '').trim().replaceAll(RegExp(r'\n{3,}'), '\n\n'),
-    }).toList();
-
-    // 2. Adaptive Token Pruning
-    List<Map<String, String>> prunedHistory = List.from(optimizedHistory);
-    
-    // We create the model early just to count tokens
     final model = GenerativeModel(
       model: _modelName,
       apiKey: cleanedKey,
       systemInstruction: Content.system(systemPrompt),
     );
 
-    // Iteratively prune low-value turns until under threshold
-    while (prunedHistory.length > 3) {
-      final totalTokens = await _calculateTokens(model, systemPrompt, prunedHistory);
-      debugPrint('[GeminiChat] 📊 Current Context: ${prunedHistory.length} msgs, $totalTokens tokens');
-      
-      if (totalTokens <= _tokenThreshold) break;
-
-      // Hit threshold - Prune weighted memory
-      final turns = MemoryScorer.toTurns(prunedHistory);
-      if (turns.length <= 2) break; // Keep at least last 2 turns
-
-      // Score everything except the anchor (0) and last 2 turns
-      // We keep indices 0 and turns.length-1, turns.length-2
-      final turnScores = <int, double>{};
-      for (int i = 1; i < turns.length - 2; i++) {
-        turnScores[i] = turns[i].score(character, turns.length);
-      }
-
-      if (turnScores.isEmpty) break;
-
-      // Find turn with lowest score
-      final lowestIndex = turnScores.entries
-          .reduce((a, b) => a.value < b.value ? a : b)
-          .key;
-
-      debugPrint('[GeminiChat] ⚖️ Pruning turn $lowestIndex (score: ${turnScores[lowestIndex]})');
-      turns.removeAt(lowestIndex);
-      prunedHistory = MemoryScorer.fromTurns(turns);
-      // Ensure current user message (last) is still there
-      prunedHistory.add(optimizedHistory.last);
-    }
-
+    final prunedHistory =
+        await _pruneHistory(model, systemPrompt, history, character);
     final priorTurns = prunedHistory.length > 1
         ? prunedHistory.sublist(0, prunedHistory.length - 1)
         : const <Map<String, String>>[];
-
-    final geminiHistory = <Content>[];
-    for (final entry in priorTurns) {
-      final role = entry['role'] ?? 'user';
-      final content = entry['content'] ?? '';
-      if (role == 'user') {
-        geminiHistory.add(Content.text(content));
-      } else {
-        geminiHistory.add(Content('model', [TextPart(content)]));
-      }
-    }
-
     final currentMessage = prunedHistory.last['content'] ?? '';
+
+    final geminiHistory = _toGeminiHistory(priorTurns);
 
     try {
       return await _sendWithRetry(model, geminiHistory, currentMessage);
@@ -99,59 +52,229 @@ class OpenAIChatService {
     }
   }
 
-  Future<String> _sendWithRetry(GenerativeModel model, List<Content> geminiHistory, String currentMessage) async {
-    int attempts = 0;
-    const maxAttempts = 2; // 1 original + 1 retry
-
-    while (attempts < maxAttempts) {
-      attempts++;
-      try {
-        final chat = model.startChat(
-          history: geminiHistory.isEmpty ? null : geminiHistory,
-        );
-
-        // Add a 15-second timeout for the request
-        final response = await chat.sendMessage(Content.text(currentMessage))
-            .timeout(const Duration(seconds: 15));
-            
-        final text = _extractText(response);
-        if (text.isNotEmpty) return text;
-        
-        throw const _GeminiException('Error: Received an empty response from history service.');
-      } catch (e) {
-        final isLastAttempt = attempts >= maxAttempts;
-        final isPermanent = e is InvalidApiKey || e is UnsupportedUserLocation;
-
-        if (isLastAttempt || isPermanent) {
-          if (e is _GeminiException) rethrow;
-          if (e is InvalidApiKey) throw const _GeminiException('Error: Invalid API Key');
-          if (e is ServerException) throw const _GeminiException('Error: Gemini Server is overloaded');
-          throw _GeminiException('Error: ${e.toString()}');
-        }
-
-        // Transient error - retry with randomized backoff
-        final backoffMs = 500 + (DateTime.now().millisecond % 1000);
-        debugPrint('[GeminiChat] ⚠️ Transient error (attempt $attempts): $e. Retrying in ${backoffMs}ms...');
-        await Future.delayed(Duration(milliseconds: backoffMs));
-      }
+  Stream<String> sendStream({
+    required Character character,
+    required String systemPrompt,
+    required List<Map<String, String>> history,
+  }) async* {
+    final cleanedKey = _apiKey;
+    if (cleanedKey.isEmpty) {
+      throw const GeminiChatException(
+          GeminiError.unknownError, 'GEMINI_API_KEY is missing.');
     }
-    throw const _GeminiException('Error: Maximum retry attempts reached');
+
+    final model = GenerativeModel(
+      model: _modelName,
+      apiKey: cleanedKey,
+      systemInstruction: Content.system(systemPrompt),
+    );
+
+    final prunedHistory =
+        await _pruneHistory(model, systemPrompt, history, character);
+    final priorTurns = prunedHistory.length > 1
+        ? prunedHistory.sublist(0, prunedHistory.length - 1)
+        : const <Map<String, String>>[];
+    final currentMessage = prunedHistory.last['content'] ?? '';
+
+    final geminiHistory = _toGeminiHistory(priorTurns);
+
+    yield* _sendStreamWithRetry(model, geminiHistory, currentMessage);
   }
 
-  Future<int> _calculateTokens(GenerativeModel model, String system, List<Map<String, String>> history) async {
+  // ── Private helpers ────────────────────────────────────────────────────────
+
+  Future<List<Map<String, String>>> _pruneHistory(
+    GenerativeModel model,
+    String systemPrompt,
+    List<Map<String, String>> history,
+    Character character,
+  ) async {
+    final optimized = history
+        .map((e) => {
+              'role': e['role'] ?? 'user',
+              'content': (e['content'] ?? '')
+                  .trim()
+                  .replaceAll(RegExp(r'\n{3,}'), '\n\n'),
+            })
+        .toList();
+
+    var pruned = List<Map<String, String>>.from(optimized);
+
+    while (pruned.length > 3) {
+      final totalTokens =
+          await _calculateTokens(model, systemPrompt, pruned);
+      debugPrint(
+          '[GeminiChat] 📊 ${pruned.length} msgs, $totalTokens tokens');
+      if (totalTokens <= _tokenThreshold) break;
+
+      final turns = MemoryScorer.toTurns(pruned);
+      if (turns.length <= 2) break;
+
+      final scores = <int, double>{};
+      for (int i = 1; i < turns.length - 2; i++) {
+        scores[i] = turns[i].score(character, turns.length);
+      }
+      if (scores.isEmpty) break;
+
+      final lowest =
+          scores.entries.reduce((a, b) => a.value < b.value ? a : b).key;
+      debugPrint(
+          '[GeminiChat] ⚖️ Pruning turn $lowest (score: ${scores[lowest]})');
+      turns.removeAt(lowest);
+      pruned = MemoryScorer.fromTurns(turns);
+      pruned.add(optimized.last);
+    }
+
+    return pruned;
+  }
+
+  List<Content> _toGeminiHistory(List<Map<String, String>> turns) {
+    return turns.map((e) {
+      final role = e['role'] ?? 'user';
+      final content = e['content'] ?? '';
+      return role == 'user'
+          ? Content.text(content)
+          : Content('model', [TextPart(content)]);
+    }).toList();
+  }
+
+  Future<String> _sendWithRetry(
+    GenerativeModel model,
+    List<Content> history,
+    String currentMessage,
+  ) async {
+    int attempts = 0;
+    while (attempts < 2) {
+      attempts++;
+      try {
+        final chat = model.startChat(history: history.isEmpty ? null : history);
+        final response = await chat
+            .sendMessage(Content.text(currentMessage))
+            .timeout(_streamTimeout);
+        final text = _extractText(response);
+        if (text.isNotEmpty) return text;
+        throw const GeminiChatException(
+            GeminiError.unknownError, 'Empty response from Gemini.');
+      } on TimeoutException {
+        if (attempts < 2) {
+          debugPrint('[GeminiChat] ⏱ Non-stream timeout (attempt $attempts). Retrying in 2s...');
+          await Future.delayed(const Duration(seconds: 2));
+          continue;
+        }
+        throw const GeminiChatException(
+            GeminiError.timeoutError, 'Request timed out after 30 seconds.');
+      } on InvalidApiKey {
+        throw const GeminiChatException(
+            GeminiError.unknownError, 'Invalid API Key.');
+      } on ServerException catch (e) {
+        final msg = e.message.toLowerCase();
+        if (msg.contains('429') ||
+            msg.contains('quota') ||
+            msg.contains('rate')) {
+          throw GeminiChatException(GeminiError.rateLimitError, e.message);
+        }
+        if (attempts >= 2) {
+          throw GeminiChatException(GeminiError.unknownError, e.message);
+        }
+        await Future.delayed(
+            Duration(milliseconds: 500 + DateTime.now().millisecond % 1000));
+      } on GeminiChatException {
+        rethrow;
+      } catch (e) {
+        if (attempts >= 2) {
+          throw GeminiChatException(
+              GeminiError.unknownError, e.toString());
+        }
+        await Future.delayed(
+            Duration(milliseconds: 500 + DateTime.now().millisecond % 1000));
+      }
+    }
+    throw const GeminiChatException(
+        GeminiError.unknownError, 'Maximum retry attempts reached.');
+  }
+
+  Stream<String> _sendStreamWithRetry(
+    GenerativeModel model,
+    List<Content> history,
+    String currentMessage,
+  ) async* {
+    int attempts = 0;
+    bool anyChunkYielded = false;
+    while (attempts < 2) {
+      attempts++;
+      try {
+        final chat = model.startChat(history: history.isEmpty ? null : history);
+        final stream = chat
+            .sendMessageStream(Content.text(currentMessage))
+            .timeout(_streamTimeout);
+
+        await for (final chunk in stream) {
+          final text = _extractTextStream(chunk);
+          if (text.isNotEmpty) {
+            anyChunkYielded = true;
+            yield text;
+          }
+        }
+        return;
+      } on TimeoutException {
+        // Only retry before first chunk — retrying mid-stream produces garbled text.
+        if (!anyChunkYielded && attempts < 2) {
+          debugPrint('[GeminiChat] ⏱ Stream timeout (attempt $attempts), no chunks yet. Retrying in 2s...');
+          await Future.delayed(const Duration(seconds: 2));
+          continue;
+        }
+        throw const GeminiChatException(
+            GeminiError.timeoutError, 'Stream timed out after 30 seconds.');
+      } on InvalidApiKey {
+        throw const GeminiChatException(
+            GeminiError.unknownError, 'Invalid API Key.');
+      } on ServerException catch (e) {
+        final msg = e.message.toLowerCase();
+        if (msg.contains('429') ||
+            msg.contains('quota') ||
+            msg.contains('rate')) {
+          throw GeminiChatException(GeminiError.rateLimitError, e.message);
+        }
+        if (attempts >= 2) {
+          throw GeminiChatException(GeminiError.unknownError, e.message);
+        }
+        debugPrint(
+            '[GeminiChat] ⚠️ Stream error (attempt $attempts): $e. Retrying...');
+        await Future.delayed(
+            Duration(milliseconds: 500 + DateTime.now().millisecond % 1000));
+      } on GeminiChatException {
+        rethrow;
+      } catch (e) {
+        if (attempts >= 2) {
+          throw GeminiChatException(
+              GeminiError.unknownError, e.toString());
+        }
+        await Future.delayed(
+            Duration(milliseconds: 500 + DateTime.now().millisecond % 1000));
+      }
+    }
+    throw const GeminiChatException(
+        GeminiError.unknownError, 'Maximum retry attempts reached.');
+  }
+
+  Future<int> _calculateTokens(
+    GenerativeModel model,
+    String system,
+    List<Map<String, String>> history,
+  ) async {
     try {
       final contents = <Content>[Content.system(system)];
       for (final h in history) {
-        contents.add(h['role'] == 'user' 
-            ? Content.text(h['content'] ?? '') 
+        contents.add(h['role'] == 'user'
+            ? Content.text(h['content'] ?? '')
             : Content('model', [TextPart(h['content'] ?? '')]));
       }
-      final response = await model.countTokens(contents).timeout(const Duration(seconds: 5));
+      final response =
+          await model.countTokens(contents).timeout(const Duration(seconds: 5));
       return response.totalTokens;
-    } catch (e) {
-      debugPrint('[GeminiChat] ⚠️ Token count failed: $e. Falling back to estimate.');
-      // Simple heuristic fallback if counting fails (chars / 4)
-      return history.fold(0, (sum, e) => sum + (e['content']?.length ?? 0)) ~/ 4;
+    } catch (_) {
+      return history.fold(
+          0, (sum, e) => sum + (e['content']?.length ?? 0)) ~/ 4;
     }
   }
 
@@ -171,12 +294,20 @@ class OpenAIChatService {
     } catch (_) {}
     return '';
   }
-}
 
-class _GeminiException implements Exception {
-  final String message;
-  const _GeminiException(this.message);
-
-  @override
-  String toString() => message;
+  String _extractTextStream(GenerateContentResponse response) {
+    if (response.text != null && response.text!.isNotEmpty) {
+      return response.text!;
+    }
+    try {
+      if (response.candidates.isNotEmpty) {
+        final text = response.candidates.first.content.parts
+            .whereType<TextPart>()
+            .map((p) => p.text)
+            .join('');
+        if (text.isNotEmpty) return text;
+      }
+    } catch (_) {}
+    return '';
+  }
 }

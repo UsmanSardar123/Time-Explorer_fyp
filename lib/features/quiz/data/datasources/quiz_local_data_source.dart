@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/quiz.dart';
 import 'static_quiz_data.dart';
 import 'quiz_questions_pool.dart';
@@ -31,6 +32,6 @@ class QuizLocalDataSourceImpl implements QuizLocalDataSource {
 
   @override
   Future<void> saveQuizScore(String quizId, int score) async {
-    print('Saving score $score for quiz $quizId');
+    debugPrint('Saving score $score for quiz $quizId');
   }
 }

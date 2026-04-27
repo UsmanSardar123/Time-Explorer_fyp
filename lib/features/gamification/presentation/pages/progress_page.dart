@@ -166,16 +166,18 @@ class _ProgressPageState extends State<ProgressPage>
   }
 
   Widget _buildStatsGrid(dynamic p) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.5,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildStatCard('Total XP', '${p.totalXP}', Icons.history_edu_rounded),
-        _buildStatCard('Streak', '${p.streak} Days', Icons.whatshot_rounded),
+        Expanded(
+          child: _buildStatCard(
+              'Total XP', '${p.totalXP}', Icons.history_edu_rounded),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildStatCard(
+              'Streak', '${p.streak} Days', Icons.whatshot_rounded),
+        ),
       ],
     );
   }
@@ -196,13 +198,19 @@ class _ProgressPageState extends State<ProgressPage>
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: _primary, size: 20),
-          const Spacer(),
+          const SizedBox(height: 12),
           Text(value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.plusJakartaSans(
                   fontSize: 20, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 2),
           Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.beVietnamPro(fontSize: 12, color: _textMuted)),
         ],
       ),
@@ -232,6 +240,7 @@ class _ProgressPageState extends State<ProgressPage>
 
   Widget _buildMilestoneItem(String title, String subtitle, bool completed) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Column(
           children: [
@@ -254,19 +263,25 @@ class _ProgressPageState extends State<ProgressPage>
           ],
         ),
         const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w700,
-                  color: completed ? _textDark : _textMuted,
-                )),
-            Text(subtitle,
-                style: GoogleFonts.beVietnamPro(
-                    fontSize: 12, color: _textMuted)),
-            const SizedBox(height: 20),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                    color: completed ? _textDark : _textMuted,
+                  )),
+              Text(subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.beVietnamPro(
+                      fontSize: 12, color: _textMuted)),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ],
     );

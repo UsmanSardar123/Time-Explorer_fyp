@@ -64,12 +64,26 @@ class _XpBarState extends State<XpBar> with SingleTickerProviderStateMixin {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('${widget.totalXP} XP',
+            Flexible(
+              child: Text(
+                '${widget.totalXP} XP',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12, fontWeight: FontWeight.w700, color: c)),
-            Text('${widget.xpToNext} to next level',
+                    fontSize: 12, fontWeight: FontWeight.w700, color: c),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                '${widget.xpToNext} to next level',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
                 style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11, color: AppTheme.textDimmed)),
+                    fontSize: 11, color: AppTheme.textDimmed),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),

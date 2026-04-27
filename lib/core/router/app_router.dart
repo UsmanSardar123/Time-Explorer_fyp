@@ -11,8 +11,6 @@ import 'package:timeexplorer/features/admin/presentation/pages/admin_dashboard_p
 import 'package:timeexplorer/features/explore/presentation/pages/search_page.dart';
 import 'package:timeexplorer/features/explore/domain/entities/place_entity.dart';
 import 'package:timeexplorer/features/bookmarks/presentation/pages/bookmarks_page.dart';
-import 'package:timeexplorer/features/explore/domain/entities/personality_entity.dart';
-import 'package:timeexplorer/features/explore/presentation/pages/personality_details_page.dart';
 import 'package:timeexplorer/features/auth/presentation/providers/auth_provider.dart';
 import 'package:timeexplorer/features/profile/presentation/pages/change_password_page.dart';
 import 'package:timeexplorer/features/profile/presentation/pages/edit_profile_page.dart';
@@ -32,7 +30,6 @@ import 'package:timeexplorer/features/admin/presentation/pages/facts_management_
 import 'package:timeexplorer/features/admin/presentation/pages/fact_form_page.dart';
 import 'package:timeexplorer/features/admin/presentation/pages/characters_management_page.dart';
 import 'package:timeexplorer/features/admin/presentation/pages/character_form_page.dart';
-import 'package:timeexplorer/features/admin/domain/entities/character_entity.dart';
 import 'package:timeexplorer/features/learn/data/models/fact_model.dart';
 import 'package:timeexplorer/features/places/domain/entities/era.dart';
 import 'package:timeexplorer/features/places/presentation/pages/era_details_page.dart';
@@ -139,13 +136,6 @@ class AppRouter {
             }
             return AppTransitions.portal(new_ui.PlaceDetailsPage(placeId: id), state);
           },
-        ),
-        GoRoute(
-          path: '/personality-details',
-          pageBuilder: (context, state) => AppTransitions.portal(
-            PersonalityDetailsPage(personality: state.extra as PersonalityEntity),
-            state,
-          ),
         ),
         GoRoute(
           path: '/paginated-list',
@@ -312,7 +302,7 @@ class AppRouter {
         GoRoute(
           path: '/admin/characters/form',
           pageBuilder: (context, state) => AppTransitions.slide(
-            CharacterFormPage(character: state.extra as CharacterEntity?),
+            CharacterFormPage(character: state.extra as Character?),
             state,
           ),
         ),

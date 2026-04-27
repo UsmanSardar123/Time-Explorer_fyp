@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class PixabayService {
@@ -21,37 +22,33 @@ class PixabayService {
         'safesearch': 'true',
       });
 
-      print('PixabayService: Fetching images for "$query"...');
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final hits = data['hits'] as List<dynamic>;
-        
+
         if (hits.isNotEmpty) {
           final urls = hits
               .map((hit) =>
-                  (hit['largeImageURL'] as String? ?? hit['webformatURL'] as String? ?? ''))
+                  (hit['largeImageURL'] as String? ??
+                   hit['webformatURL'] as String? ?? ''))
               .where((u) => u.isNotEmpty)
               .toList();
-          print('PixabayService: Found ${urls.length} images for "$query"');
+          debugPrint('[PixabayService] ✅ ${urls.length} images for "$query"');
           return urls;
         }
       }
     } catch (e) {
-      print('PixabayService: Exception fetching images for "$query": $e');
+      debugPrint('[PixabayService] ❌ error for "$query": $e');
     }
     return [];
   }
 
-  /// Fetches the URL of the main image for a given [query] (e.g., "Eiffel Tower").
+  /// Fetches the single best image URL for a given [query].
   Future<String?> getImageUrl(String query) async {
-    if (_urlCache.containsKey(query)) {
-      return _urlCache[query];
-    }
-    if (_failedQueries.contains(query)) {
-      return null;
-    }
+    if (_urlCache.containsKey(query)) return _urlCache[query];
+    if (_failedQueries.contains(query)) return null;
 
     final urls = await getImageUrls(query, limit: 3);
     if (urls.isNotEmpty) {

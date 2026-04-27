@@ -1,10 +1,9 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io' if (dart.library.html) 'dart:html';
+import 'dart:io' as io;
 import 'package:timeexplorer/features/profile/domain/entities/profile_entity.dart';
 import 'package:timeexplorer/features/profile/presentation/providers/profile_provider.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
@@ -48,14 +47,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _usernameController = TextEditingController(text: widget.profile.username ?? '');
     _bioController = TextEditingController(text: widget.profile.bio ?? '');
     _dobController = TextEditingController(text: widget.profile.dob ?? '');
-    _loadLocalImage();
-  }
-
-  Future<void> _loadLocalImage() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _localImagePath = prefs.getString('local_profile_image');
-    });
   }
 
   @override
@@ -100,13 +91,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
       setState(() => _isUploadingImage = true);
 
       // Instant preview
-      if (kIsWeb && result.bytes != null) {
-        setState(() => _webImageBytes = result.bytes);
-      } else if (!kIsWeb && result.file != null) {
-        final prefs = await SharedPreferences.getInstance();
-        final path = (result.file as File).path;
-        await prefs.setString('local_profile_image', path);
-        setState(() => _localImagePath = path);
+      if (mounted) {
+        if (kIsWeb && result.bytes != null) {
+          setState(() => _webImageBytes = result.bytes);
+        } else if (!kIsWeb && result.file != null) {
+          setState(() => _localImagePath = (result.file as io.File).path);
+        }
       }
 
       // Upload
@@ -219,7 +209,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           data: ThemeData.light().copyWith(
             primaryColor: _primary,
             colorScheme: const ColorScheme.light(primary: _primary),
-            dialogBackgroundColor: _bg,
+            dialogTheme: const DialogThemeData(backgroundColor: _bg),
           ),
           child: child!,
         );
@@ -251,7 +241,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         }
       }
 
-      final updatedProfile = widget.profile.copyWith(
+      // CRITICAL FIX: Use the latest profile from the provider to avoid overwriting photoUrl
+      final currentProfile = provider.profile ?? widget.profile;
+      
+      final updatedProfile = currentProfile.copyWith(
         displayName: _displayNameController.text,
         username: _usernameController.text,
         bio: _bioController.text,
@@ -392,8 +385,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     ImageProvider? imageProvider;
     if (_webImageBytes != null) {
       imageProvider = MemoryImage(_webImageBytes!);
-    } else if (!kIsWeb && _localImagePath != null && File(_localImagePath!).existsSync()) {
-      imageProvider = FileImage(File(_localImagePath!));
+    } else if (!kIsWeb && _localImagePath != null && io.File(_localImagePath!).existsSync()) {
+      imageProvider = FileImage(io.File(_localImagePath!));
     } else if (widget.profile.photoUrl != null) {
       imageProvider = NetworkImage(widget.profile.photoUrl!);
     }

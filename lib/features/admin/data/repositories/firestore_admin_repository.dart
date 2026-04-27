@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timeexplorer/features/admin/domain/entities/admin_stats_entity.dart';
-import 'package:timeexplorer/features/admin/domain/entities/character_entity.dart';
+import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
 import 'package:timeexplorer/features/admin/data/models/character_model.dart';
 import 'package:timeexplorer/features/admin/domain/repositories/admin_repository.dart';
 import 'package:timeexplorer/features/places/data/models/place_model.dart';
@@ -125,7 +125,7 @@ class FirestoreAdminRepository implements AdminRepository {
     try {
       final querySnapshot = await _firestore.collection('users')
         .where('displayName', isGreaterThanOrEqualTo: query)
-        .where('displayName', isLessThanOrEqualTo: query + '\uf8ff')
+        .where('displayName', isLessThanOrEqualTo: '$query\uf8ff')
         .get();
       return querySnapshot.docs.map((doc) {
         final json = doc.data();
@@ -241,7 +241,7 @@ class FirestoreAdminRepository implements AdminRepository {
   // ── Characters Management ─────────────────────────────────────────────────
 
   @override
-  Future<List<CharacterEntity>> getAllCharacters() async {
+  Future<List<Character>> getAllCharacters() async {
     try {
       final snap = await _firestore.collection('characters').orderBy('name').get();
       return snap.docs.map((d) => CharacterModel.fromMap(d.data(), d.id)).toList();

@@ -30,39 +30,59 @@ class Character extends Equatable {
   final List<String> contributions;
   final List<String> facts;
 
-  // Metadata for Identity/Roleplay (Sprint 2)
+  // Metadata for Identity/Roleplay
   final String? tone;
   final String? communicationStyle;
   final String? domainKnowledge;
   final String chatPrompt;
 
-  // Intelligence & Quiz (Sprint 6 additions)
+  // Intelligence & Quiz
   final String bio;
   final String era;
   final String origin;
   final List<String> specialties;
   final List<QuizQuestion> quiz;
 
+  // Additional Admin fields (merged)
+  final String? nationality;
+  final List<String>? achievements;
+  final String? legacy;
+
+  // Persona Engine fields (Sprint 1)
+  final int? knowledgeCutoffYear;
+  final String speechStyle;
+  final List<String> emotionalTriggers;
+  final List<String> fallbackResponses;
+  final String rateLimitWarning;
+
   const Character({
     required this.id,
     required this.name,
     required this.category,
-    required this.imageUrl,
-    required this.title,
-    required this.dob,
-    required this.dod,
-    required this.description,
-    required this.contributions,
-    required this.facts,
-    required this.chatPrompt,
-    required this.bio,
     required this.era,
+    required this.description,
     required this.origin,
-    required this.specialties,
-    required this.quiz,
+    this.imageUrl = '',
+    this.title = '',
+    this.dob = '',
+    this.dod = '',
+    this.bio = '',
+    this.chatPrompt = '',
+    this.contributions = const [],
+    this.facts = const [],
+    this.specialties = const [],
+    this.quiz = const [],
     this.tone,
     this.communicationStyle,
     this.domainKnowledge,
+    this.nationality,
+    this.achievements,
+    this.legacy,
+    this.knowledgeCutoffYear,
+    this.speechStyle = '',
+    this.emotionalTriggers = const [],
+    this.fallbackResponses = const [],
+    this.rateLimitWarning = '',
   });
 
   @override
@@ -78,5 +98,13 @@ class Character extends Equatable {
         origin,
         specialties,
         quiz,
+        nationality,
+        achievements,
+        legacy,
+        knowledgeCutoffYear,
+        speechStyle,
+        emotionalTriggers,
+        fallbackResponses,
+        rateLimitWarning,
       ];
 }

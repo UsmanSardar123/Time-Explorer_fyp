@@ -1,14 +1,27 @@
+// FILE: lib/core/services/gemini_service.dart
+// PURPOSE: Core Gemini service with error classification types and simple one-shot generation.
+// SPRINT: 3
+
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:timeexplorer/core/config/app_config.dart';
 
+enum GeminiError { networkError, rateLimitError, contentFilterError, unknownError, timeoutError }
+
+class GeminiChatException implements Exception {
+  final GeminiError error;
+  final String message;
+
+  const GeminiChatException(this.error, this.message);
+
+  @override
+  String toString() => 'GeminiChatException($error): $message';
+}
+
 class GeminiService {
-  // gemini-flash-latest: confirmed working on v1beta for this API key.
-  // gemini-1.5-flash and gemini-2.0-flash are unavailable on this account.
   static const _modelName = 'gemini-flash-latest';
 
-  // IMPORTANT: Full app restart required after changing --dart-define.
   static String get apiKey => AppConfig.geminiApiKey;
 
   GenerativeModel _buildModel() {

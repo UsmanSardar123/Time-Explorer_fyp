@@ -3,7 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
-import 'package:timeexplorer/features/admin/domain/entities/character_entity.dart';
+import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
+import 'package:timeexplorer/features/personalities/domain/entities/character_category.dart';
 import 'package:timeexplorer/features/admin/presentation/manager/admin_provider.dart';
 
 class CharactersManagementPage extends StatefulWidget {
@@ -36,13 +37,13 @@ class _CharactersManagementPageState extends State<CharactersManagementPage> {
     super.dispose();
   }
 
-  List<CharacterEntity> _filtered(List<CharacterEntity> all) {
+  List<Character> _filtered(List<Character> all) {
     if (_query.isEmpty) return all;
     final q = _query.toLowerCase();
     return all.where((c) =>
         c.name.toLowerCase().contains(q) ||
         c.era.toLowerCase().contains(q) ||
-        c.category.toLowerCase().contains(q)).toList();
+        c.category.name.toLowerCase().contains(q)).toList();
   }
 
   @override
@@ -162,7 +163,7 @@ class _CharactersManagementPageState extends State<CharactersManagementPage> {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext ctx, AdminProvider provider, CharacterEntity c) async {
+  Future<void> _confirmDelete(BuildContext ctx, AdminProvider provider, Character c) async {
     final confirmed = await showDialog<bool>(
       context: ctx,
       builder: (_) => AlertDialog(
@@ -196,7 +197,7 @@ class _CharactersManagementPageState extends State<CharactersManagementPage> {
 }
 
 class _CharacterTile extends StatelessWidget {
-  final CharacterEntity character;
+  final Character character;
   final int index;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -227,7 +228,7 @@ class _CharacterTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: _dark.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4))],
+          boxShadow: [BoxShadow(color: _dark.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4))],
         ),
         child: Row(
           children: [
@@ -236,11 +237,11 @@ class _CharacterTile extends StatelessWidget {
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20), bottomLeft: Radius.circular(20),
               ),
-              child: character.imageUrl != null && character.imageUrl!.isNotEmpty
+              child: character.imageUrl.isNotEmpty
                   ? Image.network(
-                      character.imageUrl!,
+                      character.imageUrl,
                       width: 88, height: 88, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _placeholder(),
+                      errorBuilder: (_, _, _) => _placeholder(),
                     )
                   : _placeholder(),
             ),
@@ -257,10 +258,10 @@ class _CharacterTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (character.title != null) ...[
+                    if (character.title.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
-                        character.title!,
+                        character.title,
                         style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.black45),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -314,11 +315,12 @@ class _CharacterTile extends StatelessWidget {
     );
   }
 
-  Widget _tag(String label) {
+  Widget _tag(CharacterCategory cat) {
+    final label = cat.name;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: _primary.withOpacity(0.1),
+        color: _primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(label, style: TextStyle(fontSize: 10, color: _primary, fontWeight: FontWeight.w700)),

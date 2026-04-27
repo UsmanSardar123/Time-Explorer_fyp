@@ -11,6 +11,8 @@ class UserProgress extends Equatable {
   final int quizCount;
   final DateTime? lastLoginDate;
   final int streakDays;
+  final List<String> completedQuizIds;
+  final DateTime? lastFactDate;
 
   const UserProgress({
     this.xp = 0,
@@ -22,6 +24,8 @@ class UserProgress extends Equatable {
     this.quizCount = 0,
     this.lastLoginDate,
     this.streakDays = 0,
+    this.completedQuizIds = const [],
+    this.lastFactDate,
   });
 
   UserProgress copyWith({
@@ -34,6 +38,8 @@ class UserProgress extends Equatable {
     int? quizCount,
     DateTime? lastLoginDate,
     int? streakDays,
+    List<String>? completedQuizIds,
+    DateTime? lastFactDate,
   }) {
     return UserProgress(
       xp: xp ?? this.xp,
@@ -45,26 +51,39 @@ class UserProgress extends Equatable {
       quizCount: quizCount ?? this.quizCount,
       lastLoginDate: lastLoginDate ?? this.lastLoginDate,
       streakDays: streakDays ?? this.streakDays,
+      completedQuizIds: completedQuizIds ?? this.completedQuizIds,
+      lastFactDate: lastFactDate ?? this.lastFactDate,
     );
   }
 
-  // Level formula: XP_required = 100 * (level ^ 1.5)
-  static int calculateLevel(int xp) {
-    if (xp < 100) return 1;
-    // Reverse formula: level = (xp / 100) ^ (1 / 1.5)
-    int level = pow(xp / 100, 2 / 3).floor();
-    return max(1, level);
-  }
-
+  // Level formula: XP to advance from level n to n+1 = floor(100 × n^1.5)
+  // Cumulative XP to reach level n: sum_{k=1}^{n-1} floor(100 × k^1.5)
+  //   Level 1 →    0 XP
+  //   Level 2 →  100 XP  (100 × 1^1.5 = 100)
+  //   Level 3 →  383 XP  (+283)
+  //   Level 4 →  903 XP  (+520)
   static int xpForLevel(int level) {
     if (level <= 1) return 0;
-    return (100 * pow(level, 1.5)).floor();
+    int total = 0;
+    for (int k = 1; k < level; k++) {
+      total += (100 * pow(k, 1.5)).toInt();
+    }
+    return total;
+  }
+
+  static int calculateLevel(int xp) {
+    if (xp <= 0) return 1;
+    int level = 1;
+    while (xpForLevel(level + 1) <= xp) {
+      level++;
+    }
+    return level;
   }
 
   double get progressToNextLevel {
-    int currentLevelXP = xpForLevel(level);
-    int nextLevelXP = xpForLevel(level + 1);
-    if (nextLevelXP == currentLevelXP) return 0.0;
+    final currentLevelXP = xpForLevel(level);
+    final nextLevelXP = xpForLevel(level + 1);
+    if (nextLevelXP <= currentLevelXP) return 0.0;
     return ((xp - currentLevelXP) / (nextLevelXP - currentLevelXP)).clamp(0.0, 1.0);
   }
 
@@ -73,7 +92,7 @@ class UserProgress extends Equatable {
   int get totalXP => xp;
   int get streak => streakDays;
   int get xpToNextLevel => xpForLevel(level + 1) - xp;
-  
+
   String get rankLabel {
     if (level >= 20) return 'Legendary Historian';
     if (level >= 15) return 'Master Scholar';
@@ -92,6 +111,8 @@ class UserProgress extends Equatable {
     'quizCount': quizCount,
     'lastLoginDate': lastLoginDate?.toIso8601String(),
     'streakDays': streakDays,
+    'completedQuizIds': completedQuizIds,
+    'lastFactDate': lastFactDate?.toIso8601String(),
   };
 
   factory UserProgress.fromJson(Map<String, dynamic> json) => UserProgress(
@@ -104,6 +125,8 @@ class UserProgress extends Equatable {
     quizCount: json['quizCount'] ?? 0,
     lastLoginDate: json['lastLoginDate'] != null ? DateTime.tryParse(json['lastLoginDate']) : null,
     streakDays: json['streakDays'] ?? 0,
+    completedQuizIds: List<String>.from(json['completedQuizIds'] ?? []),
+    lastFactDate: json['lastFactDate'] != null ? DateTime.tryParse(json['lastFactDate']) : null,
   );
 
   @override
@@ -117,5 +140,7 @@ class UserProgress extends Equatable {
     quizCount,
     lastLoginDate,
     streakDays,
+    completedQuizIds,
+    lastFactDate,
   ];
 }

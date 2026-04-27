@@ -36,7 +36,7 @@ class _FactsManagementPageState extends State<FactsManagementPage> {
     final q = _query.toLowerCase();
     return all
         .where((f) =>
-            f.fact.toLowerCase().contains(q) ||
+            f.description.toLowerCase().contains(q) ||
             f.category.toLowerCase().contains(q))
         .toList();
   }
@@ -48,7 +48,7 @@ class _FactsManagementPageState extends State<FactsManagementPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Delete Fact', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
         content: Text(
-          'Are you sure you want to delete this fact?\n\n"${fact.fact}"\n\nThis action cannot be undone.',
+          'Are you sure you want to delete this fact?\n\n"${fact.description}"\n\nThis action cannot be undone.',
           style: GoogleFonts.plusJakartaSans(fontSize: 14),
         ),
         actions: [
@@ -239,7 +239,7 @@ class _FactsManagementPageState extends State<FactsManagementPage> {
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                         itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (ctx, i) => _FactTile(
                           fact: filtered[i],
                           onEdit: () => context.push('/admin/facts/form', extra: filtered[i]),
@@ -270,7 +270,7 @@ class _FactTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -284,7 +284,7 @@ class _FactTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppTheme.primaryContainer.withOpacity(0.1),
+                color: AppTheme.primaryContainer.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.lightbulb_rounded, color: AppTheme.primaryContainer, size: 24),
@@ -297,7 +297,7 @@ class _FactTile extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryContainer.withOpacity(0.1),
+                      color: AppTheme.primaryContainer.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -311,7 +311,7 @@ class _FactTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    fact.fact,
+                    fact.description,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       color: const Color(0xFF1A1A1A),

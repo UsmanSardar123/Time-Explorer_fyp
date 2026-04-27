@@ -11,6 +11,7 @@ import 'package:timeexplorer/features/places/domain/usecases/get_place_details.d
 import 'package:timeexplorer/features/places/presentation/cubit/place_details_cubit.dart';
 import 'package:timeexplorer/features/places/presentation/cubit/place_details_state.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:timeexplorer/core/widgets/app_cached_image.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_provider.dart';
@@ -216,19 +217,9 @@ class PlaceDetailsPage extends StatelessWidget {
           children: [
             Hero(
               tag: 'place-hero-${place.id}',
-              child: CachedNetworkImage(
+              child: AppCachedImage(
                 imageUrl: place.imageUrl,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: const Color(0xFFE5E7EB),
-                  child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: const Color(0xFFF3F4F6),
-                  child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey, size: 40),
-                ),
               ),
             ),
             // Multi-layered gradient for depth and readability

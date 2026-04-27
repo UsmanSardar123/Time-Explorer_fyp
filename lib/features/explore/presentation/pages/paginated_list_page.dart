@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
-import 'package:timeexplorer/features/explore/domain/entities/personality_entity.dart';
+import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
+import 'package:timeexplorer/features/personalities/domain/entities/character_category.dart';
 import 'package:timeexplorer/features/explore/domain/entities/place_entity.dart';
 import 'package:timeexplorer/features/explore/presentation/widgets/place_card.dart';
 
@@ -30,7 +31,6 @@ class _PaginatedListPageState extends State<PaginatedListPage> {
   static const _bg = AppTheme.background;
   static const _surfaceLow = AppTheme.surfaceLow;
   static const _textDark = AppTheme.onSurface;
-  static const _textMuted = AppTheme.onSurfaceVariant;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const int _limit = 10;
@@ -50,7 +50,7 @@ class _PaginatedListPageState extends State<PaginatedListPage> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final collection = widget.type == ListType.places ? 'places' : 'personalities';
+      final collection = widget.type == ListType.places ? 'places' : 'characters';
       final querySnapshot = await _firestore.collection(collection).get();
       final mappedItems = querySnapshot.docs.map((doc) {
         final json = doc.data();
@@ -66,12 +66,26 @@ class _PaginatedListPageState extends State<PaginatedListPage> {
             era: json['era'] ?? json['category'] ?? '',
           );
         } else {
-          return PersonalityEntity(
+          return Character(
             id: doc.id,
             name: json['name'] ?? '',
-            description: json['description'] ?? '',
             imageUrl: json['imageUrl'] ?? '',
+            description: json['description'] ?? '',
+            title: json['title'] ?? '',
+            dob: json['dob'] ?? '',
+            dod: json['dod'] ?? '',
+            contributions: List<String>.from(json['contributions'] ?? []),
+            facts: List<String>.from(json['facts'] ?? []),
+            chatPrompt: json['chatPrompt'] ?? '',
+            category: CharacterCategory.values.firstWhere(
+              (c) => c.name == (json['category'] ?? 'scientists'),
+              orElse: () => CharacterCategory.scientists,
+            ),
+            bio: json['bio'] ?? json['description'] ?? '',
             era: json['era'] ?? '',
+            origin: json['origin'] ?? '',
+            specialties: List<String>.from(json['specialties'] ?? []),
+            quiz: [],
           );
         }
       }).toList();
@@ -132,7 +146,7 @@ class _PaginatedListPageState extends State<PaginatedListPage> {
                           child: SizedBox(height: 260, child: PlaceCard(place: item as PlaceEntity)),
                         );
                       } else {
-                        final p = item as PersonalityEntity;
+                        final p = item as Character;
                         return _buildPersonalityTile(p);
                       }
                     },
@@ -144,7 +158,7 @@ class _PaginatedListPageState extends State<PaginatedListPage> {
     );
   }
 
-  Widget _buildPersonalityTile(PersonalityEntity p) {
+  Widget _buildPersonalityTile(Character p) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -152,14 +166,14 @@ class _PaginatedListPageState extends State<PaginatedListPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _textDark.withOpacity(0.04),
+            color: _textDark.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ListTile(
-        onTap: () => context.push('/personality-details', extra: p),
+        onTap: () => context.push('/personality-detail', extra: p),
         contentPadding: const EdgeInsets.all(16),
         leading: Container(
           width: 60,
@@ -171,6 +185,7 @@ class _PaginatedListPageState extends State<PaginatedListPage> {
           child: ClipOval(
             child: DynamicPlaceImage(
               query: p.name,
+              placeId: p.id,
               fallbackUrl: p.imageUrl.isNotEmpty ? p.imageUrl : null,
               width: 60,
               height: 60,

@@ -240,6 +240,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                               tag: 'place-hero-${place.id}',
                               child: DynamicPlaceImage(
                                 query: place.name,
+                                placeId: place.id,
                                 fallbackUrl: place.imageUrl.isNotEmpty ? place.imageUrl : null,
                                 width: double.infinity,
                                 fit: BoxFit.cover,
@@ -380,7 +381,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
             padding: const EdgeInsets.only(right: 16),
             child: PersonalityCard(
               personality: p,
-              onTap: () => context.push('/personality-details', extra: p),
+              onTap: () => context.push('/personality-detail', extra: p),
             ),
           );
         },

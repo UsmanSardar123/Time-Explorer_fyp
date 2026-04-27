@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
-import '../../domain/entities/character.dart';
-import '../../domain/entities/character_category.dart';
-import '../../data/datasources/character_local_data_source.dart';
-import '../../data/repositories/character_repository_impl.dart';
+import 'package:provider/provider.dart';
+import 'package:timeexplorer/features/explore/presentation/providers/personality_provider.dart';
+import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
+import 'package:timeexplorer/features/personalities/domain/entities/character_category.dart';
 
 class PersonalitiesListPage extends StatefulWidget {
   final CharacterCategory category;
@@ -19,16 +19,16 @@ class PersonalitiesListPage extends StatefulWidget {
 class _PersonalitiesListPageState extends State<PersonalitiesListPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final List<Character> _characters;
 
   @override
   void initState() {
     super.initState();
-    _characters = CharacterRepositoryImpl(CharacterLocalDataSource())
-        .getCharactersByCategory(widget.category);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PersonalityProvider>().loadPersonalities();
+    });                                                                                               
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 280 + _characters.length * 110),
+      duration: const Duration(milliseconds: 1000),
     )..forward();
   }
 
@@ -38,8 +38,8 @@ class _PersonalitiesListPageState extends State<PersonalitiesListPage>
     super.dispose();
   }
 
-  Animation<double> _cardAnim(int index) {
-    final count = _characters.length;
+  Animation<double> _cardAnim(int index, int total) {
+    final count = total == 0 ? 1 : total;
     final start = (index / (count + 1)).clamp(0.0, 1.0);
     final end = ((index + 1) / (count + 1)).clamp(0.0, 1.0);
     return CurvedAnimation(
@@ -53,39 +53,49 @@ class _PersonalitiesListPageState extends State<PersonalitiesListPage>
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _ListHeader(
-              category: widget.category,
-              count: _characters.length,
-              onBack: () => context.pop(),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
-                physics: const BouncingScrollPhysics(),
-                itemCount: _characters.length,
-                itemBuilder: (context, i) {
-                  final anim = _cardAnim(i);
-                  return FadeTransition(
-                    opacity: anim,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 0.20),
-                        end: Offset.zero,
-                      ).animate(anim),
-                      child: _CharacterCard(
-                        character: _characters[i],
-                        rank: i + 1,
-                        onTap: () => context.push('/personality-detail', extra: _characters[i]),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+        child: Consumer<PersonalityProvider>(
+          builder: (context, provider, _) {
+            final characters = provider.getCharactersByCategory(widget.category);
+            
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ListHeader(
+                  category: widget.category,
+                  count: characters.length,
+                  onBack: () => context.pop(),
+                ),
+                Expanded(
+                  child: provider.isLoading && characters.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : characters.isEmpty
+                        ? const Center(child: Text('No legends found in this category.'))
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: characters.length,
+                            itemBuilder: (context, i) {
+                              final anim = _cardAnim(i, characters.length);
+                              return FadeTransition(
+                                opacity: anim,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, 0.20),
+                                    end: Offset.zero,
+                                  ).animate(anim),
+                                  child: _CharacterCard(
+                                    character: characters[i],
+                                    rank: i + 1,
+                                    onTap: () => context.push('/personality-detail', extra: characters[i]),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -289,15 +299,24 @@ class _CardAvatar extends StatelessWidget {
             radius: 32,
             backgroundColor: AppTheme.surfaceLow,
             child: ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: character.imageUrl,
-                httpHeaders: const {'User-Agent': 'TimeExplorer/1.0 (Flutter)'},
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => const _AvatarPlaceholder(),
-                errorWidget: (_, __, ___) => const _AvatarPlaceholder(),
-              ),
+              child: character.imageUrl.isEmpty
+                  ? const _AvatarPlaceholder()
+                  : CachedNetworkImage(
+                      imageUrl: character.imageUrl,
+                      httpHeaders: const {'User-Agent': 'TimeExplorer/1.0 (Flutter)'},
+                      width: 64,
+                      height: 64,
+                      // Constrain decode size: decode at 2× display pixels (retina).
+                      // Without this Flutter decodes full-res Wikimedia originals
+                      // (3–10 MB) for a 64 px avatar — the primary cause of stutter.
+                      memCacheWidth: 128,
+                      memCacheHeight: 128,
+                      fit: BoxFit.cover,
+                      fadeInDuration: const Duration(milliseconds: 250),
+                      fadeInCurve: Curves.easeIn,
+                      placeholder: (ctx, url) => const _AvatarPlaceholder(),
+                      errorWidget: (ctx, url, err) => const _AvatarPlaceholder(),
+                    ),
             ),
           ),
         ),

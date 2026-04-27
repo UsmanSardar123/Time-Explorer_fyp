@@ -435,7 +435,7 @@ class _CharacterQuizSectionState extends State<CharacterQuizSection> {
       setState(() {
         _showExplanation = true;
       });
-      context.read<GamificationProvider>().recordQuizCompleted();
+      context.read<GamificationProvider>().recordQuizCompleted('character_${widget.character.id}_quiz');
     }
   }
 

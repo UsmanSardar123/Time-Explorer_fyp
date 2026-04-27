@@ -179,7 +179,7 @@ class _SearchPageState extends State<SearchPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: _primary.withOpacity(0.10),
+            color: _primary.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text('$count',
@@ -198,7 +198,7 @@ class _SearchPageState extends State<SearchPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3))],
         ),
         child: Row(
           children: [
@@ -235,7 +235,7 @@ class _SearchPageState extends State<SearchPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: _primary.withOpacity(0.08),
+                        color: _primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(character.category.displayName,
@@ -264,7 +264,7 @@ class _SearchPageState extends State<SearchPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3))],
         ),
         child: Row(
           children: [
@@ -276,6 +276,7 @@ class _SearchPageState extends State<SearchPage> {
                 height: 72,
                 child: DynamicPlaceImage(
                   query: place.name,
+                  placeId: place.id,
                   fallbackUrl: place.imageUrl,
                   width: 72,
                   height: 72,
@@ -311,7 +312,7 @@ class _SearchPageState extends State<SearchPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEB246).withOpacity(0.20),
+                          color: const Color(0xFFFEB246).withValues(alpha: 0.20),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(place.era!,
@@ -342,7 +343,7 @@ class _SearchPageState extends State<SearchPage> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(color: _surfaceLow, shape: BoxShape.circle),
-            child: Icon(icon, size: 64, color: _primary.withOpacity(0.5)),
+            child: Icon(icon, size: 64, color: _primary.withValues(alpha: 0.5)),
           ),
           const SizedBox(height: 24),
           Text(title,

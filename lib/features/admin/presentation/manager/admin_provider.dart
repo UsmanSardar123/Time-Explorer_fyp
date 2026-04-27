@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:timeexplorer/features/admin/domain/entities/admin_stats_entity.dart';
-import 'package:timeexplorer/features/admin/domain/entities/character_entity.dart';
 import 'package:timeexplorer/features/admin/data/models/character_model.dart';
 import 'package:timeexplorer/features/admin/domain/repositories/admin_repository.dart';
 import 'package:timeexplorer/features/places/data/models/place_model.dart';
@@ -9,6 +8,9 @@ import 'package:timeexplorer/features/places/domain/entities/place.dart';
 import 'package:timeexplorer/features/profile/domain/entities/profile_entity.dart';
 import 'package:timeexplorer/features/learn/data/models/fact_model.dart';
 import 'package:timeexplorer/features/learn/data/facts_data.dart';
+import 'package:timeexplorer/features/personalities/data/datasources/character_local_data_source.dart';
+import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
+import 'package:timeexplorer/features/places/data/datasources/wikimedia_image_service.dart';
 
 class AdminProvider with ChangeNotifier {
   final AdminRepository _repository;
@@ -59,11 +61,11 @@ class AdminProvider with ChangeNotifier {
   String? get factsError => _factsError;
 
   // Characters State
-  List<CharacterEntity> _characters = [];
+  List<Character> _characters = [];
   bool _isCharactersLoading = false;
   String? _charactersError;
 
-  List<CharacterEntity> get characters => _characters;
+  List<Character> get characters => _characters;
   bool get isCharactersLoading => _isCharactersLoading;
   String? get charactersError => _charactersError;
 
@@ -240,6 +242,78 @@ class AdminProvider with ChangeNotifier {
 
   // ── Facts Management ──────────────────────────────────────────────────────
 
+  Future<void> fixLegacyPlaceImages() async {
+    _isPlacesLoading = true;
+    _placesError = null;
+    notifyListeners();
+
+    try {
+      if (_places.isEmpty) {
+        await fetchPlaces();
+      }
+
+      int updatedCount = 0;
+      for (final place in _places) {
+        final currentUrl = place.imageUrl;
+        final needsFix = currentUrl.isEmpty || 
+                         currentUrl.contains('unsplash.com') || 
+                         currentUrl.contains('assets/') ||
+                         currentUrl.contains('placeholder');
+
+        if (needsFix) {
+          final newUrl = await WikimediaImageService.fetchPlaceImageUrl(place.name);
+          if (newUrl != null && newUrl.isNotEmpty) {
+            final updatedPlace = PlaceModel(
+              id: place.id,
+              name: place.name,
+              category: place.category,
+              location: place.location,
+              description: place.description,
+              imageUrl: newUrl,
+              rating: place.rating,
+              eraId: place.eraId,
+              history: place.history,
+              country: place.country,
+              civilization: place.civilization,
+              builtBy: place.builtBy,
+              constructionDate: place.constructionDate,
+              architecturalStyle: place.architecturalStyle,
+              historicalSignificance: place.historicalSignificance,
+              funFacts: place.funFacts,
+              visitorInfo: place.visitorInfo,
+              createdAt: place.createdAt,
+              images: place.images,
+              keyFacts: place.keyFacts,
+              openingHours: place.openingHours,
+              ticketPrice: place.ticketPrice,
+              bestTimeToVisit: place.bestTimeToVisit,
+              visitDuration: place.visitDuration,
+              didYouKnow: place.didYouKnow,
+              latitude: place.latitude,
+              longitude: place.longitude,
+              era: place.era,
+              significance: place.significance,
+              facts: place.facts,
+              timeline: place.timeline,
+              quizzes: place.quizzes,
+            );
+            await _repository.updatePlace(updatedPlace);
+            updatedCount++;
+          }
+        }
+      }
+
+      if (updatedCount > 0) {
+        await fetchPlaces(); // Refresh list after updates
+      }
+    } catch (e) {
+      _placesError = 'Failed to fix legacy images: $e';
+    } finally {
+      _isPlacesLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> fetchFacts() async {
     _isFactsLoading = true;
     _factsError = null;
@@ -312,8 +386,10 @@ class AdminProvider with ChangeNotifier {
       for (final rawFact in historicalFacts) {
         final newFact = FactModel(
           id: '',
-          fact: rawFact['fact'] ?? '',
+          title: rawFact['fact']?.split('.').first ?? 'Fact',
+          description: rawFact['fact'] ?? '',
           category: rawFact['category'] ?? 'General',
+          type: 'general',
         );
         await _repository.createFact(newFact);
       }
@@ -322,6 +398,69 @@ class AdminProvider with ChangeNotifier {
       _factsError = e.toString();
     } finally {
       _isFactsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> migrateAllData() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // 1. Migrate Facts from historicalFacts
+      await seedFactsFromLocal();
+
+      // 2. Migrate Characters from CharacterLocalDataSource
+      final localCharacters = CharacterLocalDataSource.allCharacters;
+
+      for (final char in localCharacters) {
+        final charModel = CharacterModel(
+          id: char.id,
+          name: char.name,
+          category: char.category, // Fixed: passing enum directly
+          era: char.era,
+          description: char.description,
+          imageUrl: char.imageUrl,
+          title: char.title,
+          dob: char.dob,
+          dod: char.dod,
+          origin: char.origin,
+          nationality: char.origin,
+          achievements: char.contributions,
+          bio: char.bio,
+          chatPrompt: char.chatPrompt,
+          tone: char.tone,
+          communicationStyle: char.communicationStyle,
+          domainKnowledge: char.domainKnowledge,
+          specialties: char.specialties,
+          quiz: char.quiz, // Fixed: passing List<QuizQuestion> directly
+          contributions: char.contributions,
+          facts: char.facts,
+        );
+        await _repository.createCharacter(charModel);
+
+        // 3. Migrate Character Facts to separate collection
+        for (final factStr in char.facts) {
+          final factModel = FactModel(
+            id: '',
+            title: '${char.name} Fact',
+            description: factStr,
+            relatedEntityId: char.id,
+            type: 'character',
+            category: char.category.name,
+          );
+          await _repository.createFact(factModel);
+        }
+      }
+
+      await loadStats();
+      await fetchCharacters();
+      await fetchFacts();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }

@@ -1,20 +1,17 @@
+import 'dart:io' as dart_io;
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
-// Mobile-only imports — guarded by kIsWeb
-import 'dart:io' if (dart.library.html) 'dart:html' as dart_io;
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-
 /// Result of an image pick & validate operation.
 class ProfileImageResult {
-  /// Null when on mobile; populated on web.
+  /// Populated on web (bytes from XFile.readAsBytes).
   final Uint8List? bytes;
 
-  /// Null when on web; populated on mobile.
-  final Object? file; // File on mobile (dart:io.File)
+  /// Populated on mobile (dart:io.File). Null on web.
+  final Object? file;
 
-  /// The original file name (used to derive extension).
+  /// Original file name, used to derive extension.
   final String fileName;
 
   const ProfileImageResult({
@@ -30,29 +27,24 @@ class ProfileImageError {
   const ProfileImageError(this.message);
 }
 
-/// Central service for picking, validating, and compressing profile images.
-/// Fully web + mobile compatible — never crashes silently.
+/// Central service for picking and validating profile images.
+/// Web: returns raw bytes. Mobile: returns dart:io.File.
+/// image_picker's imageQuality parameter handles compression on both platforms.
 class ProfileImageService {
   static const _maxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
   static const _allowedExtensions = ['jpg', 'jpeg'];
-  static const _compressQuality = 75; // 0–100
-  static const _compressMaxDimension = 1024; // pixels
 
   final ImagePicker _picker;
 
-  const ProfileImageService({ImagePicker? picker})
-      : _picker = picker ?? const ImagePicker();
+  ProfileImageService({ImagePicker? picker})
+      : _picker = picker ?? ImagePicker();
 
   // ignore: prefer_constructors_over_static_methods
   static ProfileImageService create() =>
       ProfileImageService(picker: ImagePicker());
 
-  /// Opens the gallery picker, validates and compresses the image.
-  /// Returns [ProfileImageResult] on success or [ProfileImageError] on failure.
   Future<Object> pickFromGallery() => _pick(ImageSource.gallery);
 
-  /// Opens the camera, validates and compresses the image.
-  /// Returns [ProfileImageResult] on success or [ProfileImageError] on failure.
   Future<Object> pickFromCamera() => _pick(ImageSource.camera);
 
   // ── Core logic ───────────────────────────────────────────────────────────
@@ -61,20 +53,15 @@ class ProfileImageService {
     try {
       final XFile? picked = await _picker.pickImage(
         source: source,
-        imageQuality: 90, // initial quality; we compress further below
+        imageQuality: 80,
       );
 
-      if (picked == null) {
-        // User cancelled — not an error.
-        return const ProfileImageError('cancelled');
-      }
+      if (picked == null) return const ProfileImageError('cancelled');
 
-      // ── Validate extension ───────────────────────────────────────────────
       final ext = picked.name.split('.').last.toLowerCase();
       if (!_allowedExtensions.contains(ext)) {
         return ProfileImageError(
-          'Only JPG / JPEG files are allowed.\n'
-          'You selected a .$ext file.',
+          'Only JPG / JPEG files are allowed.\nYou selected a .$ext file.',
         );
       }
 
@@ -89,66 +76,38 @@ class ProfileImageService {
     }
   }
 
-  // ── Web handler ───────────────────────────────────────────────────────────
+  // ── Web ───────────────────────────────────────────────────────────────────
 
   Future<Object> _handleWeb(XFile picked) async {
     final bytes = await picked.readAsBytes();
-
-    // File size check
     if (bytes.lengthInBytes > _maxFileSizeBytes) {
       final mb = (bytes.lengthInBytes / 1024 / 1024).toStringAsFixed(1);
       return ProfileImageError(
         'File is too large (${mb}MB). Please choose an image under 5MB.',
       );
     }
-
-    // Web: flutter_image_compress does not support web, so return raw bytes.
     debugPrint(
       '[ProfileImageService] 🌐 Web pick OK — ${bytes.lengthInBytes} bytes',
     );
     return ProfileImageResult(fileName: picked.name, bytes: bytes);
   }
 
-  // ── Mobile handler ────────────────────────────────────────────────────────
+  // ── Mobile ────────────────────────────────────────────────────────────────
 
   Future<Object> _handleMobile(XFile picked) async {
-    // ignore: avoid_dynamic_calls
-    final originalFile = dart_io.File(picked.path);
-    final originalSize = await originalFile.length();
-
-    if (originalSize > _maxFileSizeBytes) {
-      final mb = (originalSize / 1024 / 1024).toStringAsFixed(1);
+    final file = dart_io.File(picked.path);
+    final size = await file.length();
+    if (size > _maxFileSizeBytes) {
+      final mb = (size / 1024 / 1024).toStringAsFixed(1);
       return ProfileImageError(
         'File is too large (${mb}MB). Please choose an image under 5MB.',
       );
     }
-
-    // Compress
-    final compressedPath = '${picked.path}_compressed.jpg';
-    final XFile? compressed = await FlutterImageCompress.compressAndGetFile(
-      picked.path,
-      compressedPath,
-      quality: _compressQuality,
-      minWidth: _compressMaxDimension,
-      minHeight: _compressMaxDimension,
-      format: CompressFormat.jpeg,
-    );
-
-    final finalFile = compressed != null
-        ? dart_io.File(compressed.path)
-        : originalFile;
-
-    final finalSize = await finalFile.length();
     debugPrint(
       '[ProfileImageService] 📱 Mobile pick OK — '
-      'original: ${(originalSize / 1024).toStringAsFixed(0)}KB, '
-      'compressed: ${(finalSize / 1024).toStringAsFixed(0)}KB',
+      '${(size / 1024).toStringAsFixed(0)}KB',
     );
-
-    return ProfileImageResult(
-      fileName: picked.name,
-      file: finalFile,
-    );
+    return ProfileImageResult(fileName: picked.name, file: file);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
