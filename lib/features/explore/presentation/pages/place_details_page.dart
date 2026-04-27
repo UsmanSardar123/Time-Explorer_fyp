@@ -280,7 +280,7 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.primaryContainer.withOpacity(0.12),
+        color: AppTheme.primaryContainer.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(9999),
       ),
       child: Text(
@@ -387,7 +387,7 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.amber.withOpacity(0.2),
+        color: AppTheme.amber.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(

@@ -1,23 +1,41 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:timeexplorer/core/services/pixabay_service.dart';
-import 'package:timeexplorer/core/services/wikimedia_service.dart';
+import 'package:timeexplorer/core/services/place_image_repository.dart';
 import 'package:timeexplorer/core/widgets/shimmer_box.dart';
 
+/// A smart image widget for place covers that:
+///   • Shows [fallbackUrl] instantly when it is available (zero delay).
+///   • Otherwise resolves via [PlaceImageRepository] (memory → SharedPreferences
+///     → Wikimedia → Pixabay) and persists the result so future loads are
+///     instantaneous.
+///   • When [placeId] is provided, resolution results are persisted between
+///     app sessions. Pass it whenever you have the place ID.
+///   • Falls back to a beautiful monument placeholder — never shows
+///     broken images or raw error icons.
 class DynamicPlaceImage extends StatefulWidget {
   final String query;
+
+  /// Firestore document ID of the place. Required for persistent caching.
+  final String? placeId;
+
+  /// Pre-fetched image URL (e.g. from Firestore). Shown immediately while
+  /// background resolution completes.
   final String? fallbackUrl;
+
   final double? width;
   final double? height;
   final BoxFit fit;
+  final BorderRadius? borderRadius;
 
   const DynamicPlaceImage({
     super.key,
     required this.query,
+    this.placeId,
     this.fallbackUrl,
     this.width,
     this.height,
     this.fit = BoxFit.cover,
+    this.borderRadius,
   });
 
   @override
@@ -25,152 +43,220 @@ class DynamicPlaceImage extends StatefulWidget {
 }
 
 class _DynamicPlaceImageState extends State<DynamicPlaceImage> {
-  final WikimediaService _wikimediaService = WikimediaService();
-  final PixabayService _pixabayService = PixabayService();
-  
   String? _imageUrl;
   bool _isLoading = true;
-  bool _hasAttemptedFallback = false;
+  bool _isRetry = false;
 
   @override
   void initState() {
     super.initState();
-    _initImage();
-  }
-
-  void _initImage() {
-    final hasFallback = widget.fallbackUrl != null && widget.fallbackUrl!.isNotEmpty;
-    if (hasFallback) {
-      _imageUrl = widget.fallbackUrl;
-      _isLoading = false;
-    } else {
-      _isLoading = true;
-      _loadImage();
-    }
+    _init();
   }
 
   @override
-  void didUpdateWidget(covariant DynamicPlaceImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.query != widget.query || oldWidget.fallbackUrl != widget.fallbackUrl) {
-      _hasAttemptedFallback = false;
-      _initImage();
+  void didUpdateWidget(covariant DynamicPlaceImage old) {
+    super.didUpdateWidget(old);
+    if (old.query != widget.query ||
+        old.placeId != widget.placeId ||
+        old.fallbackUrl != widget.fallbackUrl) {
+      _init();
     }
   }
 
-  Future<void> _loadImage({bool isRetry = false}) async {
-    if (!mounted) return;
-
-    if (isRetry) {
-      setState(() => _isLoading = true);
-    }
-
-    try {
-      // 1. Try Wikimedia first
-      String? url;
-      try {
-        url = await _wikimediaService
-            .getImageUrl(widget.query)
-            .timeout(const Duration(seconds: 8));
-      } catch (_) {
-        url = null;
-      }
-
-      // 2. If Wikimedia failed, try Pixabay
-      if (url == null && mounted) {
-        try {
-          url = await _pixabayService
-              .getImageUrl(widget.query)
-              .timeout(const Duration(seconds: 8));
-        } catch (_) {
-          url = null;
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _imageUrl = url ?? widget.fallbackUrl;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _imageUrl = widget.fallbackUrl;
-          _isLoading = false;
-        });
-      }
+  void _init() {
+    _isRetry = false;
+    // Show the stored URL immediately — no shimmer, no wait.
+    if (widget.fallbackUrl != null && widget.fallbackUrl!.isNotEmpty) {
+      setState(() {
+        _imageUrl = widget.fallbackUrl;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _imageUrl = null;
+        _isLoading = true;
+      });
+      _resolve();
     }
   }
 
-  void _handleImageError() {
-    if (!_hasAttemptedFallback && mounted) {
-      _hasAttemptedFallback = true;
-      // If the provided image failed, try to search for a new one
-      _loadImage(isRetry: true);
+  Future<void> _resolve() async {
+    String? url;
+
+    if (widget.placeId != null) {
+      url = await PlaceImageRepository.instance.resolve(
+        placeId: widget.placeId!,
+        placeName: widget.query,
+        storedUrl: widget.fallbackUrl,
+        forceRefresh: _isRetry,
+      );
+    } else {
+      // No placeId — use in-memory services directly (no persistence).
+      url = await PlaceImageRepository.instance.resolve(
+        placeId: widget.query, // use query as surrogate key
+        placeName: widget.query,
+        storedUrl: widget.fallbackUrl,
+        forceRefresh: _isRetry,
+      );
+    }
+
+    if (mounted) {
+      setState(() {
+        _imageUrl = url;
+        _isLoading = false;
+      });
     }
   }
 
-  static const _iconColor = Color(0xFF8D7168);
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    Widget child;
+
     if (_isLoading) {
-      return ShimmerBox(width: widget.width, height: widget.height, radius: 0);
+      child = ShimmerBox(width: widget.width, height: widget.height, radius: 0);
+    } else if (_imageUrl == null || _imageUrl!.isEmpty) {
+      child = _Placeholder(width: widget.width, height: widget.height);
+    } else {
+      child = _CachedImage(
+        url: _imageUrl!,
+        width: widget.width,
+        height: widget.height,
+        fit: widget.fit,
+        onError: _onImageError,
+      );
     }
 
-    if (_imageUrl == null || _imageUrl!.isEmpty) {
-      return _buildPlaceholder();
+    if (widget.borderRadius != null) {
+      return ClipRRect(borderRadius: widget.borderRadius!, child: child);
     }
-
-    return _buildCachedImage(_imageUrl!);
+    return child;
   }
 
-  Widget _buildPlaceholder() {
+  void _onImageError() {
+    if (!mounted) return;
+    
+    // Prevent infinite loop if the resolved URL from repository also fails
+    if (_isRetry) {
+      setState(() {
+        _imageUrl = null;
+        _isLoading = false; // Stop loading and show fallback placeholder
+      });
+      return;
+    }
+
+    // Image URL was bad — clear from caches and try a fresh fetch.
+    if (widget.placeId != null) {
+      PlaceImageRepository.instance.evict(widget.placeId!);
+    }
+    setState(() {
+      _imageUrl = null;
+      _isLoading = true;
+      _isRetry = true;
+    });
+    _resolve();
+  }
+}
+
+// ── URL helpers ───────────────────────────────────────────────────────────────
+
+/// Normalises a URL so non-ASCII path characters are percent-encoded without
+/// double-encoding sequences that are already encoded.
+String _safeUrl(String url) {
+  try {
+    return Uri.encodeFull(Uri.decodeFull(url));
+  } catch (_) {
+    return url;
+  }
+}
+
+// ── Extracted sub-widgets (keeps the state class lean) ───────────────────────
+
+class _CachedImage extends StatelessWidget {
+  final String url;
+  final double? width;
+  final double? height;
+  final BoxFit fit;
+  final VoidCallback onError;
+
+  const _CachedImage({
+    required this.url,
+    required this.width,
+    required this.height,
+    required this.fit,
+    required this.onError,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final encodedUrl = _safeUrl(url);
+    return CachedNetworkImage(
+      imageUrl: encodedUrl,
+      key: ValueKey(encodedUrl),
+      width: width,
+      height: height,
+      fit: fit,
+      fadeInDuration: const Duration(milliseconds: 350),
+      fadeInCurve: Curves.easeIn,
+      httpHeaders: const {
+        'User-Agent': 'TimeExplorer/1.0',
+        'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+      },
+      memCacheWidth: (width != null && width!.isFinite)
+          ? (width! * 2).toInt()
+          : 800,
+      placeholder: (context, url) =>
+          ShimmerBox(width: width, height: height, radius: 0),
+      errorWidget: (context, url, error) {
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => onError());
+        return _Placeholder(width: width, height: height);
+      },
+    );
+  }
+}
+
+class _Placeholder extends StatelessWidget {
+  final double? width;
+  final double? height;
+
+  const _Placeholder({this.width, this.height});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: widget.width,
-      height: widget.height,
-      color: const Color(0xFF151B26),
+      width: width,
+      height: height,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A2332), Color(0xFF0F1923)],
+        ),
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.history_edu_rounded, color: _iconColor, size: 36),
-          if (widget.height == null || widget.height! > 60) ...[
-            const SizedBox(height: 6),
-            const Text(
-              'Legacy Image',
-              style: TextStyle(color: _iconColor, fontSize: 11, fontWeight: FontWeight.w600),
+          Icon(
+            Icons.account_balance_rounded,
+            color: Colors.white.withValues(alpha: 0.25),
+            size: (height != null && height! > 80) ? 40 : 22,
+          ),
+          if (height == null || height! > 80) ...[
+            const SizedBox(height: 8),
+            Text(
+              'No Image Available',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.3),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.5,
+              ),
             ),
           ],
         ],
       ),
     );
   }
-
-  Widget _buildCachedImage(String url) {
-    return CachedNetworkImage(
-      imageUrl: url,
-      key: ValueKey(url),
-      width: widget.width,
-      height: widget.height,
-      fit: widget.fit,
-      fadeInDuration: const Duration(milliseconds: 400),
-      fadeInCurve: Curves.easeIn,
-      httpHeaders: const {
-        'User-Agent': 'TimeExplorer/1.0 (contact@example.com)',
-        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-      },
-      memCacheWidth: (widget.width != null && widget.width!.isFinite)
-          ? (widget.width! * 2).toInt()
-          : 800,
-      placeholder: (context, url) =>
-          ShimmerBox(width: widget.width, height: widget.height, radius: 0),
-      errorWidget: (context, url, error) {
-        // Trigger fallback on error
-        WidgetsBinding.instance.addPostFrameCallback((_) => _handleImageError());
-        return _buildPlaceholder();
-      },
-    );
-  }
 }
-

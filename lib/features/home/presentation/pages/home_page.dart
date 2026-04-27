@@ -4,12 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/core/widgets/gamified_components.dart';
+import 'package:timeexplorer/features/gamification/domain/entities/user_progress.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:timeexplorer/features/profile/presentation/providers/profile_provider.dart';
 import 'package:timeexplorer/features/learn/presentation/daily_fact_provider.dart';
 import 'package:timeexplorer/features/places/data/eras_data.dart';
 import 'package:timeexplorer/features/gamification/presentation/widgets/level_up_overlay.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
 import 'package:timeexplorer/core/widgets/xp_bar.dart';
 
 import 'package:timeexplorer/features/explore/presentation/pages/explore_page.dart';
@@ -145,7 +146,8 @@ class _TimeExplorerDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<ProfileProvider>().profile;
-    final progress = context.watch<GamificationProvider>().progress;
+    final gamProvider = context.watch<GamificationProvider>();
+    final progress = gamProvider.progress;
     final factProvider = context.watch<DailyFactProvider>();
 
     return CustomScrollView(
@@ -197,7 +199,7 @@ class _TimeExplorerDashboard extends StatelessWidget {
                 const SizedBox(height: 20),
                 _buildHeroCard(context),
                 const SizedBox(height: 28),
-                _buildXPSection(progress),
+                _buildXPSection(gamProvider, progress),
                 const SizedBox(height: 28),
                 _buildSectionHeader('Featured Eras'),
                 const SizedBox(height: 14),
@@ -337,7 +339,27 @@ class _TimeExplorerDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildXPSection(dynamic progress) {
+  Widget _buildXPSection(GamificationProvider gamProvider, UserProgress progress) {
+    if (gamProvider.isInitializing) {
+      return Container(
+        height: 96,
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceLowest,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.outlineVariant, width: 1),
+        ),
+        child: const Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppTheme.primaryContainer,
+            ),
+          ),
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -363,7 +385,7 @@ class _TimeExplorerDashboard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Level ${progress.level ?? 1}',
+                  'Level ${progress.level}',
                   style: GoogleFonts.plusJakartaSans(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -375,7 +397,7 @@ class _TimeExplorerDashboard extends StatelessWidget {
               const Icon(Icons.local_fire_department_rounded, color: AppTheme.amber, size: 18),
               const SizedBox(width: 4),
               Text(
-                '${progress.streak} day streak',
+                '${progress.streakDays} day streak',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -386,9 +408,9 @@ class _TimeExplorerDashboard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           XpBar(
-            progress: progress.xpProgress ?? 0.0,
-            totalXP: progress.totalXP ?? 0,
-            xpToNext: progress.xpToNextLevel ?? 100,
+            progress: progress.progressToNextLevel,
+            totalXP: progress.xp,
+            xpToNext: progress.xpToNextLevel,
             color: AppTheme.primaryContainer,
             animDelayMs: 200,
           ),
@@ -428,25 +450,14 @@ class _TimeExplorerDashboard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    if (era.outerImage.isNotEmpty)
-                      CachedNetworkImage(
-                        imageUrl: era.outerImage,
-                        fit: BoxFit.cover,
-                        httpHeaders: const {
-                          'User-Agent': 'TimeExplorer/1.0 (contact@example.com)',
-                          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-                        },
-                        placeholder: (_, __) => Container(color: AppTheme.surface),
-                        errorWidget: (_, __, ___) => Container(
-                          color: AppTheme.surface,
-                          child: const Icon(Icons.history_edu_rounded, color: AppTheme.onSurfaceVariant, size: 32),
-                        ),
-                      )
-                    else
-                      Container(
-                        color: AppTheme.surface,
-                        child: const Icon(Icons.history_edu_rounded, color: AppTheme.onSurfaceVariant, size: 32),
-                      ),
+                    DynamicPlaceImage(
+                      query: era.eraName,
+                      placeId: 'era_${era.id}',
+                      fallbackUrl: era.outerImage.isNotEmpty ? era.outerImage : null,
+                      width: 130,
+                      height: 160,
+                      fit: BoxFit.cover,
+                    ),
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(

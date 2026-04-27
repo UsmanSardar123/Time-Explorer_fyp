@@ -1,5 +1,5 @@
 import 'package:timeexplorer/features/admin/domain/entities/admin_stats_entity.dart';
-import 'package:timeexplorer/features/admin/domain/entities/character_entity.dart';
+import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
 import 'package:timeexplorer/features/admin/data/models/character_model.dart';
 import 'package:timeexplorer/features/admin/domain/repositories/admin_repository.dart';
 import 'package:timeexplorer/features/places/data/models/place_model.dart';
@@ -72,7 +72,7 @@ class MockAdminRepository implements AdminRepository {
 
   // Characters stubs
   @override
-  Future<List<CharacterEntity>> getAllCharacters() async => [];
+  Future<List<Character>> getAllCharacters() async => [];
 
   @override
   Future<void> createCharacter(CharacterModel character) async {}

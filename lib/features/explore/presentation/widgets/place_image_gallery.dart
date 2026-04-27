@@ -183,7 +183,7 @@ class _PlaceImageGalleryState extends State<PlaceImageGallery> {
               child: Center(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
@@ -207,7 +207,7 @@ class _PlaceImageGalleryState extends State<PlaceImageGallery> {
               child: Center(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
@@ -239,7 +239,7 @@ class _PlaceImageGalleryState extends State<PlaceImageGallery> {
                     shape: BoxShape.circle,
                     color: _currentPage == index
                         ? Colors.white
-                        : Colors.white.withOpacity(0.5),
+                        : Colors.white.withValues(alpha: 0.5),
                   ),
                 ),
               ),

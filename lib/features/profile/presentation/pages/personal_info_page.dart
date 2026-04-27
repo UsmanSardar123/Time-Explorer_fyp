@@ -130,18 +130,20 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
-      child: Column(
-        children: genders.map((g) => RadioListTile<String>(
-          title: Text(g),
-          value: g,
-          groupValue: _gender,
-          onChanged: (val) => setState(() => _gender = val),
-          activeColor: Colors.teal.shade500,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        )).toList(),
+      child: RadioGroup<String>(
+        groupValue: _gender,
+        onChanged: (val) => setState(() => _gender = val),
+        child: Column(
+          children: genders.map((g) => RadioListTile<String>(
+            title: Text(g),
+            value: g,
+            fillColor: WidgetStatePropertyAll(Colors.teal.shade500),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          )).toList(),
+        ),
       ),
     );
   }
@@ -161,7 +163,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: TextFormField(

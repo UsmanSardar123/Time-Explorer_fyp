@@ -5,15 +5,19 @@ import '../../features/gamification/domain/entities/badge.dart';
 
 class GamificationService {
   static const String _kUserProgressKey = 'user_progress_data';
-  
-  // XP Rewards
+
+  // ── XP Rewards ──────────────────────────────────────────────────────────────
+  static const int xpDailyAppOpen = 10;          // first open of the day
+  static const int xpQuizCompleted = 20;          // first-time quiz completion (per quizId)
+  static const int xpQuizSessionBonus = 30;       // every completed quiz session
+  static const int xpCorrectAnswer = 10;          // per correct answer
+  static const int xpWrongAnswer = 2;             // participation reward per wrong answer
+  static const int xpDailyFact = 5;              // "Did You Know" – once per day
   static const int xpMessageSent = 5;
   static const int xpFirstPersonalityInteraction = 10;
-  static const int xpQuizCompleted = 25;
   static const int xpNewCategoryExplored = 20;
-  static const int xpDailyAppOpen = 5;
 
-  // Badge IDs
+  // ── Badge IDs ────────────────────────────────────────────────────────────────
   static const String badgeFirstContact = 'first_contact';
   static const String badgeConversationalist = 'conversationalist';
   static const String badgeExplorer = 'explorer';
@@ -53,13 +57,15 @@ class GamificationService {
     ),
   ];
 
+  // ── Core persistence ─────────────────────────────────────────────────────────
+
   Future<UserProgress> loadProgress() async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getString(_kUserProgressKey);
     if (data == null) return const UserProgress();
     try {
       return UserProgress.fromJson(jsonDecode(data));
-    } catch (e) {
+    } catch (_) {
       return const UserProgress();
     }
   }
@@ -69,115 +75,143 @@ class GamificationService {
     await prefs.setString(_kUserProgressKey, jsonEncode(progress.toJson()));
   }
 
-  Future<UserProgress> addXP(int amount) async {
+  // ── Internal helper ──────────────────────────────────────────────────────────
+
+  Future<UserProgress> _addXPAndSave(UserProgress progress, int amount) async {
+    final newXP = progress.xp + amount;
+    final updated = progress.copyWith(
+      xp: newXP,
+      level: UserProgress.calculateLevel(newXP),
+    );
+    await saveProgress(updated);
+    return updated;
+  }
+
+  // ── Public XP actions ────────────────────────────────────────────────────────
+
+  Future<UserProgress> addXP(int amount, {DateTime? customTime}) async {
+    final progress = await loadProgress();
+    return _addXPAndSave(progress, amount);
+  }
+
+  /// +10 XP per correct answer. Not idempotent — called once per answered question.
+  Future<UserProgress> recordCorrectAnswer() async {
+    final progress = await loadProgress();
+    return _addXPAndSave(progress, xpCorrectAnswer);
+  }
+
+  /// +2 XP participation reward per wrong answer.
+  Future<UserProgress> recordWrongAnswer() async {
+    final progress = await loadProgress();
+    return _addXPAndSave(progress, xpWrongAnswer);
+  }
+
+  /// +30 XP session bonus, awarded every time a quiz session is completed.
+  Future<UserProgress> recordQuizSessionComplete() async {
+    final progress = await loadProgress();
+    return _addXPAndSave(progress, xpQuizSessionBonus);
+  }
+
+  /// +5 XP for viewing a "Did You Know" fact — awarded at most once per calendar day.
+  Future<UserProgress> recordFactViewed({DateTime? customTime}) async {
     var progress = await loadProgress();
-    int newXP = progress.xp + amount;
-    int newLevel = UserProgress.calculateLevel(newXP);
-    
+    final now = (customTime ?? DateTime.now()).toUtc();
+    final today = DateTime.utc(now.year, now.month, now.day);
+
+    if (progress.lastFactDate != null) {
+      final last = progress.lastFactDate!.toUtc();
+      final lastDay = DateTime.utc(last.year, last.month, last.day);
+      if (lastDay == today) return progress; // already rewarded today
+    }
+
+    final newXP = progress.xp + xpDailyFact;
     progress = progress.copyWith(
       xp: newXP,
-      level: newLevel,
+      level: UserProgress.calculateLevel(newXP),
+      lastFactDate: now,
     );
-    
     await saveProgress(progress);
     return progress;
   }
 
+  // ── Existing actions (preserved) ─────────────────────────────────────────────
+
   Future<UserProgress> recordMessageSent() async {
     var progress = await loadProgress();
-    int newTotalMessages = progress.totalMessages + 1;
-    
     progress = progress.copyWith(
       xp: progress.xp + xpMessageSent,
-      totalMessages: newTotalMessages,
+      totalMessages: progress.totalMessages + 1,
     );
-    
     progress = await _checkAndUnlockBadges(progress);
     progress = progress.copyWith(level: UserProgress.calculateLevel(progress.xp));
-    
     await saveProgress(progress);
     return progress;
   }
 
   Future<UserProgress> recordPersonalityInteraction(String personalityId) async {
     var progress = await loadProgress();
-    
-    if (progress.interactedPersonalities.contains(personalityId)) {
-      return progress;
-    }
-    
+    if (progress.interactedPersonalities.contains(personalityId)) return progress;
+
     final newList = List<String>.from(progress.interactedPersonalities)..add(personalityId);
-    int bonusXP = xpFirstPersonalityInteraction;
-    
     progress = progress.copyWith(
-      xp: progress.xp + bonusXP,
+      xp: progress.xp + xpFirstPersonalityInteraction,
       interactedPersonalities: newList,
     );
-    
     progress = await _checkAndUnlockBadges(progress);
     progress = progress.copyWith(level: UserProgress.calculateLevel(progress.xp));
-    
     await saveProgress(progress);
     return progress;
   }
 
   Future<UserProgress> recordCategoryExplored(String categoryId) async {
     var progress = await loadProgress();
-    
-    if (progress.visitedCategories.contains(categoryId)) {
-      return progress;
-    }
-    
+    if (progress.visitedCategories.contains(categoryId)) return progress;
+
     final newList = List<String>.from(progress.visitedCategories)..add(categoryId);
-    
     progress = progress.copyWith(
       xp: progress.xp + xpNewCategoryExplored,
       visitedCategories: newList,
     );
-    
     progress = await _checkAndUnlockBadges(progress);
     progress = progress.copyWith(level: UserProgress.calculateLevel(progress.xp));
-    
     await saveProgress(progress);
     return progress;
   }
 
-  Future<UserProgress> recordQuizCompleted() async {
+  /// +20 XP for completing a quiz for the first time (idempotent per quizId).
+  Future<UserProgress> recordQuizCompleted(String quizId) async {
     var progress = await loadProgress();
-    int newQuizCount = progress.quizCount + 1;
-    
+    if (progress.completedQuizIds.contains(quizId)) return progress;
+
+    final newList = List<String>.from(progress.completedQuizIds)..add(quizId);
     progress = progress.copyWith(
       xp: progress.xp + xpQuizCompleted,
-      quizCount: newQuizCount,
+      quizCount: progress.quizCount + 1,
+      completedQuizIds: newList,
     );
-    
     progress = await _checkAndUnlockBadges(progress);
     progress = progress.copyWith(level: UserProgress.calculateLevel(progress.xp));
-    
     await saveProgress(progress);
     return progress;
   }
 
-  Future<UserProgress> recordDailyOpen() async {
+  /// Handles first daily app open: awards +10 XP and updates streak.
+  Future<UserProgress> recordDailyOpen({DateTime? customTime}) async {
     var progress = await loadProgress();
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    
+    final now = (customTime ?? DateTime.now()).toUtc();
+    final today = DateTime.utc(now.year, now.month, now.day);
+
     if (progress.lastLoginDate != null) {
-      final lastLogin = DateTime(
-        progress.lastLoginDate!.year,
-        progress.lastLoginDate!.month,
-        progress.lastLoginDate!.day,
+      final lastLoginUtc = progress.lastLoginDate!.toUtc();
+      if (now.isBefore(lastLoginUtc)) return progress;
+
+      final lastLoginDay = DateTime.utc(
+        lastLoginUtc.year, lastLoginUtc.month, lastLoginUtc.day,
       );
-      
-      if (lastLogin == today) return progress;
-      
-      final difference = today.difference(lastLogin).inDays;
-      int newStreak = 1;
-      if (difference == 1) {
-        newStreak = progress.streakDays + 1;
-      }
-      
+      if (lastLoginDay == today) return progress;
+
+      final diff = today.difference(lastLoginDay).inDays;
+      final newStreak = diff == 1 ? progress.streakDays + 1 : 1;
       progress = progress.copyWith(
         xp: progress.xp + xpDailyAppOpen,
         lastLoginDate: now,
@@ -190,53 +224,49 @@ class GamificationService {
         streakDays: 1,
       );
     }
-    
+
     progress = progress.copyWith(level: UserProgress.calculateLevel(progress.xp));
     await saveProgress(progress);
     return progress;
   }
 
+  // ── Badge logic ───────────────────────────────────────────────────────────────
+
   Future<UserProgress> _checkAndUnlockBadges(UserProgress progress) async {
     List<String> newlyUnlocked = List<String>.from(progress.unlockedBadges);
     bool changed = false;
 
-    // First Contact
-    if (!newlyUnlocked.contains(badgeFirstContact) && progress.interactedPersonalities.isNotEmpty) {
+    if (!newlyUnlocked.contains(badgeFirstContact) &&
+        progress.interactedPersonalities.isNotEmpty) {
       newlyUnlocked.add(badgeFirstContact);
       changed = true;
     }
-
-    // Conversationalist
-    if (!newlyUnlocked.contains(badgeConversationalist) && progress.totalMessages >= 50) {
+    if (!newlyUnlocked.contains(badgeConversationalist) &&
+        progress.totalMessages >= 50) {
       newlyUnlocked.add(badgeConversationalist);
       changed = true;
     }
-
-    // Explorer (assuming 5 categories as per categories_page.dart's _availableCategories)
-    if (!newlyUnlocked.contains(badgeExplorer) && progress.visitedCategories.length >= 5) {
+    if (!newlyUnlocked.contains(badgeExplorer) &&
+        progress.visitedCategories.length >= 5) {
       newlyUnlocked.add(badgeExplorer);
       changed = true;
     }
-
-    // Scholar
     if (!newlyUnlocked.contains(badgeScholar) && progress.quizCount >= 5) {
       newlyUnlocked.add(badgeScholar);
       changed = true;
     }
-
-    // Historian
-    if (!newlyUnlocked.contains(badgeHistorian) && progress.interactedPersonalities.length >= 10) {
+    if (!newlyUnlocked.contains(badgeHistorian) &&
+        progress.interactedPersonalities.length >= 10) {
       newlyUnlocked.add(badgeHistorian);
       changed = true;
     }
 
-    if (changed) {
-      return progress.copyWith(unlockedBadges: newlyUnlocked);
-    }
-    return progress;
+    return changed ? progress.copyWith(unlockedBadges: newlyUnlocked) : progress;
   }
 
   List<Badge> getBadges(List<String> unlockedIds) {
-    return _availableBadges.map((b) => b.copyWith(isUnlocked: unlockedIds.contains(b.id))).toList();
+    return _availableBadges
+        .map((b) => b.copyWith(isUnlocked: unlockedIds.contains(b.id)))
+        .toList();
   }
 }

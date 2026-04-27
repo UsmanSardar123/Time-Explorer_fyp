@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import '../../domain/entities/character.dart';
-import '../../domain/entities/character_category.dart';
 
 class CharacterInfoPanel extends StatelessWidget {
   final Character character;

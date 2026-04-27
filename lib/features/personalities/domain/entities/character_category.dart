@@ -48,4 +48,11 @@ enum CharacterCategory {
       case CharacterCategory.writers:      return 'Masters of the written word';
     }
   }
+
+  static CharacterCategory fromString(String category) {
+    return CharacterCategory.values.firstWhere(
+      (e) => e.name.toLowerCase() == category.toLowerCase(),
+      orElse: () => CharacterCategory.scientists,
+    );
+  }
 }

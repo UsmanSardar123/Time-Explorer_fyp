@@ -65,7 +65,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -77,7 +77,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.03),
+                color: Colors.white.withValues(alpha: 0.03),
               ),
             ),
           ),
@@ -101,7 +101,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                             borderRadius: BorderRadius.circular(32),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 40,
                                 offset: const Offset(0, 20),
                               ),
@@ -129,7 +129,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             letterSpacing: 0.5,
                           ),
                         ),

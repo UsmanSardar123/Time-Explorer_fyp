@@ -138,6 +138,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
               ),
               child: DynamicPlaceImage(
                 query: place.name,
+                placeId: place.id,
                 fallbackUrl: (place.imageUrl as String).isNotEmpty ? place.imageUrl as String : null,
                 width: 116,
                 height: 116,

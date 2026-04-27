@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
 import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_provider.dart';
 import 'package:timeexplorer/features/explore/domain/entities/place_entity.dart';
 
@@ -67,11 +67,12 @@ class PlaceHeader extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              CachedNetworkImage(
-                imageUrl: imageUrl,
+              DynamicPlaceImage(
+                query: name,
+                placeId: id,
+                fallbackUrl: imageUrl,
+                width: double.infinity,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: Colors.grey[200]),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
               const DecoratedBox(
                 decoration: BoxDecoration(

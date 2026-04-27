@@ -38,33 +38,35 @@ class XPProgressBar extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        Stack(
-          children: [
-            Container(
-              height: 6,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(3),
+        LayoutBuilder(
+          builder: (context, constraints) => Stack(
+            children: [
+              Container(
+                height: 6,
+                width: constraints.maxWidth,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 600),
-              height: 6,
-              width: (MediaQuery.of(context).size.width - 120) * xpPercent,
-              decoration: BoxDecoration(
-                gradient: AppTheme.amberGradient,
-                borderRadius: BorderRadius.circular(3),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.amber.withValues(alpha: 0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 600),
+                height: 6,
+                width: (constraints.maxWidth * xpPercent).clamp(0.0, constraints.maxWidth),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.amberGradient,
+                  borderRadius: BorderRadius.circular(3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.amber.withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );

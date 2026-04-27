@@ -135,7 +135,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: _dark.withOpacity(0.06),
+            color: _dark.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -145,7 +145,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
         contentPadding: const EdgeInsets.all(12),
         leading: CircleAvatar(
           radius: 28,
-          backgroundColor: _primary.withOpacity(0.12),
+          backgroundColor: _primary.withValues(alpha: 0.12),
           backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
           child: user.photoUrl == null
               ? const Icon(Icons.person_rounded, color: _primary)

@@ -266,7 +266,7 @@ class _UserDetailFormPageState extends State<UserDetailFormPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: _dark.withOpacity(0.05),
+                color: _dark.withValues(alpha: 0.05),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),

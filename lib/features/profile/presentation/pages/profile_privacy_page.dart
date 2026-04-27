@@ -61,7 +61,7 @@ class _ProfilePrivacyPageState extends State<ProfilePrivacyPage> {
               subtitle: const Text('Allow others to find and view your explorer profile'),
               value: _isPublic,
               onChanged: (val) => setState(() => _isPublic = val),
-              activeColor: Colors.orange.shade500,
+              activeThumbColor: Colors.orange.shade500,
             ),
           ),
           if (_isPublic) ...[
@@ -72,12 +72,16 @@ class _ProfilePrivacyPageState extends State<ProfilePrivacyPage> {
             ),
             _buildCard(
               cardColor: cardColor,
-              child: Column(
-                children: [
-                  _buildRadioTile('Standard', 'Visible to all explorers', 'standard'),
-                  _buildRadioTile('Limited', 'Hide sensitive stats', 'limited'),
-                  _buildRadioTile('Followers Only', 'Only approved followers see details', 'followers'),
-                ],
+              child: RadioGroup<String>(
+                groupValue: _privacyPreference,
+                onChanged: (val) => setState(() => _privacyPreference = val),
+                child: Column(
+                  children: [
+                    _buildRadioTile('Standard', 'Visible to all explorers', 'standard'),
+                    _buildRadioTile('Limited', 'Hide sensitive stats', 'limited'),
+                    _buildRadioTile('Followers Only', 'Only approved followers see details', 'followers'),
+                  ],
+                ),
               ),
             ),
           ],
@@ -98,7 +102,7 @@ class _ProfilePrivacyPageState extends State<ProfilePrivacyPage> {
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: child,
@@ -110,9 +114,7 @@ class _ProfilePrivacyPageState extends State<ProfilePrivacyPage> {
       title: Text(title),
       subtitle: Text(subtitle),
       value: value,
-      groupValue: _privacyPreference,
-      onChanged: (val) => setState(() => _privacyPreference = val),
-      activeColor: Colors.orange.shade500,
+      fillColor: WidgetStatePropertyAll(Colors.orange.shade500),
     );
   }
 }

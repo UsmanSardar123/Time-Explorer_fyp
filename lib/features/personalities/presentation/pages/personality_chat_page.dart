@@ -1,15 +1,22 @@
+// FILE: lib/features/personalities/presentation/pages/personality_chat_page.dart
+// PURPOSE: Chat screen with character header, streaming messages, suggestion chips, and context cards.
+// SPRINT: 5
+
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
+import '../../data/services/analytics_service.dart';
 import '../../domain/entities/character.dart';
-import '../../domain/entities/chat_message.dart';
 import '../cubit/chat_cubit.dart';
 import '../cubit/chat_state.dart';
+import '../widgets/message_bubble.dart';
+import '../widgets/suggestion_chips.dart';
+import '../widgets/typing_indicator.dart';
 
 class PersonalityChatPage extends StatefulWidget {
   final Character character;
@@ -50,7 +57,8 @@ class _PersonalityChatPageState extends State<PersonalityChatPage> {
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 150), () {
       if (_scroll.hasClients) {
-        _scroll.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+        _scroll.animateTo(0,
+            duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
       }
     });
   }
@@ -63,31 +71,67 @@ class _PersonalityChatPageState extends State<PersonalityChatPage> {
         backgroundColor: AppTheme.background,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(70),
-          child: _ChatAppBar(character: widget.character),
+          child: _ChatHeader(character: widget.character),
         ),
         body: BlocConsumer<ChatCubit, ChatState>(
-          listener: (context, state) {
-            if (!state.isTyping) _scrollToBottom();
+          listenWhen: (prev, curr) =>
+              (prev.isTyping && !curr.isTyping) ||
+              (prev.streamingMessageId != null &&
+                  curr.streamingMessageId == null) ||
+              (prev.rateLimitWarningText != curr.rateLimitWarningText) ||
+              (prev.isRateLimited != curr.isRateLimited) ||
+              (!prev.isTimeout && curr.isTimeout),
+          listener: (ctx, state) {
+            if (!state.isTyping && state.streamingMessageId == null) {
+              _scrollToBottom();
+            }
+            if (state.isTimeout) {
+              ScaffoldMessenger.of(ctx)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(SnackBar(
+                  content: Text(
+                    'The scroll is taking too long to unroll. Tap below to try again.',
+                    style: GoogleFonts.beVietnamPro(fontSize: 13),
+                  ),
+                  backgroundColor: const Color(0xFF5C4010),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  margin: const EdgeInsets.all(16),
+                  duration: const Duration(seconds: 4),
+                ));
+            }
+            if (state.rateLimitWarningText != null && !state.isRateLimited) {
+              ScaffoldMessenger.of(ctx)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(SnackBar(
+                  content: Text(
+                    state.rateLimitWarningText!,
+                    style: GoogleFonts.beVietnamPro(fontSize: 13),
+                  ),
+                  backgroundColor: const Color(0xFF8B6914),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  margin: const EdgeInsets.all(16),
+                ));
+            }
+            if (state.isRateLimited) {
+              showDialog<void>(
+                context: ctx,
+                barrierDismissible: false,
+                builder: (_) =>
+                    _RateLimitDialog(character: widget.character),
+              );
+            }
           },
-          builder: (context, state) => Column(
-            children: [
-              if (state.isOffline) const _OfflineBanner(),
-              Expanded(
-                child: _MessageList(
-                  messages: state.messages,
-                  isTyping: state.isTyping,
-                  error: state.error,
-                  character: widget.character,
-                  scrollController: _scroll,
-                ),
-              ),
-              _InputRow(
-                controller: _input,
-                onSend: _send,
-                character: widget.character,
-                isDisabled: state.isOffline || state.isTyping,
-              ),
-            ],
+          builder: (_, state) => _ChatBody(
+            character: widget.character,
+            state: state,
+            scroll: _scroll,
+            input: _input,
+            onSend: _send,
+            onRetry: _cubit.retryLastMessage,
           ),
         ),
       ),
@@ -95,9 +139,11 @@ class _PersonalityChatPageState extends State<PersonalityChatPage> {
   }
 }
 
-class _ChatAppBar extends StatelessWidget {
+// ── Header ────────────────────────────────────────────────────────────────────
+
+class _ChatHeader extends StatelessWidget {
   final Character character;
-  const _ChatAppBar({required this.character});
+  const _ChatHeader({required this.character});
 
   @override
   Widget build(BuildContext context) {
@@ -110,258 +156,113 @@ class _ChatAppBar extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.onSurface, size: 18),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppTheme.onSurface, size: 18),
             onPressed: () => context.pop(),
           ),
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: AppTheme.surfaceLow,
-            child: ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: character.imageUrl,
-                httpHeaders: const {'User-Agent': 'TimeExplorer/1.0 (Flutter)'},
-                width: 40,
-                height: 40,
-                fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => const Icon(Icons.person_rounded, color: AppTheme.onSurfaceVariant, size: 20),
-              ),
-            ),
-          ),
+          _HeaderAvatar(imageUrl: character.imageUrl),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  character.name,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.onSurface),
-                ),
+                Text(character.name,
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.onSurface)),
                 Row(
                   children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF059669)),
-                    ),
+                    const _LiveDot(),
                     const SizedBox(width: 5),
-                    Text('Online', style: GoogleFonts.beVietnamPro(fontSize: 11, color: AppTheme.onSurfaceVariant)),
+                    Text('Live',
+                        style: GoogleFonts.beVietnamPro(
+                            fontSize: 11, color: AppTheme.onSurfaceVariant)),
+                    const SizedBox(width: 8),
+                    _EraBadge(era: character.era),
                   ],
                 ),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryContainer.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.primaryContainer.withValues(alpha: 0.20)),
-              ),
-              child: Text(
-                'AI',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.primaryContainer,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 }
 
-class _MessageList extends StatelessWidget {
-  final List<ChatMessage> messages;
-  final bool isTyping;
-  final String? error;
-  final Character character;
-  final ScrollController scrollController;
-
-  const _MessageList({
-    required this.messages,
-    required this.isTyping,
-    required this.error,
-    required this.character,
-    required this.scrollController,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final reversed = messages.reversed.toList();
-    return ListView.builder(
-      controller: scrollController,
-      reverse: true,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      physics: const BouncingScrollPhysics(),
-      itemCount: reversed.length + (isTyping ? 1 : 0) + (error != null ? 1 : 0),
-      itemBuilder: (context, i) {
-        if (i == 0 && error != null) return _ErrorBubble(message: error!);
-        if (i == (error != null ? 1 : 0) && isTyping) return _TypingBubble(character: character);
-        final offset = (isTyping ? 1 : 0) + (error != null ? 1 : 0);
-        final msg = reversed[i - offset];
-        return _MessageBubble(message: msg, character: character);
-      },
-    );
-  }
-}
-
-class _MessageBubble extends StatelessWidget {
-  final ChatMessage message;
-  final Character character;
-  const _MessageBubble({required this.message, required this.character});
-
-  @override
-  Widget build(BuildContext context) {
-    return message.isUser
-        ? _UserBubble(text: message.text)
-        : _AiBubble(text: message.text, character: character);
-  }
-}
-
-class _UserBubble extends StatelessWidget {
-  final String text;
-  const _UserBubble({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12, left: 60),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-        decoration: const BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-            bottomLeft: Radius.circular(20),
-            bottomRight: Radius.circular(4),
-          ),
-        ),
-        child: Text(
-          text,
-          style: GoogleFonts.beVietnamPro(fontSize: 14, color: Colors.white, height: 1.45),
-        ),
-      ),
-    );
-  }
-}
-
-class _AiBubble extends StatelessWidget {
-  final String text;
-  final Character character;
-  const _AiBubble({required this.text, required this.character});
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          _MiniAvatar(imageUrl: character.imageUrl),
-          const SizedBox(width: 10),
-          Flexible(
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 12, right: 60),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceLowest,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                  bottomLeft: Radius.circular(4),
-                ),
-                border: Border.all(color: AppTheme.outlineVariant),
-              ),
-              child: Text(
-                text,
-                style: GoogleFonts.beVietnamPro(fontSize: 14, color: AppTheme.onSurface, height: 1.55),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniAvatar extends StatelessWidget {
+class _HeaderAvatar extends StatelessWidget {
   final String imageUrl;
-  const _MiniAvatar({required this.imageUrl});
+  const _HeaderAvatar({required this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
     return CircleAvatar(
-      radius: 16,
+      radius: 20,
       backgroundColor: AppTheme.surfaceLow,
       child: ClipOval(
         child: CachedNetworkImage(
           imageUrl: imageUrl,
           httpHeaders: const {'User-Agent': 'TimeExplorer/1.0 (Flutter)'},
-          width: 32,
-          height: 32,
+          width: 40,
+          height: 40,
           fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => const Icon(Icons.person_rounded, color: AppTheme.onSurfaceVariant, size: 16),
+          errorWidget: (_, _, _) => const Icon(Icons.person_rounded,
+              color: AppTheme.onSurfaceVariant, size: 20),
         ),
       ),
     );
   }
 }
 
-class _TypingBubble extends StatelessWidget {
-  final Character character;
-  const _TypingBubble({required this.character});
+class _EraBadge extends StatelessWidget {
+  final String era;
+  const _EraBadge({required this.era});
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          _MiniAvatar(imageUrl: character.imageUrl),
-          const SizedBox(width: 10),
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceLowest,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-                bottomLeft: Radius.circular(4),
-              ),
-              border: Border.all(color: AppTheme.outlineVariant),
-            ),
-            child: const _BouncingDots(),
-          ),
-        ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3CD),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+            color: const Color(0xFFD4A853).withValues(alpha: 0.45)),
+      ),
+      child: Text(
+        era,
+        style: GoogleFonts.plusJakartaSans(
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF8B6914)),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
 }
 
-class _BouncingDots extends StatefulWidget {
-  const _BouncingDots();
+class _LiveDot extends StatefulWidget {
+  const _LiveDot();
 
   @override
-  State<_BouncingDots> createState() => _BouncingDotsState();
+  State<_LiveDot> createState() => _LiveDotState();
 }
 
-class _BouncingDotsState extends State<_BouncingDots> with SingleTickerProviderStateMixin {
+class _LiveDotState extends State<_LiveDot>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 800))
+      ..repeat(reverse: true);
+    _opacity = Tween<double>(begin: 0.35, end: 1.0)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -372,33 +273,115 @@ class _BouncingDotsState extends State<_BouncingDots> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(3, (i) {
-        final start = i * 0.2;
-        final end = (start + 0.4).clamp(0.0, 1.0);
-        final anim = Tween<double>(begin: 0.0, end: -7.0).animate(
-          CurvedAnimation(parent: _ctrl, curve: Interval(start, end, curve: Curves.easeInOut)),
-        );
-        return AnimatedBuilder(
-          animation: anim,
-          builder: (_, __) => Transform.translate(
-            offset: Offset(0, anim.value),
-            child: Container(
-              margin: EdgeInsets.only(right: i < 2 ? 5 : 0),
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.primaryContainer.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-        );
-      }),
+    return AnimatedBuilder(
+      animation: _opacity,
+      builder: (_, _) => Opacity(
+        opacity: _opacity.value,
+        child: Container(
+          width: 7,
+          height: 7,
+          decoration: const BoxDecoration(
+              shape: BoxShape.circle, color: Color(0xFF059669)),
+        ),
+      ),
     );
   }
 }
+
+// ── Body ──────────────────────────────────────────────────────────────────────
+
+class _ChatBody extends StatelessWidget {
+  final Character character;
+  final ChatState state;
+  final ScrollController scroll;
+  final TextEditingController input;
+  final VoidCallback onSend;
+  final VoidCallback onRetry;
+
+  const _ChatBody({
+    required this.character,
+    required this.state,
+    required this.scroll,
+    required this.input,
+    required this.onSend,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final display = state.messages
+        .where((m) => m.isUser || m.text.isNotEmpty)
+        .toList();
+    final reversed = display.reversed.toList();
+    final hasError = state.error != null;
+    final hasTimeout = state.isTimeout;
+    final extraCount =
+        (state.isTyping ? 1 : 0) + (hasError ? 1 : 0) + (hasTimeout ? 1 : 0);
+
+    return Column(
+      children: [
+        if (state.isOffline) const _OfflineBanner(),
+        Expanded(
+          child: CustomScrollView(
+            controller: scroll,
+            reverse: true,
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) {
+                      if (i == 0 && hasTimeout) {
+                        return _TimeoutRetryCard(onRetry: onRetry);
+                      }
+                      final afterTimeout = hasTimeout ? 1 : 0;
+                      if (i == afterTimeout && hasError) {
+                        return _ErrorBubble(message: state.error!);
+                      }
+                      if (i == afterTimeout + (hasError ? 1 : 0) &&
+                          state.isTyping) {
+                        return TypingIndicator(imageUrl: character.imageUrl);
+                      }
+                      final msg = reversed[i - extraCount];
+                      return MessageBubble(
+                        key: ValueKey(msg.id),
+                        message: msg,
+                        character: character,
+                        isStreaming: msg.id == state.streamingMessageId,
+                        contextFacts: state.contextFacts,
+                      );
+                    },
+                    childCount: reversed.length + extraCount,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SuggestionChips(
+          suggestions: state.suggestions,
+          onChipTapped: (text) {
+            unawaited(AnalyticsService.logSuggestionChipTapped(
+              characterId: character.id,
+              chipText: text,
+            ));
+            input.text = text;
+            onSend();
+          },
+        ),
+        _InputRow(
+          controller: input,
+          onSend: onSend,
+          character: character,
+          isDisabled:
+              state.isTyping || state.isOffline || state.isRateLimited,
+        ),
+      ],
+    );
+  }
+}
+
+// ── Offline banner ────────────────────────────────────────────────────────────
 
 class _OfflineBanner extends StatelessWidget {
   const _OfflineBanner();
@@ -408,25 +391,25 @@ class _OfflineBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      color: AppTheme.primaryContainer.withValues(alpha: 0.12),
+      color: AppTheme.primaryContainer.withValues(alpha: 0.1),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.wifi_off_rounded, size: 14, color: AppTheme.primaryContainer),
+          const Icon(Icons.wifi_off_rounded,
+              size: 14, color: AppTheme.primaryContainer),
           const SizedBox(width: 6),
-          Text(
-            'You\'re offline — showing cached messages',
-            style: GoogleFonts.beVietnamPro(
-              fontSize: 12,
-              color: AppTheme.primaryContainer,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          Text('You\'re offline — showing cached messages',
+              style: GoogleFonts.beVietnamPro(
+                  fontSize: 12,
+                  color: AppTheme.primaryContainer,
+                  fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 }
+
+// ── Error bubble ──────────────────────────────────────────────────────────────
 
 class _ErrorBubble extends StatelessWidget {
   final String message;
@@ -447,16 +430,58 @@ class _ErrorBubble extends StatelessWidget {
           Icon(Icons.warning_amber_rounded, color: AppTheme.error, size: 18),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              message,
-              style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppTheme.error, height: 1.4),
-            ),
+            child: Text(message,
+                style: GoogleFonts.beVietnamPro(
+                    fontSize: 12, color: AppTheme.error, height: 1.4)),
           ),
         ],
       ),
     );
   }
 }
+
+// ── Timeout retry card ────────────────────────────────────────────────────────
+
+class _TimeoutRetryCard extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _TimeoutRetryCard({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onRetry,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF3CD),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFD4A853).withValues(alpha: 0.45)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.hourglass_empty_rounded,
+                color: Color(0xFF8B6914), size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'The scroll is taking too long to unroll. Tap to retry.',
+                style: GoogleFonts.beVietnamPro(
+                    fontSize: 13,
+                    color: const Color(0xFF5C4010),
+                    height: 1.4),
+              ),
+            ),
+            const Icon(Icons.refresh_rounded,
+                color: Color(0xFF8B6914), size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Input row ─────────────────────────────────────────────────────────────────
 
 class _InputRow extends StatelessWidget {
   final TextEditingController controller;
@@ -474,7 +499,8 @@ class _InputRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
+      padding: EdgeInsets.fromLTRB(
+          16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
       decoration: const BoxDecoration(
         color: AppTheme.surfaceLowest,
         border: Border(top: BorderSide(color: AppTheme.outlineVariant)),
@@ -491,15 +517,18 @@ class _InputRow extends StatelessWidget {
               ),
               child: TextField(
                 controller: controller,
-                style: GoogleFonts.beVietnamPro(fontSize: 14, color: AppTheme.onSurface),
+                style: GoogleFonts.beVietnamPro(
+                    fontSize: 14, color: AppTheme.onSurface),
                 maxLines: null,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => onSend(),
                 decoration: InputDecoration(
                   hintText: 'Ask ${character.name.split(' ').first}…',
-                  hintStyle: GoogleFonts.beVietnamPro(fontSize: 14, color: AppTheme.outlineVariant),
+                  hintStyle: GoogleFonts.beVietnamPro(
+                      fontSize: 14, color: AppTheme.outlineVariant),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
@@ -511,6 +540,51 @@ class _InputRow extends StatelessWidget {
     );
   }
 }
+
+// ── Rate limit dialog ─────────────────────────────────────────────────────────
+
+class _RateLimitDialog extends StatelessWidget {
+  final Character character;
+  const _RateLimitDialog({required this.character});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFFFDF6E3),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          ChatMiniAvatar(imageUrl: character.imageUrl),
+          const SizedBox(width: 10),
+          Text(character.name,
+              style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF3D2C0E))),
+        ],
+      ),
+      content: Text(
+        character.rateLimitWarning.isNotEmpty
+            ? character.rateLimitWarning
+            : 'You have asked me many questions today. Return on the morrow '
+                'and we shall continue our discourse.',
+        style: GoogleFonts.beVietnamPro(
+            fontSize: 14, color: const Color(0xFF5C4010), height: 1.55),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text('Return later',
+              style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF8B6914))),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Send button ───────────────────────────────────────────────────────────────
 
 class _SendButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -555,11 +629,9 @@ class _SendButtonState extends State<_SendButton> {
                     ),
                   ],
           ),
-          child: Icon(
-            Icons.send_rounded,
-            color: widget.isDisabled ? AppTheme.onSurfaceVariant : Colors.white,
-            size: 20,
-          ),
+          child: Icon(Icons.send_rounded,
+              color: widget.isDisabled ? AppTheme.onSurfaceVariant : Colors.white,
+              size: 20),
         ),
       ),
     );

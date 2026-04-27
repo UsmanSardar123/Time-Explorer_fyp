@@ -57,8 +57,22 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     
                     const SizedBox(height: 32),
                     
-                    // 3. Management Sections
-                    _buildSectionTitle('Management'),
+                    // 3. Quick Actions
+                    _buildSectionTitle('Quick Actions'),
+                    Row(
+                      children: [
+                        _buildQuickAction('Character', Icons.person_add_alt_1_rounded, () => context.push('/admin/characters/add')),
+                        const SizedBox(width: 12),
+                        _buildQuickAction('Place', Icons.add_location_alt_rounded, () => context.push('/admin/places/add')),
+                        const SizedBox(width: 12),
+                        _buildQuickAction('Fact', Icons.add_comment_rounded, () => context.push('/admin/facts/add')),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+                    
+                    // 4. Management Sections
+                    _buildSectionTitle('Full Management'),
                     _buildAdminAction('Manage Users', Icons.person_search_rounded, () => context.push('/admin/users')),
                     _buildAdminAction('Manage Places', Icons.landscape_rounded, () => context.push('/admin/places')),
                     _buildAdminAction('Manage Characters', Icons.history_edu_rounded, () => context.push('/admin/characters')),
@@ -84,31 +98,109 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
-      color: _adminPrimary,
+      decoration: const BoxDecoration(
+        color: _adminPrimary,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Admin Console',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Admin Console',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    'Managing Time Explorer Ecosystem',
+                    style: GoogleFonts.beVietnamPro(color: Colors.white60, fontSize: 14),
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(Icons.logout_rounded, color: Colors.white70),
-                onPressed: () => context.read<AuthProvider>().signOut(),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.settings_suggest_rounded, color: Colors.white),
+                  onPressed: () {}, // System Settings
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Managing Time Explorer Ecosystem',
-            style: GoogleFonts.beVietnamPro(color: Colors.white60, fontSize: 14),
+          const SizedBox(height: 32),
+          // Migration Tool Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.auto_awesome_rounded, color: Colors.amber),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Migration Required',
+                        style: GoogleFonts.plusJakartaSans(color: Colors.amber, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Sync local characters and facts to Firestore.',
+                        style: GoogleFonts.beVietnamPro(color: Colors.white70, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => _showMigrationDialog(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  child: const Text('Migrate', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMigrationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Migration'),
+        content: const Text('This will upload all hardcoded characters and facts to Firestore. This should only be done once.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<AdminProvider>().migrateAllData();
+            },
+            child: const Text('Start Migration'),
           ),
         ],
       ),
@@ -175,6 +267,43 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 
+  Widget _buildQuickAction(String label, IconData icon, VoidCallback onTap) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: _adminPrimary, size: 24),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: GoogleFonts.beVietnamPro(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: _adminPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAdminAction(String label, IconData icon, VoidCallback onTap) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -196,15 +325,30 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Widget _buildCacheButton(AdminProvider provider) {
-    return Center(
-      child: TextButton.icon(
-        onPressed: () => provider.clearSystemCache(),
-        icon: const Icon(Icons.cleaning_services_rounded, size: 18, color: Colors.black45),
-        label: Text(
-          'Flush System Cache',
-          style: GoogleFonts.plusJakartaSans(color: Colors.black45, fontWeight: FontWeight.w700),
+    return Column(
+      children: [
+        Center(
+          child: TextButton.icon(
+            onPressed: () => provider.clearSystemCache(),
+            icon: const Icon(Icons.cleaning_services_rounded, size: 18, color: Colors.black45),
+            label: Text(
+              'Flush System Cache',
+              style: GoogleFonts.plusJakartaSans(color: Colors.black45, fontWeight: FontWeight.w700),
+            ),
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        Center(
+          child: TextButton.icon(
+            onPressed: () => context.read<AuthProvider>().signOut(),
+            icon: const Icon(Icons.logout_rounded, size: 18, color: Colors.redAccent),
+            label: Text(
+              'Sign Out',
+              style: GoogleFonts.plusJakartaSans(color: Colors.redAccent, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

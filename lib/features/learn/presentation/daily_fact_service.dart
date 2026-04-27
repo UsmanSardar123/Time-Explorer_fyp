@@ -16,15 +16,25 @@ class DailyFactService {
     List<Map<String, String>> availableFacts = [];
     try {
       final querySnapshot = await FirebaseFirestore.instance.collection('facts').get();
-      
+
       if (querySnapshot.docs.isNotEmpty) {
-        availableFacts = querySnapshot.docs.map((doc) {
-          final json = doc.data();
-          return {
-            'fact': json['fact']?.toString() ?? '',
-            'category': json['category']?.toString() ?? 'General',
-          };
-        }).toList();
+        availableFacts = querySnapshot.docs
+            .map((doc) {
+              final json = doc.data();
+              // FactModel.toMap() stores the text in 'description'; fall back to
+              // legacy 'fact' field for documents that predate the admin migration.
+              final text = (json['description']?.toString() ??
+                      json['fact']?.toString() ??
+                      json['title']?.toString() ??
+                      '')
+                  .trim();
+              return {
+                'fact': text,
+                'category': json['category']?.toString() ?? 'General',
+              };
+            })
+            .where((m) => m['fact']!.isNotEmpty)
+            .toList();
       }
     } catch (e) {
       // Ignored, will drop down to local list.

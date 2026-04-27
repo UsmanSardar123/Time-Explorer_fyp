@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
+import 'package:timeexplorer/features/explore/presentation/providers/personality_provider.dart';
 import '../../domain/entities/character_category.dart';
 
 class CategoriesPage extends StatelessWidget {
@@ -39,61 +40,70 @@ class CategoriesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categories = CharacterCategory.values;
+    
+    // Load personalities on build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PersonalityProvider>().loadPersonalities();
+    });
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Header(
-                onBack: () => context.pop(),
-                total: categories.length,
-                unlocked: _availableCategories.length,
-              ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.86,
-                  ),
-                  itemCount: categories.length,
-                  itemBuilder: (context, i) {
-                    final cat = categories[i];
-                    final available = _availableCategories.contains(cat);
-                    return TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: Duration(milliseconds: 350 + i * 70),
-                      curve: Curves.easeOutCubic,
-                      builder: (_, v, child) => Opacity(
-                        opacity: v,
-                        child: Transform.translate(
-                          offset: Offset(0, 22 * (1 - v)),
-                          child: child,
-                        ),
-                      ),
-                      child: _CategoryCard(
-                        category: cat,
-                        colors: _gradients[cat]!,
-                        available: available,
-                        count: _categoryCounts[cat] ?? 0,
-                        onTap: available
-                            ? () {
-                                context.read<GamificationProvider>().recordCategoryExplored(cat.name);
-                                context.push('/personalities-list', extra: cat);
-                              }
-                            : null,
-                      ),
-                    );
-                  },
+        child: Consumer<PersonalityProvider>(
+          builder: (context, provider, _) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Header(
+                  onBack: () => context.pop(),
+                  total: categories.length,
+                  unlocked: categories.length, // For now, show all as unlocked if managing via admin
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(height: 4),
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.86,
+                    ),
+                    itemCount: categories.length,
+                    itemBuilder: (context, i) {
+                      final cat = categories[i];
+                      final count = provider.getCharactersByCategory(cat).length;
+                      
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 350 + i * 70),
+                        curve: Curves.easeOutCubic,
+                        builder: (_, v, child) => Opacity(
+                          opacity: v,
+                          child: Transform.translate(
+                            offset: Offset(0, 22 * (1 - v)),
+                            child: child,
+                          ),
+                        ),
+                        child: _CategoryCard(
+                          category: cat,
+                          colors: _gradients[cat] ?? [AppTheme.primary, AppTheme.primaryContainer],
+                          available: true,
+                          count: count,
+                          onTap: () {
+                            context.read<GamificationProvider>().recordCategoryExplored(cat.name);
+                            context.push('/personalities-list', extra: cat);
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         ),
+      ),
     );
   }
 }

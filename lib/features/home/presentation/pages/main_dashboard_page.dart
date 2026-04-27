@@ -12,6 +12,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:timeexplorer/features/gamification/presentation/widgets/xp_progress_bar.dart';
 import 'package:timeexplorer/features/gamification/presentation/widgets/badge_unlock_dialog.dart';
+import 'package:timeexplorer/features/gamification/presentation/widgets/level_badge.dart';
 
 class MainDashboardPage extends StatefulWidget {
   const MainDashboardPage({super.key});
@@ -147,25 +148,40 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Row(
+                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: AppTheme.amberGradient,
-                        ),
-                        child: CircleAvatar(
-                          radius: 28,
-                          backgroundImage: profile?.photoUrl != null
-                              ? NetworkImage(profile!.photoUrl!)
-                              : null,
-                          backgroundColor: AppTheme.deepNavy,
-                          child: profile?.photoUrl == null
-                              ? const Icon(Icons.person_rounded, color: Colors.white, size: 28)
-                              : null,
-                        ),
+                      Stack(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: AppTheme.amberGradient,
+                            ),
+                            child: CircleAvatar(
+                              radius: 28,
+                              backgroundImage: profile?.photoUrl != null
+                                  ? NetworkImage(profile!.photoUrl!)
+                                  : null,
+                              backgroundColor: AppTheme.deepNavy,
+                              child: profile?.photoUrl == null
+                                  ? const Icon(Icons.person_rounded, color: Colors.white, size: 28)
+                                  : null,
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: context.watch<GamificationProvider>().progress.level > 0
+                                ? LevelBadge(
+                                    level: context.watch<GamificationProvider>().progress.level,
+                                    xpProgress: context.watch<GamificationProvider>().progress.progressToNextLevel,
+                                    size: 20,
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -175,29 +191,35 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _greeting(),
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12, 
-                                        color: Colors.white70,
-                                        fontWeight: FontWeight.w600,
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _greeting(),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12,
+                                          color: Colors.white70,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      profile?.displayName ?? 'Explorer',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 22, 
-                                        fontWeight: FontWeight.w800, 
-                                        color: Colors.white,
-                                        height: 1.1,
+                                      Text(
+                                        profile?.displayName ?? 'Explorer',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                          height: 1.1,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
+                                const SizedBox(width: 8),
                                 const StreakFlame(),
                               ],
                             ),

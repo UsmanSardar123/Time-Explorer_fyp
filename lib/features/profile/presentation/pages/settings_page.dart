@@ -104,7 +104,7 @@ class SettingsPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _textDark.withOpacity(0.04),
+            color: _textDark.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -129,7 +129,7 @@ class SettingsPage extends StatelessWidget {
       trailing: Switch.adaptive(
         value: value,
         onChanged: onChanged,
-        activeColor: _primary,
+        activeThumbColor: _primary,
       ),
     );
   }
