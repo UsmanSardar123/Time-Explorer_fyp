@@ -18,6 +18,17 @@ import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_
 import 'package:timeexplorer/features/explore/domain/entities/place_entity.dart' as explore;
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/core/widgets/tap_scale.dart';
+import 'package:timeexplorer/features/places/presentation/widgets/place_card.dart' show eraColor;
+import 'package:timeexplorer/features/places/presentation/widgets/place_image_gallery.dart';
+import 'package:timeexplorer/features/places/presentation/widgets/facts_carousel.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:timeexplorer/features/places/presentation/widgets/historical_timeline.dart';
+import 'package:timeexplorer/features/places/presentation/widgets/ai_insights_widget.dart';
+import 'package:timeexplorer/features/places/presentation/widgets/associated_characters_widget.dart';
+import 'package:timeexplorer/features/places/presentation/widgets/nearby_places_widget.dart';
+import 'package:timeexplorer/features/places/data/services/user_progress_service.dart';
+import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 
 class PlaceDetailsPage extends StatelessWidget {
   final String placeId;
@@ -35,7 +46,16 @@ class PlaceDetailsPage extends StatelessWidget {
           PlacesRepositoryImpl(remoteDataSource: PlacesRemoteDataSourceImpl()),
         ),
       )..loadPlaceDetails(placeId),
-      child: BlocBuilder<PlaceDetailsCubit, PlaceDetailsState>(
+      child: BlocConsumer<PlaceDetailsCubit, PlaceDetailsState>(
+        listenWhen: (prev, curr) =>
+            curr is PlaceDetailsLoaded && prev is! PlaceDetailsLoaded,
+        listener: (context, state) {
+          if (state is PlaceDetailsLoaded) {
+            final id = state.place.id;
+            UserProgressService().recordPlaceExplored(id);
+            context.read<GamificationProvider>().recordPlaceDiscovered(id);
+          }
+        },
         builder: (context, state) {
           if (state is PlaceDetailsInitial || state is PlaceDetailsLoading) {
             return const Scaffold(
@@ -67,12 +87,21 @@ class PlaceDetailsPage extends StatelessWidget {
             final place = state.place;
             final images = place.images ?? [];
 
+            final accentColor = place.colorThemeHex != null
+                ? Color(int.parse(
+                    place.colorThemeHex!.replaceFirst('#', '0xFF')))
+                : eraColor(place.era, place.category);
+
             return Scaffold(
               backgroundColor: AppTheme.scaffoldBackgroundColor,
               body: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   _buildSliverAppBar(context, place),
+                  // Era color banner
+                  SliverToBoxAdapter(
+                    child: Container(height: 8, color: accentColor),
+                  ),
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -84,22 +113,38 @@ class PlaceDetailsPage extends StatelessWidget {
                           _buildAnimatedSection(child: _buildSectionTitle('Overview'), delay: 100),
                           const SizedBox(height: 12),
                           _buildAnimatedSection(child: _buildHistoricalOverview(place), delay: 200),
+                          const SizedBox(height: 24),
+                          _buildAnimatedSection(child: _buildTalkToLocalButton(context, place), delay: 250),
                           const SizedBox(height: 32),
                           if (images.isNotEmpty) ...[
-                            _buildAnimatedSection(child: _buildSectionTitle('Visual Gallery'), delay: 300),
+                            _buildAnimatedSection(child: _buildSectionTitle('Gallery'), delay: 300),
                             const SizedBox(height: 16),
-                            _buildAnimatedSection(child: _buildImageGallery(place), delay: 400),
+                            _buildAnimatedSection(
+                              child: PlaceImageGallery(
+                                placeId: place.id,
+                                imageUrls: images,
+                              ),
+                              delay: 400,
+                            ),
                             const SizedBox(height: 32),
                           ],
                           if (place.timeline != null && place.timeline!.isNotEmpty) ...[
                             _buildAnimatedSection(child: _buildSectionTitle('Historical Timeline'), delay: 500),
                             const SizedBox(height: 16),
-                            _buildAnimatedSection(child: _buildTimeline(place), delay: 600),
+                            _buildAnimatedSection(
+                              child: HistoricalTimeline(
+                                events: place.timeline!,
+                                accentColor: accentColor,
+                              ),
+                              delay: 600,
+                            ),
                             const SizedBox(height: 32),
                           ],
                           _buildAnimatedSection(child: _buildSectionTitle('Quick Facts'), delay: 700),
                           const SizedBox(height: 16),
                           _buildAnimatedSection(child: _buildInfoGrid(place), delay: 800),
+                          const SizedBox(height: 24),
+                          _buildAnimatedSection(child: _buildTimeTravelWeather(place), delay: 850),
                           const SizedBox(height: 32),
                           if (place.significance != null || place.historicalSignificance != null) ...[
                             _buildAnimatedSection(child: _buildSectionTitle('Historical Significance'), delay: 900),
@@ -107,17 +152,43 @@ class PlaceDetailsPage extends StatelessWidget {
                             _buildAnimatedSection(child: _buildSignificanceCard(place), delay: 1000),
                             const SizedBox(height: 32),
                           ],
-                          if (place.facts != null && place.facts!.isNotEmpty) ...[
-                            _buildAnimatedSection(child: _buildSectionTitle('Did You Know?'), delay: 1100),
+                          if ((place.facts ?? place.funFacts ?? []).isNotEmpty) ...[
+                            _buildAnimatedSection(child: _buildSectionTitle('Facts'), delay: 1100),
                             const SizedBox(height: 16),
-                            _buildAnimatedSection(child: _buildFunFactsList(place), delay: 1200),
+                            _buildAnimatedSection(
+                              child: FactsCarousel(
+                                facts: place.facts ?? place.funFacts ?? [],
+                                accentColor: accentColor,
+                              ),
+                              delay: 1200,
+                            ),
                             const SizedBox(height: 32),
                           ],
-                          _buildAnimatedSection(child: _buildSectionTitle('Knowledge Check'), delay: 1300),
-                          const SizedBox(height: 16),
-                          _buildAnimatedSection(child: _buildQuizSection(place), delay: 1400),
+                          _buildAnimatedSection(
+                            child: AiInsightsWidget(place: place),
+                            delay: 1300,
+                          ),
                           const SizedBox(height: 32),
-                          _buildAnimatedSection(child: _buildMapIntegration(place), delay: 1500),
+                          _buildAnimatedSection(child: _buildSectionTitle('Knowledge Check'), delay: 1400),
+                          const SizedBox(height: 16),
+                          _buildAnimatedSection(child: _buildQuizSection(place), delay: 1500),
+                          const SizedBox(height: 32),
+                          _buildAnimatedSection(child: _buildMapIntegration(place), delay: 1600),
+                          const SizedBox(height: 32),
+                          if ((place.associatedCharacterIds ?? []).isNotEmpty) ...[
+                            _buildAnimatedSection(
+                              child: AssociatedCharactersWidget(
+                                characterIds: place.associatedCharacterIds!,
+                                placeName: place.name,
+                              ),
+                              delay: 1700,
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+                          _buildAnimatedSection(
+                            child: NearbyPlacesWidget(nearbyPlaces: state.nearbyPlaces),
+                            delay: 1800,
+                          ),
                           const SizedBox(height: 48),
                         ],
                       ),
@@ -542,6 +613,16 @@ class PlaceDetailsPage extends StatelessWidget {
               _buildInfoTile(Icons.calendar_today_rounded, 'DATE', place.constructionDate ?? 'TBA'),
             ],
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Divider(height: 1, color: Colors.grey[100]),
+          ),
+          Row(
+            children: [
+              _buildInfoTile(Icons.public_rounded, 'COUNTRY', place.country ?? 'Unknown'),
+              _buildInfoTile(Icons.verified_rounded, 'UNESCO', place.unescoStatus ?? 'Not Listed'),
+            ],
+          ),
         ],
       ),
     );
@@ -679,10 +760,34 @@ class PlaceDetailsPage extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final latLng = LatLng(place.latitude!, place.longitude!);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Location'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionTitle('Location'),
+            TextButton.icon(
+              onPressed: () async {
+                final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}');
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri);
+                }
+              },
+              icon: const Icon(Icons.directions_rounded, size: 16, color: AppTheme.primaryColor),
+              label: Text(
+                'Directions',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         Container(
           height: 200,
@@ -700,73 +805,34 @@ class PlaceDetailsPage extends StatelessWidget {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: Stack(
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: latLng,
+                initialZoom: 13.0,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                ),
+              ),
               children: [
-                // Static Map Image (Optimized for performance)
-                CachedNetworkImage(
-                  imageUrl: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800', // Beautiful map background
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  color: Colors.white.withValues(alpha: 0.9),
-                  colorBlendMode: BlendMode.screen,
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.timeexplorer.app',
                 ),
-                // Custom Map UI Layers
-                Container(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.05),
-                ),
-                // Subtle Grid Lines for "Map" feel
-                _buildMapGrid(),
-                // Centered Marker
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.location_on_rounded, color: AppTheme.primaryColor, size: 40),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10),
-                          ],
-                        ),
-                        child: Text(
-                          place.name,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1F2937),
-                          ),
-                        ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: latLng,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(
+                        Icons.location_on_rounded,
+                        color: AppTheme.primaryColor,
+                        size: 40,
                       ),
-                    ],
-                  ),
-                ),
-                // Interaction Layer
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => _openMap(place),
-                    child: const SizedBox.expand(),
-                  ),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: TextButton.icon(
-            onPressed: () => _openMap(place),
-            icon: const Icon(Icons.directions_rounded, size: 18),
-            label: const Text('Get Directions'),
-            style: TextButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.08),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ),
@@ -774,39 +840,91 @@ class PlaceDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildMapGrid() {
-    return CustomPaint(
-      painter: _GridPainter(),
-      child: const SizedBox.expand(),
+  Widget _buildTalkToLocalButton(BuildContext context, Place place) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.primaryColor, AppTheme.accentOrange],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => context.push('/local-guide', extra: place),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.forum_rounded, color: Colors.white),
+                const SizedBox(width: 12),
+                Text(
+                  'Talk to a Local',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Future<void> _openMap(Place place) async {
-    final url = 'https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}';
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    }
+  Widget _buildTimeTravelWeather(Place place) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.cloud_sync_rounded, color: AppTheme.primaryColor, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                'Time-Travel Climate',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.deepNavy,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'During the ${place.historicalPeriod ?? place.eraLabel ?? "ancient times"}, the climate around ${place.name} was likely different from today. AI analysis suggests the environment was more suited for the civilization that built it.',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              height: 1.6,
+              color: const Color(0xFF4B5563),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
   }
-}
-
-class _GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.grey.withValues(alpha: 0.1)
-      ..strokeWidth = 1.0;
-
-    const step = 40.0;
-    for (double i = 0; i < size.width; i += step) {
-      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
-    }
-    for (double i = 0; i < size.height; i += step) {
-      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 class PlaceQuizCard extends StatefulWidget {

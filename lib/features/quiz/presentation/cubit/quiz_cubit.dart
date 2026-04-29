@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/quiz.dart';
+import '../../domain/entities/quiz_topic.dart';
 import '../../domain/usecases/get_daily_quiz.dart';
 import '../../domain/usecases/submit_answer.dart';
 import '../../domain/usecases/calculate_score.dart';
@@ -19,6 +20,7 @@ class QuizInitial extends QuizState {}
 class QuizLoading extends QuizState {}
 class QuizLoaded extends QuizState {
   final Quiz quiz;
+  final DifficultyLevel? difficulty;
   final int currentQuestionIndex;
   final int score;
   final bool isFinished;
@@ -27,6 +29,7 @@ class QuizLoaded extends QuizState {
 
   const QuizLoaded({
     required this.quiz,
+    this.difficulty,
     this.currentQuestionIndex = 0,
     this.score = 0,
     this.isFinished = false,
@@ -35,7 +38,7 @@ class QuizLoaded extends QuizState {
   });
 
   @override
-  List<Object?> get props => [quiz, currentQuestionIndex, score, isFinished, lastSelectedAction, showingExplanation];
+  List<Object?> get props => [quiz, difficulty, currentQuestionIndex, score, isFinished, lastSelectedAction, showingExplanation];
 
   QuizLoaded copyWith({
     int? currentQuestionIndex,
@@ -46,6 +49,7 @@ class QuizLoaded extends QuizState {
   }) {
     return QuizLoaded(
       quiz: quiz,
+      difficulty: difficulty,
       currentQuestionIndex: currentQuestionIndex ?? this.currentQuestionIndex,
       score: score ?? this.score,
       isFinished: isFinished ?? this.isFinished,
@@ -72,11 +76,11 @@ class QuizCubit extends Cubit<QuizState> {
     required this.calculateScore,
   }) : super(QuizInitial());
 
-  Future<void> loadQuiz({String? category}) async {
+  Future<void> loadQuiz({String? category, DifficultyLevel? difficulty}) async {
     emit(QuizLoading());
     try {
-      final quiz = await getDailyQuiz(category: category);
-      emit(QuizLoaded(quiz: quiz));
+      final quiz = await getDailyQuiz(category: category, difficulty: difficulty);
+      emit(QuizLoaded(quiz: quiz, difficulty: difficulty));
     } catch (e) {
       emit(QuizError(e.toString()));
     }

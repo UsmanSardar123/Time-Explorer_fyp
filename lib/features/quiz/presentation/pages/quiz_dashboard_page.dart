@@ -144,7 +144,7 @@ class QuizDashboardPage extends StatelessWidget {
   Widget _buildTopicTile(BuildContext context, QuizTopic topic) {
     return TapScale(
       haptic: true,
-      onTap: () => context.push('/quiz-play', extra: topic.title),
+      onTap: () => context.push('/quiz-play', extra: topic),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -174,7 +174,7 @@ class QuizDashboardPage extends StatelessWidget {
             style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           subtitle: Text(
-            '10 Questions • Master Mode',
+            '10 Questions • ${topic.difficultyLevel.label}',
             style: GoogleFonts.beVietnamPro(fontSize: 13, color: _textMuted),
           ),
           trailing: const Icon(Icons.play_circle_fill_rounded, color: _primary, size: 32),

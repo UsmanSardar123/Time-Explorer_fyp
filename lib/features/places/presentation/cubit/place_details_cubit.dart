@@ -57,6 +57,15 @@ class PlaceDetailsCubit extends Cubit<PlaceDetailsState> {
             latitude: place.latitude,
             longitude: place.longitude,
             rating: place.rating,
+            era: place.era,
+            significance: place.significance,
+            facts: place.facts,
+            timeline: place.timeline,
+            quizzes: place.quizzes,
+            associatedCharacterIds: place.associatedCharacterIds,
+            colorThemeHex: place.colorThemeHex,
+            nearbyPlaceIds: place.nearbyPlaceIds,
+            aiInsightsCacheKey: place.aiInsightsCacheKey,
           );
         } catch (e) {
           print('[PlaceDetailsCubit] Wikipedia fetch failed: $e');

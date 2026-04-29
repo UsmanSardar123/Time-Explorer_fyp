@@ -35,6 +35,7 @@ import 'package:timeexplorer/features/places/domain/entities/era.dart';
 import 'package:timeexplorer/features/places/presentation/pages/era_details_page.dart';
 import 'package:timeexplorer/features/quiz/presentation/pages/quiz_dashboard_page.dart';
 import 'package:timeexplorer/features/quiz/presentation/pages/quiz_page.dart';
+import 'package:timeexplorer/features/quiz/domain/entities/quiz_topic.dart';
 import 'package:timeexplorer/features/gamification/presentation/pages/progress_page.dart';
 import 'package:timeexplorer/core/router/app_transitions.dart';
 import 'package:timeexplorer/features/onboarding/presentation/pages/splash_page.dart';
@@ -44,6 +45,7 @@ import 'package:timeexplorer/features/personalities/domain/entities/character_ca
 import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
 import 'package:timeexplorer/features/personalities/presentation/pages/personality_detail_page.dart';
 import 'package:timeexplorer/features/personalities/presentation/pages/personality_chat_page.dart';
+import 'package:timeexplorer/features/places/presentation/pages/local_guide_chat_page.dart';
 import 'package:flutter/material.dart';
 
 class AppRouter {
@@ -124,7 +126,9 @@ class AppRouter {
           pageBuilder: (context, state) {
             final extra = state.extra;
             String id;
-            if (extra is PlaceEntity) {
+            if (extra is Place) {
+              id = extra.id;
+            } else if (extra is PlaceEntity) {
               id = extra.id;
             } else if (extra is String) {
               id = extra;
@@ -154,6 +158,13 @@ class AppRouter {
           path: '/era-details',
           pageBuilder: (context, state) => AppTransitions.portal(
             EraDetailsPage(era: state.extra as Era),
+            state,
+          ),
+        ),
+        GoRoute(
+          path: '/local-guide',
+          pageBuilder: (context, state) => AppTransitions.slide(
+            LocalGuideChatPage(place: state.extra as Place),
             state,
           ),
         ),
@@ -235,10 +246,13 @@ class AppRouter {
         ),
         GoRoute(
           path: '/quiz-play',
-          pageBuilder: (context, state) => AppTransitions.bottomUp(
-            QuizPage(category: state.extra as String?),
-            state,
-          ),
+          pageBuilder: (context, state) {
+            final topic = state.extra as QuizTopic;
+            return AppTransitions.bottomUp(
+              QuizPage(category: topic.title, difficulty: topic.difficultyLevel),
+              state,
+            );
+          },
         ),
 
         // ── Personalities / Chat ───────────────────────────────────────────
@@ -263,10 +277,22 @@ class AppRouter {
         ),
         GoRoute(
           path: '/personality-chat',
-          pageBuilder: (context, state) => AppTransitions.slide(
-            PersonalityChatPage(character: state.extra as Character),
-            state,
-          ),
+          pageBuilder: (context, state) {
+            final extra = state.extra;
+            if (extra is Map<String, dynamic>) {
+              return AppTransitions.slide(
+                PersonalityChatPage(
+                  character: extra['character'] as Character,
+                  initialMessage: extra['initialMessage'] as String?,
+                ),
+                state,
+              );
+            }
+            return AppTransitions.slide(
+              PersonalityChatPage(character: extra as Character),
+              state,
+            );
+          },
         ),
 
         // ── Admin ──────────────────────────────────────────────────────────

@@ -20,7 +20,8 @@ import '../widgets/typing_indicator.dart';
 
 class PersonalityChatPage extends StatefulWidget {
   final Character character;
-  const PersonalityChatPage({super.key, required this.character});
+  final String? initialMessage;
+  const PersonalityChatPage({super.key, required this.character, this.initialMessage});
 
   @override
   State<PersonalityChatPage> createState() => _PersonalityChatPageState();
@@ -35,6 +36,13 @@ class _PersonalityChatPageState extends State<PersonalityChatPage> {
   void initState() {
     super.initState();
     _cubit = ChatCubit(character: widget.character);
+    if (widget.initialMessage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<GamificationProvider>().recordMessageSent();
+        _cubit.sendMessage(widget.initialMessage!);
+        _scrollToBottom();
+      });
+    }
   }
 
   @override
@@ -90,7 +98,7 @@ class _PersonalityChatPageState extends State<PersonalityChatPage> {
                 ..hideCurrentSnackBar()
                 ..showSnackBar(SnackBar(
                   content: Text(
-                    'The scroll is taking too long to unroll. Tap below to try again.',
+                    'Response timed out after 15 s — the character has replied in-character.',
                     style: GoogleFonts.beVietnamPro(fontSize: 13),
                   ),
                   backgroundColor: const Color(0xFF5C4010),
@@ -98,7 +106,12 @@ class _PersonalityChatPageState extends State<PersonalityChatPage> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                   margin: const EdgeInsets.all(16),
-                  duration: const Duration(seconds: 4),
+                  duration: const Duration(seconds: 6),
+                  action: SnackBarAction(
+                    label: 'Retry',
+                    textColor: const Color(0xFFFFD54F),
+                    onPressed: () => ctx.read<ChatCubit>().retryLastMessage(),
+                  ),
                 ));
             }
             if (state.rateLimitWarningText != null && !state.isRateLimited) {

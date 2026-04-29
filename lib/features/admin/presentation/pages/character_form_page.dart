@@ -42,11 +42,14 @@ class _CharacterFormPageState extends State<CharacterFormPage> {
   late final TextEditingController _specialtiesInput;
   late final TextEditingController _contributionsInput;
   late final TextEditingController _achievementInput;
+  late final TextEditingController _contextKeywordInput;
+  late final TextEditingController _contextFactInput;
 
   CharacterCategory _category = CharacterCategory.scientists;
   final List<String> _achievements = [];
   final List<String> _specialties = [];
   final List<String> _contributions = [];
+  final Map<String, String> _contextFacts = {};
   final List<QuizQuestion> _quiz = [];
 
   bool get _isEdit => widget.character != null;
@@ -72,6 +75,8 @@ class _CharacterFormPageState extends State<CharacterFormPage> {
     _specialtiesInput = TextEditingController();
     _contributionsInput = TextEditingController();
     _achievementInput = TextEditingController();
+    _contextKeywordInput = TextEditingController();
+    _contextFactInput = TextEditingController();
 
     if (c?.category != null) {
       _category = c!.category;
@@ -79,6 +84,7 @@ class _CharacterFormPageState extends State<CharacterFormPage> {
     if (c?.achievements != null) _achievements.addAll(c!.achievements!);
     if (c?.specialties != null) _specialties.addAll(c!.specialties);
     if (c?.contributions != null) _contributions.addAll(c!.contributions);
+    if (c?.contextFacts != null) _contextFacts.addAll(c!.contextFacts);
     if (c?.quiz != null) _quiz.addAll(c!.quiz);
   }
 
@@ -89,6 +95,7 @@ class _CharacterFormPageState extends State<CharacterFormPage> {
       _birthYear, _deathYear, _nationality, _legacy,
       _bio, _chatPrompt, _tone, _commStyle, _domainKnowledge,
       _specialtiesInput, _contributionsInput, _achievementInput,
+      _contextKeywordInput, _contextFactInput,
     ]) { ctrl.dispose(); }
     super.dispose();
   }
@@ -118,6 +125,7 @@ class _CharacterFormPageState extends State<CharacterFormPage> {
       domainKnowledge:    _domainKnowledge.text.trim(),
       specialties:        _specialties,
       contributions:      _contributions,
+      contextFacts:       _contextFacts,
       quiz:               _quiz,
       facts:              widget.character?.facts ?? [],
     );
@@ -237,6 +245,8 @@ class _CharacterFormPageState extends State<CharacterFormPage> {
             _listInput('Contributions', _contributionsInput, _contributions, () => _addItem(_contributionsInput, _contributions)),
             const SizedBox(height: 14),
             _listInput('Key Achievements', _achievementInput, _achievements, () => _addItem(_achievementInput, _achievements)),
+            const SizedBox(height: 14),
+            _mapInput('Context Facts', _contextKeywordInput, _contextFactInput, _contextFacts, () => _addMapItem(_contextKeywordInput, _contextFactInput, _contextFacts)),
             const SizedBox(height: 36),
 
             // Submit button
@@ -396,5 +406,88 @@ class _CharacterFormPageState extends State<CharacterFormPage> {
   void _addItem(TextEditingController ctrl, List<String> list) {
     final v = ctrl.text.trim();
     if (v.isNotEmpty) setState(() { list.add(v); ctrl.clear(); });
+  }
+
+  Widget _mapInput(String label, TextEditingController keyCtrl, TextEditingController valCtrl, Map<String, String> map, VoidCallback onAdd) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: TextField(
+                controller: keyCtrl,
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _dark),
+                decoration: InputDecoration(
+                  hintText: 'Keyword',
+                  hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.black26),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _surface)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _surface)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _primaryLight, width: 1.5)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: valCtrl,
+                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: _dark),
+                onSubmitted: (_) => onAdd(),
+                decoration: InputDecoration(
+                  hintText: 'Fact / Context',
+                  hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.black26),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border:        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _surface)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _surface)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _primaryLight, width: 1.5)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Material(
+              color: _primary,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: onAdd,
+                borderRadius: BorderRadius.circular(12),
+                child: const Padding(
+                  padding: EdgeInsets.all(14),
+                  child: Icon(Icons.add, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (map.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: map.entries.map((e) => Chip(
+              label: Text('${e.key}: ${e.value}', style: GoogleFonts.plusJakartaSans(fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+              backgroundColor: _surface,
+              deleteIcon: const Icon(Icons.close, size: 16),
+              onDeleted: () => setState(() => map.remove(e.key)),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            )).toList(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _addMapItem(TextEditingController keyCtrl, TextEditingController valCtrl, Map<String, String> map) {
+    final k = keyCtrl.text.trim();
+    final v = valCtrl.text.trim();
+    if (k.isNotEmpty && v.isNotEmpty) {
+      setState(() { map[k] = v; keyCtrl.clear(); valCtrl.clear(); });
+    }
   }
 }

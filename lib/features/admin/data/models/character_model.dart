@@ -19,6 +19,7 @@ class CharacterModel extends Character {
     super.quiz = const [],
     super.contributions = const [],
     super.facts = const [],
+    super.contextFacts = const {},
     super.nationality,
     super.achievements,
     super.legacy,
@@ -61,6 +62,10 @@ class CharacterModel extends Character {
       }).toList() ?? [],
       contributions: (map['contributions'] as List?)?.map((e) => e.toString()).toList() ?? [],
       facts: (map['facts'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      contextFacts: (map['contextFacts'] as Map<String, dynamic>?)?.map(
+            (key, value) => MapEntry(key, value.toString()),
+          ) ??
+          {},
       nationality: map['nationality'] ?? map['origin'],
       achievements: (map['achievements'] as List?)?.map((e) => e.toString()).toList(),
       legacy: map['legacy'],
@@ -99,6 +104,7 @@ class CharacterModel extends Character {
     }).toList(),
     'contributions': contributions,
     'facts': facts,
+    'contextFacts': contextFacts,
     'knowledgeCutoffYear': knowledgeCutoffYear,
     'speechStyle': speechStyle,
     'emotionalTriggers': emotionalTriggers,

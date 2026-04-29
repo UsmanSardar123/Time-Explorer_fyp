@@ -110,6 +110,15 @@ class GamificationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// +50 XP – call the first time a place is opened (idempotent per placeId).
+  Future<void> recordPlaceDiscovered(String placeId) async {
+    final oldLevel = _progress.level;
+    final oldBadges = List<String>.from(_progress.unlockedBadges);
+    _progress = await _service.recordPlaceDiscovered(placeId);
+    _checkMilestones(oldLevel, oldBadges);
+    notifyListeners();
+  }
+
   /// +5 XP – call when user views a "Did You Know" fact (once per day).
   Future<void> recordFactViewed() async {
     final oldLevel = _progress.level;

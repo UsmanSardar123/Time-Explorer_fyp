@@ -1,16 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeexplorer/features/explore/presentation/providers/personality_provider.dart';
 import 'package:timeexplorer/features/explore/presentation/providers/place_provider.dart';
-import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
 import 'package:timeexplorer/features/explore/presentation/widgets/personality_card.dart';
-import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_provider.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/core/widgets/gamified_components.dart';
 import 'package:timeexplorer/core/widgets/shimmer_box.dart';
 import 'package:timeexplorer/core/widgets/fade_slide_in.dart';
+import 'package:timeexplorer/features/places/domain/entities/place.dart';
+import 'package:timeexplorer/features/places/presentation/widgets/place_card.dart';
+import 'package:timeexplorer/features/places/presentation/widgets/progress_header.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});
@@ -22,6 +25,7 @@ class ExplorePage extends StatefulWidget {
 class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -37,6 +41,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -54,15 +59,20 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // 1. Top Search Bar
+            // 1. Progress Header (authenticated users only)
+            SliverToBoxAdapter(
+              child: ProgressHeader(totalPlaces: placeProvider.places.length),
+            ),
+
+            // 2. Top Search Bar
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: _buildSearchBar(),
               ),
             ),
-            
-            // 2. Category Chips
+
+            // 3. Category / Era Chips
             SliverToBoxAdapter(
               child: _buildCategoryChips(placeProvider),
             ),
@@ -104,8 +114,11 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
         focusNode: _searchFocus,
         style: GoogleFonts.plusJakartaSans(color: AppTheme.textHighContrast),
         onChanged: (value) {
-          context.read<PlaceProvider>().setSearchQuery(value);
-          context.read<PersonalityProvider>().setSearchQuery(value);
+          _debounce?.cancel();
+          _debounce = Timer(const Duration(milliseconds: 300), () {
+            context.read<PlaceProvider>().setSearchQuery(value);
+            context.read<PersonalityProvider>().setSearchQuery(value);
+          });
         },
         decoration: InputDecoration(
           hintText: 'Search history...',
@@ -151,6 +164,9 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
         itemBuilder: (context, index) {
           final cat = provider.categories[index];
           final isSelected = cat == provider.selectedCategory;
+          final accent = cat == 'All'
+              ? AppTheme.primaryElectric
+              : eraColor(cat, cat);
           return Padding(
             padding: const EdgeInsets.only(right: 12),
             child: AnimatedButton(
@@ -160,8 +176,7 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  gradient: isSelected ? AppTheme.primaryGradient : null,
-                  color: isSelected ? null : AppTheme.surfaceLow,
+                  color: isSelected ? accent : AppTheme.surfaceLow,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected ? Colors.transparent : AppTheme.outlineVariant,
@@ -214,143 +229,37 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: provider.places.length,
       itemBuilder: (context, index) {
-        final place = provider.places[index];
+        final pe = provider.places[index];
+        final place = Place(
+          id: pe.id,
+          name: pe.name,
+          category: pe.category,
+          location: pe.location,
+          description: pe.description,
+          imageUrl: pe.imageUrl,
+          rating: pe.rating,
+          era: pe.era,
+          history: pe.history,
+          builtBy: pe.builtBy,
+          civilization: pe.civilization,
+          buildType: pe.buildType,
+          historicalPeriod: pe.historicalPeriod,
+          primaryMaterial: pe.primaryMaterial,
+          dimensions: pe.dimensions,
+          unescoStatus: pe.unescoStatus,
+          purpose: pe.purpose,
+          funFacts: pe.funFacts,
+        );
         return FadeSlideIn(
           index: index,
           child: Padding(
             padding: const EdgeInsets.only(bottom: 24),
-            child: AnimatedCard(
-              onTap: () => context.push('/place-details', extra: place),
-              child: Container(
-                height: 280,
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceCyber,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Stack(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: Hero(
-                              tag: 'place-hero-${place.id}',
-                              child: DynamicPlaceImage(
-                                query: place.name,
-                                placeId: place.id,
-                                fallbackUrl: place.imageUrl.isNotEmpty ? place.imageUrl : null,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      place.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 18,
-                                        color: AppTheme.textHighContrast,
-                                      ),
-                                    ),
-                                  ),
-                                  const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppTheme.primaryElectric),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    // Era chip overlay
-                    Positioned(
-                      top: 150,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.cyberGradient,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          (place.era ?? place.category).toUpperCase(),
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 10,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Heart bookmark button — topmost
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Consumer<BookmarkProvider>(
-                        builder: (context, bookmarkProvider, _) {
-                          final isBookmarked = bookmarkProvider.isBookmarked(place.id);
-                          return AnimatedButton(
-                            onTap: () {
-                              bookmarkProvider.toggleBookmark(place);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(isBookmarked
-                                      ? 'Removed from history'
-                                      : 'Legacy preserved! ❤️'),
-                                  duration: const Duration(seconds: 1),
-                                  backgroundColor: AppTheme.primaryElectric,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(6.0), // increased tap area
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.surfaceCyber.withValues(alpha: 0.8),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppTheme.primaryElectric.withValues(alpha: 0.2)),
-                                ),
-                                child: Icon(
-                                  isBookmarked
-                                      ? Icons.favorite_rounded
-                                      : Icons.favorite_border_rounded,
-                                  color: isBookmarked
-                                      ? AppTheme.accentNeon
-                                      : AppTheme.textDimmed,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ), // Close Stack
-              ), // Close ClipRRect
-            ), // Close Container
-          ), // Close GestureDetector
-        ), // Close Padding
-      ); // FadeSlideIn
-    },
-  );
-}
+            child: PlaceListCard(place: place),
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildPersonalitiesList(PersonalityProvider provider) {
     if (provider.isLoading) {

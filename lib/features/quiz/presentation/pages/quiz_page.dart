@@ -8,13 +8,15 @@ import 'package:timeexplorer/features/quiz/presentation/cubit/quiz_cubit.dart';
 import '../../domain/usecases/get_daily_quiz.dart';
 import '../../domain/usecases/submit_answer.dart';
 import '../../domain/usecases/calculate_score.dart';
+import '../../domain/entities/quiz_topic.dart';
 import '../../data/repositories/quiz_repository_impl.dart';
 import '../../data/datasources/quiz_local_data_source.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 
 class QuizPage extends StatelessWidget {
   final String? category;
-  const QuizPage({super.key, this.category});
+  final DifficultyLevel? difficulty;
+  const QuizPage({super.key, this.category, this.difficulty});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +27,7 @@ class QuizPage extends StatelessWidget {
         ),
         submitAnswer: SubmitAnswer(),
         calculateScore: CalculateScore(),
-      )..loadQuiz(category: category),
+      )..loadQuiz(category: category, difficulty: difficulty),
       child: const QuizView(),
     );
   }
@@ -132,7 +134,27 @@ class _QuizViewState extends State<QuizView> with TickerProviderStateMixin {
   Widget _buildHUD(QuizLoaded state) {
     final total = state.quiz.questions.length;
     final progress = total > 0 ? (state.currentQuestionIndex + 1) / total : 0.0;
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (state.difficulty != null)
+          Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryContainer.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              state.difficulty!.label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primaryContainer,
+              ),
+            ),
+          ),
+        Row(
       children: [
         // Left: Hearts
         const Row(
@@ -184,6 +206,8 @@ class _QuizViewState extends State<QuizView> with TickerProviderStateMixin {
               ),
             ),
           ),
+        ),
+      ],
         ),
       ],
     );

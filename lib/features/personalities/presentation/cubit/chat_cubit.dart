@@ -19,6 +19,7 @@ import '../../data/services/prompt_builder_service.dart';
 import '../../data/services/rate_limit_service.dart';
 import '../../data/services/response_cache_service.dart';
 import '../../data/services/response_validator.dart';
+import '../../data/repositories/character_firestore_repository.dart';
 import '../../data/services/suggestion_service.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/chat_message.dart';
@@ -26,8 +27,9 @@ import 'chat_state.dart';
 
 class ChatCubit extends Cubit<ChatState> {
   final OpenAIChatService _service;
-  final Character _character;
+  Character _character;
   final ConversationManager _manager;
+  final CharacterFirestoreRepository _firestoreRepo;
   final ConversationRepository _repo;
   final PromptBuilderService _promptBuilder;
   final SuggestionService _suggestionService;
@@ -47,6 +49,7 @@ class ChatCubit extends Cubit<ChatState> {
         _contextFactService = ContextFactService(),
         _rateLimitService = RateLimitService(),
         _cacheService = ResponseCacheService(),
+        _firestoreRepo = CharacterFirestoreRepository(),
         super(const ChatState()) {
     _initSession();
   }
@@ -54,6 +57,8 @@ class ChatCubit extends Cubit<ChatState> {
   String get _uid => FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
 
   Future<void> _initSession() async {
+    final firestoreChar = await _firestoreRepo.getById(_character.id);
+    if (firestoreChar != null) _character = firestoreChar;
     _manager.setSystemPrompt(_promptBuilder.build(_character));
 
     unawaited(AnalyticsService.logChatSessionStarted(
@@ -237,14 +242,7 @@ class ChatCubit extends Cubit<ChatState> {
         currentMessages.removeWhere((m) => m.id == aiMsgId);
       }
 
-      if (e is GeminiChatException && e.error == GeminiError.timeoutError) {
-        emit(state.copyWith(
-          messages: currentMessages,
-          isTyping: false,
-          streamingMessageId: null,
-          isTimeout: true,
-        ));
-      } else if (e is GeminiChatException &&
+      if (e is GeminiChatException &&
           _character.fallbackResponses.isNotEmpty) {
         final fallbackText =
             _pickFallback(_character.fallbackResponses, e.error);
@@ -261,6 +259,16 @@ class ChatCubit extends Cubit<ChatState> {
           isTyping: false,
           streamingMessageId: null,
           isOffline: e.error == GeminiError.networkError,
+          isTimeout: e.error == GeminiError.timeoutError,
+        ));
+      } else if (e is GeminiChatException &&
+          e.error == GeminiError.timeoutError) {
+        // No fallback responses configured — surface retry card only.
+        emit(state.copyWith(
+          messages: currentMessages,
+          isTyping: false,
+          streamingMessageId: null,
+          isTimeout: true,
         ));
       } else {
         final errStr = e.toString();

@@ -13,6 +13,7 @@ class UserProgress extends Equatable {
   final int streakDays;
   final List<String> completedQuizIds;
   final DateTime? lastFactDate;
+  final List<String> exploredPlaceIds;
 
   const UserProgress({
     this.xp = 0,
@@ -26,6 +27,7 @@ class UserProgress extends Equatable {
     this.streakDays = 0,
     this.completedQuizIds = const [],
     this.lastFactDate,
+    this.exploredPlaceIds = const [],
   });
 
   UserProgress copyWith({
@@ -40,6 +42,7 @@ class UserProgress extends Equatable {
     int? streakDays,
     List<String>? completedQuizIds,
     DateTime? lastFactDate,
+    List<String>? exploredPlaceIds,
   }) {
     return UserProgress(
       xp: xp ?? this.xp,
@@ -53,6 +56,7 @@ class UserProgress extends Equatable {
       streakDays: streakDays ?? this.streakDays,
       completedQuizIds: completedQuizIds ?? this.completedQuizIds,
       lastFactDate: lastFactDate ?? this.lastFactDate,
+      exploredPlaceIds: exploredPlaceIds ?? this.exploredPlaceIds,
     );
   }
 
@@ -113,6 +117,7 @@ class UserProgress extends Equatable {
     'streakDays': streakDays,
     'completedQuizIds': completedQuizIds,
     'lastFactDate': lastFactDate?.toIso8601String(),
+    'exploredPlaceIds': exploredPlaceIds,
   };
 
   factory UserProgress.fromJson(Map<String, dynamic> json) => UserProgress(
@@ -127,6 +132,7 @@ class UserProgress extends Equatable {
     streakDays: json['streakDays'] ?? 0,
     completedQuizIds: List<String>.from(json['completedQuizIds'] ?? []),
     lastFactDate: json['lastFactDate'] != null ? DateTime.tryParse(json['lastFactDate']) : null,
+    exploredPlaceIds: List<String>.from(json['exploredPlaceIds'] ?? []),
   );
 
   @override
@@ -142,5 +148,6 @@ class UserProgress extends Equatable {
     streakDays,
     completedQuizIds,
     lastFactDate,
+    exploredPlaceIds,
   ];
 }

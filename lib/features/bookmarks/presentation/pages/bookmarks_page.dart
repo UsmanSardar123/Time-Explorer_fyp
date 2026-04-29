@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -46,6 +48,12 @@ class _BookmarksPageState extends State<BookmarksPage> {
                     color: AppTheme.onSurface,
                   ),
                 ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: _ExploredSummaryCard(totalPlaces: catProvider.places.length),
               ),
             ),
             SliverToBoxAdapter(child: _buildFilterChips(catProvider)),
@@ -231,6 +239,101 @@ class _BookmarksPageState extends State<BookmarksPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ExploredSummaryCard extends StatelessWidget {
+  final int totalPlaces;
+  const _ExploredSummaryCard({required this.totalPlaces});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return const SizedBox.shrink();
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('progress')
+          .doc('places')
+          .snapshots(),
+      builder: (context, snap) {
+        final data = snap.data?.data() as Map<String, dynamic>?;
+        final explored = (data?['totalExplored'] as int?) ?? 0;
+        final total = totalPlaces > 0 ? totalPlaces : 1;
+        final pct = (explored / total).clamp(0.0, 1.0);
+
+        return GestureDetector(
+          onTap: () => context.push('/progress'),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLow,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.outlineVariant),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryContainer.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.explore_rounded,
+                      color: AppTheme.primaryContainer, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '$explored / $totalPlaces explored',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            '${(pct * 100).toInt()}%',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryContainer,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: pct,
+                          minHeight: 5,
+                          backgroundColor: AppTheme.surfaceHigh,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppTheme.primaryContainer),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Icon(Icons.chevron_right_rounded,
+                    color: AppTheme.onSurfaceVariant, size: 18),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
