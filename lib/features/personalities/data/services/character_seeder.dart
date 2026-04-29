@@ -96,6 +96,10 @@ class CharacterSeeder {
       'Traveled to every major Islamic state of the 14th century',
       'Served in diplomatic and judicial roles across three continents',
     ],
+    'contextFacts': {
+      'rihla': 'The Rihla is Ibn Battuta\'s famous travel log, detailing his 30-year journey across the Islamic world.',
+      'mali': 'Mansa Musa, the ruler of Mali during Ibn Battuta\'s visit, is considered one of the wealthiest individuals in human history.',
+    },
     'legacy':
         'Ibn Battuta\'s Rihla remains an irreplaceable historical record of the 14th-century world, '
         'documenting civilizations, customs, and events that no other single source captured.',
@@ -184,6 +188,10 @@ class CharacterSeeder {
       'Maintained Egypt as an independent power in the face of Roman expansion',
       'Patron of the Library of Alexandria and Egyptian scholarship',
     ],
+    'contextFacts': {
+      'actium': 'The Battle of Actium in 31 BC was a decisive naval battle where Octavian defeated Mark Antony and Cleopatra.',
+      'library': 'The Great Library of Alexandria was one of the largest and most significant libraries of the ancient world.',
+    },
     'legacy':
         'Cleopatra remains the defining symbol of female power in the ancient world. Her reign marked '
         'the end of 3,000 years of pharaonic rule and the transformation of Egypt into a Roman province.',
@@ -273,6 +281,10 @@ class CharacterSeeder {
       'Designed engineering concepts that anticipated inventions by centuries',
       'Produced the most detailed anatomical drawings of the Renaissance period',
     ],
+    'contextFacts': {
+      'mona lisa': 'The Mona Lisa is famous for its sfumato technique, which blends colors and tones without distinct lines.',
+      'anatomy': 'Da Vinci illegally dissected over 30 human corpses to create his detailed anatomical drawings.',
+    },
     'legacy':
         'Da Vinci stands as history\'s most versatile genius, whose art and science were inseparable. '
         'His notebooks continue to reveal ideas that were centuries ahead of their time.',
@@ -363,6 +375,10 @@ class CharacterSeeder {
       'Ended the Fatimid Caliphate and restored Sunni governance to Egypt',
       'Became the most celebrated ruler of the Islamic world in his era',
     ],
+    'contextFacts': {
+      'hattin': 'At the Battle of Hattin, Salahuddin\'s forces lured the Crusader army into the arid landscape, cutting off their water supply.',
+      'jerusalem': 'When Salahuddin recaptured Jerusalem in 1187, he strictly forbade massacres and looting, in stark contrast to the Crusader conquest in 1099.',
+    },
     'legacy':
         'Salahuddin is remembered as the embodiment of chivalric leadership — revered by Muslims and '
         'respected even by Crusaders. His recapture of Jerusalem remains one of history\'s defining moments.',
@@ -454,6 +470,10 @@ class CharacterSeeder {
       'Only person in history to win Nobel Prizes in two different sciences',
       'First woman professor at the University of Paris (Sorbonne)',
     ],
+    'contextFacts': {
+      'polonium': 'Marie Curie discovered polonium in 1898 and named it after her home country of Poland, which was then partitioned and occupied.',
+      'radium': 'Radium is a highly radioactive element discovered by the Curies; its intense radioactivity caused the notebooks to remain radioactive to this day.',
+    },
     'legacy':
         'Marie Curie\'s work laid the foundation for nuclear physics and cancer radiotherapy. '
         'She remains the most celebrated female scientist in history and a symbol of perseverance.',

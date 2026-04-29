@@ -1,16 +1,17 @@
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/quiz.dart';
+import '../../domain/entities/quiz_topic.dart';
 import 'static_quiz_data.dart';
 import 'quiz_questions_pool.dart';
 
 abstract class QuizLocalDataSource {
-  Future<Quiz> getDailyQuiz({String? category});
+  Future<Quiz> getDailyQuiz({String? category, DifficultyLevel? difficulty});
   Future<void> saveQuizScore(String quizId, int score);
 }
 
 class QuizLocalDataSourceImpl implements QuizLocalDataSource {
   @override
-  Future<Quiz> getDailyQuiz({String? category}) async {
+  Future<Quiz> getDailyQuiz({String? category, DifficultyLevel? difficulty}) async {
     // Simulating network/local delay
     await Future.delayed(const Duration(milliseconds: 800));
 

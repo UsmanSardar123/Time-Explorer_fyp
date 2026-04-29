@@ -29,6 +29,7 @@ class Character extends Equatable {
   final String description;
   final List<String> contributions;
   final List<String> facts;
+  final Map<String, String> contextFacts;
 
   // Metadata for Identity/Roleplay
   final String? tone;
@@ -70,6 +71,7 @@ class Character extends Equatable {
     this.chatPrompt = '',
     this.contributions = const [],
     this.facts = const [],
+    this.contextFacts = const {},
     this.specialties = const [],
     this.quiz = const [],
     this.tone,
@@ -98,6 +100,7 @@ class Character extends Equatable {
         origin,
         specialties,
         quiz,
+        contextFacts,
         nationality,
         achievements,
         legacy,

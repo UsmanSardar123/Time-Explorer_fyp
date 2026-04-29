@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timeexplorer/features/places/data/models/place_model.dart';
+import 'package:timeexplorer/features/places/domain/entities/timeline_event.dart';
 
 abstract class PlacesRemoteDataSource {
   Future<PlaceModel> getPlaceDetails(String placeId);
@@ -7,6 +8,12 @@ abstract class PlacesRemoteDataSource {
   Future<List<PlaceModel>> getPlacesByEra(String eraId);
   Future<void> updatePlace(PlaceModel place);
   Future<void> deletePlace(String placeId);
+  
+  // Sprint 1 Additions
+  Future<List<PlaceModel>> fetchAllPlaces();
+  Future<PlaceModel?> fetchPlaceById(String id);
+  Future<List<TimelineEvent>> fetchTimeline(String placeId);
+  Future<List<PlaceModel>> fetchNearbyPlacesByIds(List<String> ids);
 }
 
 class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
@@ -74,6 +81,68 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
       await _firestore.collection('places').doc(placeId).delete();
     } catch (e) {
       throw Exception('Failed to delete place: $e');
+    }
+  }
+
+  @override
+  Future<List<PlaceModel>> fetchAllPlaces() async {
+    try {
+      final querySnapshot = await _firestore.collection('places').get();
+      return querySnapshot.docs
+          .map((doc) => PlaceModel.fromMap(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      print('Error fetching all places: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<PlaceModel?> fetchPlaceById(String id) async {
+    try {
+      final doc = await _firestore.collection('places').doc(id).get();
+      if (!doc.exists) return null;
+      return PlaceModel.fromMap(doc.data()!, doc.id);
+    } catch (e) {
+      print('Error fetching place by id: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<List<TimelineEvent>> fetchTimeline(String placeId) async {
+    try {
+      final querySnapshot = await _firestore.collection('places')
+          .doc(placeId)
+          .collection('timeline')
+          .orderBy('orderIndex')
+          .get();
+      
+      return querySnapshot.docs
+          .map((doc) => TimelineEvent.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      print('Error fetching timeline: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<PlaceModel>> fetchNearbyPlacesByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    try {
+      // Firestore 'whereIn' limits to 10 items
+      final limitedIds = ids.take(10).toList();
+      final querySnapshot = await _firestore.collection('places')
+          .where(FieldPath.documentId, whereIn: limitedIds)
+          .get();
+      
+      return querySnapshot.docs
+          .map((doc) => PlaceModel.fromMap(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      print('Error fetching nearby places by ids: $e');
+      return [];
     }
   }
 }

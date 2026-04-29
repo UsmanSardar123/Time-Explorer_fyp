@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timeexplorer/features/places/domain/entities/place.dart';
 import '../../domain/entities/timeline_event.dart';
+import 'package:timeexplorer/models/place_era.dart';
 
 class PlaceModel extends Place {
   const PlaceModel({
@@ -17,9 +19,16 @@ class PlaceModel extends Place {
     super.constructionDate,
     super.architecturalStyle,
     super.historicalSignificance,
+    super.buildType,
+    super.historicalPeriod,
+    super.primaryMaterial,
+    super.dimensions,
+    super.unescoStatus,
+    super.purpose,
     super.funFacts,
     super.visitorInfo,
     super.createdAt,
+    super.wikimediaTags,
     super.images,
     super.keyFacts,
     super.openingHours,
@@ -31,10 +40,17 @@ class PlaceModel extends Place {
     super.longitude,
     required super.rating,
     super.era,
+    super.eraEnum,
+    super.eraLabel,
+    super.city,
     super.significance,
     super.facts,
     super.timeline,
     super.quizzes,
+    super.associatedCharacterIds,
+    super.colorThemeHex,
+    super.nearbyPlaceIds,
+    super.aiInsightsCacheKey,
   });
 
   factory PlaceModel.fromMap(Map<String, dynamic> data, String id) {
@@ -53,9 +69,16 @@ class PlaceModel extends Place {
       constructionDate: data['constructionDate'],
       architecturalStyle: data['architecturalStyle'],
       historicalSignificance: data['historicalSignificance'],
+      buildType: data['buildType'],
+      historicalPeriod: data['historicalPeriod'],
+      primaryMaterial: data['primaryMaterial'],
+      dimensions: data['dimensions'],
+      unescoStatus: data['unescoStatus'],
+      purpose: data['purpose'],
       funFacts: data['funFacts'] != null ? List<String>.from(data['funFacts']) : null,
       visitorInfo: data['visitorInfo'],
       createdAt: data['createdAt']?.toString(),
+      wikimediaTags: data['wikimediaTags'] != null ? List<String>.from(data['wikimediaTags']) : null,
       images: data['images'] != null ? List<String>.from(data['images']) : null,
       keyFacts: data['keyFacts'] != null ? List<String>.from(data['keyFacts']) : null,
       openingHours: data['openingHours'],
@@ -63,20 +86,35 @@ class PlaceModel extends Place {
       bestTimeToVisit: data['bestTimeToVisit'],
       visitDuration: data['visitDuration'],
       didYouKnow: data['didYouKnow'],
-      latitude: (data['latitude'] as num?)?.toDouble(),
-      longitude: (data['longitude'] as num?)?.toDouble(),
+      latitude: data['coordinates'] is GeoPoint 
+          ? (data['coordinates'] as GeoPoint).latitude 
+          : (data['latitude'] as num?)?.toDouble(),
+      longitude: data['coordinates'] is GeoPoint 
+          ? (data['coordinates'] as GeoPoint).longitude 
+          : (data['longitude'] as num?)?.toDouble(),
       rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
       era: data['era'] ?? data['eraId'],
+      eraEnum: PlaceEraExtension.fromString(data['eraEnum'] ?? data['era'] ?? data['eraId']),
+      eraLabel: data['eraLabel'],
+      city: data['city'],
       significance: data['significance'] ?? data['historicalSignificance'],
       facts: data['facts'] != null 
           ? List<String>.from(data['facts']) 
           : (data['funFacts'] != null ? List<String>.from(data['funFacts']) : null),
-      timeline: data['timeline'] != null 
-          ? (data['timeline'] as List).map((x) => TimelineEvent.fromMap(x as Map<String, dynamic>)).toList() 
+      timeline: data['timeline'] != null
+          ? (data['timeline'] as List).map((x) => TimelineEvent.fromMap(x as Map<String, dynamic>)).toList()
           : null,
       quizzes: data['quizzes'] != null
           ? (data['quizzes'] as List).map((x) => PlaceQuiz.fromMap(x as Map<String, dynamic>)).toList()
           : null,
+      associatedCharacterIds: data['associatedCharacterIds'] != null
+          ? List<String>.from(data['associatedCharacterIds'])
+          : null,
+      colorThemeHex: data['colorThemeHex'],
+      nearbyPlaceIds: data['nearbyPlaceIds'] != null
+          ? List<String>.from(data['nearbyPlaceIds'])
+          : null,
+      aiInsightsCacheKey: data['aiInsightsCacheKey'],
     );
   }
 
@@ -90,6 +128,9 @@ class PlaceModel extends Place {
       'imageUrl': imageUrl.isNotEmpty ? imageUrl : 'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=800',
       'eraId': eraId,
       'era': era ?? eraId, 
+      'eraEnum': eraEnum?.value,
+      'eraLabel': eraLabel,
+      'city': city,
       'history': history,
       'country': country,
       'civilization': civilization,
@@ -97,11 +138,18 @@ class PlaceModel extends Place {
       'constructionDate': constructionDate,
       'architecturalStyle': architecturalStyle,
       'historicalSignificance': historicalSignificance,
+      'buildType': buildType,
+      'historicalPeriod': historicalPeriod,
+      'primaryMaterial': primaryMaterial,
+      'dimensions': dimensions,
+      'unescoStatus': unescoStatus,
+      'purpose': purpose,
       'significance': significance ?? historicalSignificance,
       'funFacts': funFacts,
       'facts': facts ?? funFacts,
       'visitorInfo': visitorInfo,
       'createdAt': createdAt ?? DateTime.now().toIso8601String(),
+      'wikimediaTags': wikimediaTags,
       'images': images,
       'galleryImages': images, 
       'keyFacts': keyFacts,
@@ -110,11 +158,16 @@ class PlaceModel extends Place {
       'bestTimeToVisit': bestTimeToVisit,
       'visitDuration': visitDuration,
       'didYouKnow': didYouKnow,
+      'coordinates': (latitude != null && longitude != null) ? GeoPoint(latitude!, longitude!) : null,
       'latitude': latitude,
       'longitude': longitude,
       'rating': rating,
       'timeline': timeline?.map((x) => x.toMap()).toList(),
       'quizzes': quizzes?.map((x) => x.toMap()).toList(),
+      'associatedCharacterIds': associatedCharacterIds,
+      'colorThemeHex': colorThemeHex,
+      'nearbyPlaceIds': nearbyPlaceIds,
+      'aiInsightsCacheKey': aiInsightsCacheKey,
     };
   }
 }

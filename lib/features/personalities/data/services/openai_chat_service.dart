@@ -14,7 +14,7 @@ class OpenAIChatService {
   static const _modelName = 'gemini-flash-latest';
   static String get _apiKey => AppConfig.geminiApiKey;
   static const int _tokenThreshold = 3000;
-  static const Duration _streamTimeout = Duration(seconds: 30);
+  static const Duration _streamTimeout = Duration(seconds: 15);
 
   const OpenAIChatService();
 
@@ -162,7 +162,7 @@ class OpenAIChatService {
           continue;
         }
         throw const GeminiChatException(
-            GeminiError.timeoutError, 'Request timed out after 30 seconds.');
+            GeminiError.timeoutError, 'Request timed out after 15 seconds.');
       } on InvalidApiKey {
         throw const GeminiChatException(
             GeminiError.unknownError, 'Invalid API Key.');
@@ -224,7 +224,7 @@ class OpenAIChatService {
           continue;
         }
         throw const GeminiChatException(
-            GeminiError.timeoutError, 'Stream timed out after 30 seconds.');
+            GeminiError.timeoutError, 'Stream timed out after 15 seconds.');
       } on InvalidApiKey {
         throw const GeminiChatException(
             GeminiError.unknownError, 'Invalid API Key.');

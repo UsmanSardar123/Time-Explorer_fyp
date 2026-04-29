@@ -93,3 +93,11 @@ const List<QuizTopic> allTopics = [
     color: Color(0xFF708090),
   ),
 ];
+
+extension DifficultyLevelLabel on DifficultyLevel {
+  String get label => switch (this) {
+    DifficultyLevel.easy   => 'Beginner',
+    DifficultyLevel.medium => 'Enthusiast',
+    DifficultyLevel.hard   => 'Expert',
+  };
+}

@@ -68,7 +68,7 @@ class MemoryScorer {
   static List<ChatTurn> toTurns(List<Map<String, String>> history) {
     final turns = <ChatTurn>[];
     for (int i = 0; i < history.length - 1; i += 2) {
-      if (history[i]['role'] == 'user' && history[i + 1]['role'] == 'assistant') {
+      if (history[i]['role'] == 'user' && history[i + 1]['role'] == 'model') {
         turns.add(ChatTurn(
           user: history[i],
           assistant: history[i + 1],

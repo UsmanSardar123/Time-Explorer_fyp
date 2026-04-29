@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'timeline_event.dart';
+import 'package:timeexplorer/models/place_era.dart';
 
 class PlaceQuiz extends Equatable {
   final String question;
@@ -57,6 +58,7 @@ class Place extends Equatable {
   final List<String>? funFacts;
   final String? visitorInfo;
   final String? createdAt;
+  final List<String>? wikimediaTags;
   final List<String>? images;
   final List<String>? keyFacts;
   final String? openingHours;
@@ -69,13 +71,22 @@ class Place extends Equatable {
   final double rating;
 
   // Sprint 1 Additions
-  final String? era;
+  final String? era; // Kept for backwards compatibility
+  final PlaceEra? eraEnum;
+  final String? eraLabel;
+  final String? city;
   final String? significance;
   final List<String>? facts;
   final List<TimelineEvent>? timeline;
 
   // Sprint 6 Addition
   final List<PlaceQuiz>? quizzes;
+
+  // Sprint 1 — Ask the Guide bridge + UI metadata
+  final List<String>? associatedCharacterIds;
+  final String? colorThemeHex;
+  final List<String>? nearbyPlaceIds;
+  final String? aiInsightsCacheKey;
 
   const Place({
     required this.id,
@@ -101,6 +112,7 @@ class Place extends Equatable {
     this.funFacts,
     this.visitorInfo,
     this.createdAt,
+    this.wikimediaTags,
     this.images,
     this.keyFacts,
     this.openingHours,
@@ -112,10 +124,17 @@ class Place extends Equatable {
     this.longitude,
     required this.rating,
     this.era,
+    this.eraEnum,
+    this.eraLabel,
+    this.city,
     this.significance,
     this.facts,
     this.timeline,
     this.quizzes,
+    this.associatedCharacterIds,
+    this.colorThemeHex,
+    this.nearbyPlaceIds,
+    this.aiInsightsCacheKey,
   });
 
   @override
@@ -143,6 +162,7 @@ class Place extends Equatable {
         funFacts,
         visitorInfo,
         createdAt,
+        wikimediaTags,
         images,
         keyFacts,
         openingHours,
@@ -154,9 +174,16 @@ class Place extends Equatable {
         longitude,
         rating,
         era,
+        eraEnum,
+        eraLabel,
+        city,
         significance,
         facts,
         timeline,
         quizzes,
+        associatedCharacterIds,
+        colorThemeHex,
+        nearbyPlaceIds,
+        aiInsightsCacheKey,
       ];
 }

@@ -16,6 +16,7 @@ class GamificationService {
   static const int xpMessageSent = 5;
   static const int xpFirstPersonalityInteraction = 10;
   static const int xpNewCategoryExplored = 20;
+  static const int xpPlaceDiscovered = 50;
 
   // ── Badge IDs ────────────────────────────────────────────────────────────────
   static const String badgeFirstContact = 'first_contact';
@@ -23,6 +24,8 @@ class GamificationService {
   static const String badgeExplorer = 'explorer';
   static const String badgeScholar = 'scholar';
   static const String badgeHistorian = 'historian';
+  static const String badgeTrailblazer = 'trailblazer';
+  static const String badgeArchaeologist = 'archaeologist';
 
   final List<Badge> _availableBadges = [
     const Badge(
@@ -54,6 +57,18 @@ class GamificationService {
       name: 'Historian',
       description: 'Interact with 10 different personalities.',
       icon: '📜',
+    ),
+    const Badge(
+      id: badgeTrailblazer,
+      name: 'Trailblazer',
+      description: 'Explore 5 historical places.',
+      icon: '🗺️',
+    ),
+    const Badge(
+      id: badgeArchaeologist,
+      name: 'Archaeologist',
+      description: 'Explore 15 historical places.',
+      icon: '⛏️',
     ),
   ];
 
@@ -178,6 +193,22 @@ class GamificationService {
     return progress;
   }
 
+  /// +50 XP for discovering a place for the first time (idempotent per placeId).
+  Future<UserProgress> recordPlaceDiscovered(String placeId) async {
+    var progress = await loadProgress();
+    if (progress.exploredPlaceIds.contains(placeId)) return progress;
+
+    final newList = List<String>.from(progress.exploredPlaceIds)..add(placeId);
+    progress = progress.copyWith(
+      xp: progress.xp + xpPlaceDiscovered,
+      exploredPlaceIds: newList,
+    );
+    progress = await _checkAndUnlockBadges(progress);
+    progress = progress.copyWith(level: UserProgress.calculateLevel(progress.xp));
+    await saveProgress(progress);
+    return progress;
+  }
+
   /// +20 XP for completing a quiz for the first time (idempotent per quizId).
   Future<UserProgress> recordQuizCompleted(String quizId) async {
     var progress = await loadProgress();
@@ -258,6 +289,16 @@ class GamificationService {
     if (!newlyUnlocked.contains(badgeHistorian) &&
         progress.interactedPersonalities.length >= 10) {
       newlyUnlocked.add(badgeHistorian);
+      changed = true;
+    }
+    if (!newlyUnlocked.contains(badgeTrailblazer) &&
+        progress.exploredPlaceIds.length >= 5) {
+      newlyUnlocked.add(badgeTrailblazer);
+      changed = true;
+    }
+    if (!newlyUnlocked.contains(badgeArchaeologist) &&
+        progress.exploredPlaceIds.length >= 15) {
+      newlyUnlocked.add(badgeArchaeologist);
       changed = true;
     }
 
