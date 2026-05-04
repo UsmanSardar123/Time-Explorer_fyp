@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'quiz_topic.dart';
 
 enum QuestionType {
   mcq,
@@ -14,6 +15,7 @@ class QuizQuestion extends Equatable {
   final int correctAnswerIndex;
   final String explanation;
   final QuestionType type;
+  final DifficultyLevel difficulty;
   final String? imageUrl;
 
   const QuizQuestion({
@@ -23,9 +25,10 @@ class QuizQuestion extends Equatable {
     required this.correctAnswerIndex,
     required this.explanation,
     required this.type,
+    required this.difficulty,
     this.imageUrl,
   });
 
   @override
-  List<Object?> get props => [id, question, options, correctAnswerIndex, explanation, type, imageUrl];
+  List<Object?> get props => [id, question, options, correctAnswerIndex, explanation, type, difficulty, imageUrl];
 }

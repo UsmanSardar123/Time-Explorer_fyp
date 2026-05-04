@@ -39,18 +39,27 @@ void main() async {
   AppConfig.validate();
 
 
+  debugPrint('[App] Initializing Firebase...');
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  unawaited(
-    RemoteConfigService.checkForUpdates(CharacterFirestoreRepository()),
-  );
-
-  await Hive.initFlutter();
-  await Hive.openBox<String>('wikipedia_cache');
+  debugPrint('[App] Firebase initialized.');
 
   runApp(const ProviderScope(child: MyApp()));
+
+  // Defer platform-channel-heavy init to after first frame to prevent
+  // the "Width is zero" viewport freeze on Android. Hive.initFlutter()
+  // calls path_provider under the hood; running it before runApp() causes
+  // the FlutterView to resize before it has stable dimensions.
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    debugPrint('[App] Post-frame: initializing Hive cache...');
+    await Hive.initFlutter();
+    await Hive.openBox<String>('wikipedia_cache');
+    debugPrint('[App] Post-frame: Hive cache ready.');
+    unawaited(
+      RemoteConfigService.checkForUpdates(CharacterFirestoreRepository()),
+    );
+  });
 }
 
 class ProviderScope extends StatelessWidget {
@@ -75,7 +84,7 @@ class ProviderScope extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => DailyFactProvider()),
         ChangeNotifierProvider(create: (_) => EraProvider()),
-        ChangeNotifierProvider(create: (_) => GamificationProvider()..init()),
+        ChangeNotifierProvider(create: (_) => GamificationProvider()),
       ],
       child: child,
     );
@@ -97,6 +106,12 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     final authProvider = context.read<AuthProvider>();
     _router = AppRouter.createRouter(authProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<GamificationProvider>().init();
+        debugPrint('[App] First frame rendered — post-frame init triggered.');
+      }
+    });
   }
 
   @override

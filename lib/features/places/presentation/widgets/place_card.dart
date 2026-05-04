@@ -41,9 +41,11 @@ class PlaceListCard extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               Hero(
-                tag: 'place_hero_${place.id}',
+                tag: 'place_cover_${place.id}',
                 child: CachedNetworkImage(
-                  imageUrl: place.imageUrl.isNotEmpty ? place.imageUrl : 'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=800',
+                  imageUrl: place.imageUrls.isNotEmpty
+                      ? place.imageUrls.first
+                      : (place.imageUrl.isNotEmpty ? place.imageUrl : 'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=800'),
                   fit: BoxFit.cover,
                   width: double.infinity,
                   placeholder: (context, url) => const ShimmerBox(radius: 0),

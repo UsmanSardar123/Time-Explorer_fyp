@@ -48,13 +48,51 @@ class AuthProvider extends ChangeNotifier {
   void _initAuthListener() {
     _authSubscription?.cancel();
     _authSubscription = FirebaseAuth.instance.authStateChanges().listen((User? user) async {
-      if (user != null) {
-        // Fetch full entity in background
-        _currentUser = await _getCurrentUserUseCase();
-      } else {
+      debugPrint('[AuthProvider] Auth state changed: ${user?.uid ?? 'signed out'}');
+
+      if (user == null) {
         _currentUser = null;
+        _isLoading = false;
+        notifyListeners();
+        return;
       }
+
+      // Unblock navigation immediately — do not wait for Firestore
       _isLoading = false;
+      notifyListeners();
+
+      // Fetch full profile in background with a hard timeout
+      debugPrint('[AuthProvider] Fetching user profile...');
+      try {
+        final fetched = await _getCurrentUserUseCase().timeout(
+          const Duration(seconds: 8),
+          onTimeout: () {
+            debugPrint('[AuthProvider] User profile fetch timed out — using Firebase data');
+            return UserEntity(
+              id: user.uid,
+              email: user.email ?? '',
+              displayName: user.displayName,
+              photoUrl: user.photoURL,
+            );
+          },
+        );
+        _currentUser = fetched ??
+            UserEntity(
+              id: user.uid,
+              email: user.email ?? '',
+              displayName: user.displayName,
+              photoUrl: user.photoURL,
+            );
+        debugPrint('[AuthProvider] User profile ready: ${_currentUser?.email}');
+      } catch (e) {
+        debugPrint('[AuthProvider] User profile fetch failed: $e — using Firebase data');
+        _currentUser = UserEntity(
+          id: user.uid,
+          email: user.email ?? '',
+          displayName: user.displayName,
+          photoUrl: user.photoURL,
+        );
+      }
       notifyListeners();
     });
   }
@@ -70,9 +108,12 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
+      debugPrint('[AuthProvider] Sign in started: $email');
       await _signInUseCase(email, password);
-      // Let the stream listener handle _currentUser assignment and navigation trigger
+      debugPrint('[AuthProvider] Sign in use case completed');
+      _isLoading = false; // Safety net: stream listener also does this
     } catch (e) {
+      debugPrint('[AuthProvider] Sign in error: $e');
       _error = e.toString();
       _isLoading = false;
     } finally {
@@ -85,8 +126,12 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
+      debugPrint('[AuthProvider] Sign up started: $email');
       await _signUpUseCase(email, password, name, dob);
+      debugPrint('[AuthProvider] Sign up completed');
+      _isLoading = false;
     } catch (e) {
+      debugPrint('[AuthProvider] Sign up error: $e');
       _error = e.toString();
       _isLoading = false;
     } finally {
@@ -99,8 +144,12 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
+      debugPrint('[AuthProvider] Google sign in started');
       await _googleSignInUseCase();
+      debugPrint('[AuthProvider] Google sign in completed');
+      _isLoading = false;
     } catch (e) {
+      debugPrint('[AuthProvider] Google sign in error: $e');
       _error = e.toString();
       _isLoading = false;
     } finally {

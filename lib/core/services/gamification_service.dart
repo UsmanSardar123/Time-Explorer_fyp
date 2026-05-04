@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/gamification/domain/entities/user_progress.dart';
 import '../../features/gamification/domain/entities/badge.dart';
@@ -74,6 +77,10 @@ class GamificationService {
 
   // ── Core persistence ─────────────────────────────────────────────────────────
 
+  static const String _kFirestoreField = 'gamification';
+
+  String? _getUserId() => FirebaseAuth.instance.currentUser?.uid;
+
   Future<UserProgress> loadProgress() async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getString(_kUserProgressKey);
@@ -85,9 +92,47 @@ class GamificationService {
     }
   }
 
+  /// Loads progress from Firestore (source of truth), updates local cache, returns result.
+  /// Falls back to local SharedPreferences on error.
+  Future<UserProgress> loadFromFirestore(String uid) async {
+    debugPrint('[GAMIFICATION] Fetching from Firestore for $uid');
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      if (doc.exists) {
+        final raw = doc.data()![_kFirestoreField];
+        if (raw != null) {
+          final progress = UserProgress.fromJson(Map<String, dynamic>.from(raw));
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_kUserProgressKey, jsonEncode(progress.toJson()));
+          debugPrint('[GAMIFICATION] Firestore sync done: xp=${progress.xp}, level=${progress.level}, streak=${progress.streakDays}');
+          return progress;
+        }
+      }
+    } catch (e) {
+      debugPrint('[GAMIFICATION] Firestore load error (using local): $e');
+    }
+    return loadProgress();
+  }
+
+  /// Fire-and-forget Firestore write — does not block callers.
+  void _syncToFirestore(UserProgress progress) {
+    final uid = _getUserId();
+    if (uid == null) return;
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .set({_kFirestoreField: progress.toJson()}, SetOptions(merge: true))
+        .then((_) => debugPrint('[GAMIFICATION] Firestore write ok: xp=${progress.xp}, streak=${progress.streakDays}'))
+        .catchError((e) => debugPrint('[GAMIFICATION] Firestore write failed: $e'));
+  }
+
   Future<void> saveProgress(UserProgress progress) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kUserProgressKey, jsonEncode(progress.toJson()));
+    _syncToFirestore(progress); // non-blocking background sync
   }
 
   // ── Internal helper ──────────────────────────────────────────────────────────
