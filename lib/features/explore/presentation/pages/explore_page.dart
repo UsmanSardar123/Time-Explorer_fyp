@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:timeexplorer/features/explore/presentation/providers/personality_provider.dart';
 import 'package:timeexplorer/features/explore/presentation/providers/place_provider.dart';
-import 'package:timeexplorer/features/explore/presentation/widgets/personality_card.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/core/widgets/gamified_components.dart';
 import 'package:timeexplorer/core/widgets/shimmer_box.dart';
@@ -34,7 +32,6 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<PlaceProvider>().loadPlaces();
-        context.read<PersonalityProvider>().loadPersonalities();
       }
     });
   }
@@ -51,7 +48,6 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     final placeProvider = context.watch<PlaceProvider>();
-    final personalityProvider = context.watch<PersonalityProvider>();
 
     return Scaffold(
       backgroundColor: AppTheme.deepSpace,
@@ -82,16 +78,9 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                    const SizedBox(height: 24),
-                   // 3. Explore Places Header
                    _buildSectionTitle('Explore Places'),
                    const SizedBox(height: 16),
                    _buildPlacesGrid(placeProvider),
-                   
-                   const SizedBox(height: 32),
-                   // 5. Personalities Section
-                   _buildSectionTitle('Time Legends'),
-                   const SizedBox(height: 16),
-                   _buildPersonalitiesList(personalityProvider),
                    const SizedBox(height: 40),
                 ],
               ),
@@ -117,7 +106,6 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
           _debounce?.cancel();
           _debounce = Timer(const Duration(milliseconds: 300), () {
             context.read<PlaceProvider>().setSearchQuery(value);
-            context.read<PersonalityProvider>().setSearchQuery(value);
           });
         },
         decoration: InputDecoration(
@@ -130,7 +118,6 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
                   onPressed: () {
                     _searchController.clear();
                     context.read<PlaceProvider>().setSearchQuery('');
-                    context.read<PersonalityProvider>().setSearchQuery('');
                     setState(() {});
                   },
                 )
@@ -261,42 +248,6 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildPersonalitiesList(PersonalityProvider provider) {
-    if (provider.isLoading) {
-      return SizedBox(
-        height: 220,
-        child: ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          scrollDirection: Axis.horizontal,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: 4,
-          itemBuilder: (_, index) => Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: ShimmerBox(width: 140, height: 220, radius: 20),
-          ),
-        ),
-      );
-    }
-    return SizedBox(
-      height: 220,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: provider.personalities.length,
-        itemBuilder: (context, index) {
-          final p = provider.personalities[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: PersonalityCard(
-              personality: p,
-              onTap: () => context.push('/personality-detail', extra: p),
-            ),
-          );
-        },
-      ),
-    );
-  }
 }
 
 class _PlaceCardShimmer extends StatelessWidget {

@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/gamification_service.dart';
@@ -16,6 +18,8 @@ class GamificationProvider extends ChangeNotifier {
   String? _newlyUnlockedBadge;
   bool _isInitializing = true;
   bool _initCalled = false;
+  StreamSubscription<User?>? _authSubscription;
+  String? _lastSyncedUid;
 
   UserProgress get progress => _progress;
   bool get pendingLevelUp => _pendingLevelUp;
@@ -28,9 +32,38 @@ class GamificationProvider extends ChangeNotifier {
     if (_initCalled) return;
     _initCalled = true;
     await _migrateOldData();
+
+    // Sync from Firestore before recording daily open if user is already authenticated
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      debugPrint('[GAMIFICATION] Init: syncing Firestore for $uid');
+      _progress = await _service.loadFromFirestore(uid);
+      _lastSyncedUid = uid;
+    }
+
     _progress = await _service.recordDailyOpen();
     _isInitializing = false;
     notifyListeners();
+
+    // Listen for future auth state changes (e.g. logout → login without restart)
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (user == null) {
+        _lastSyncedUid = null; // reset so next login triggers re-sync
+        return;
+      }
+      if (user.uid == _lastSyncedUid) return; // already synced for this session
+      _lastSyncedUid = user.uid;
+      debugPrint('[GAMIFICATION] Auth change: syncing Firestore for ${user.uid}');
+      _progress = await _service.loadFromFirestore(user.uid);
+      _progress = await _service.recordDailyOpen(); // idempotent per day
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _migrateOldData() async {

@@ -1,4 +1,5 @@
 import '../../domain/entities/quiz_question.dart';
+import '../../domain/entities/quiz_topic.dart';
 
 final Map<String, List<QuizQuestion>> quizPool = {
   'Ancient Egypt': [
@@ -9,6 +10,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'The Great Pyramid of Giza is the largest of the Egyptian pyramids and is located in Giza, Egypt.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'egypt_2',
@@ -17,6 +19,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'Radiocarbon dating reveals mammoths were still living on Wrangel Island until 1650 BC, well after the pyramids were built.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'egypt_3',
@@ -25,6 +28,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Cleopatra VII Philopator was the last active ruler of the Ptolemaic Kingdom of Egypt.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'egypt_4',
@@ -33,6 +37,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'They unknowingly used the penicillin in moldy bread to treat infected wounds.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'egypt_5',
@@ -41,6 +46,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'Traces of pigment suggest the Sphinx was once vibrantly painted.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'egypt_6',
@@ -49,6 +55,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'King Tut became Pharaoh at the age of 9.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'egypt_7',
@@ -57,6 +64,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'Cats were highly revered, and their death was a major mourning event.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'egypt_8',
@@ -65,6 +73,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'The Eternal Treaty was signed between Ramesses II and Hattusili III.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'egypt_9',
@@ -73,6 +82,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'Their pantheon was incredibly vast and complex.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'egypt_10',
@@ -81,6 +91,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'It held the record for 3,800 years until the Lincoln Cathedral was completed in 1311.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
   ],
   'Ancient Rome': [
@@ -91,6 +102,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'It was built during the Flavian dynasty.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'rome_2',
@@ -99,6 +111,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'They used various abrasive and sometimes bizarre ingredients.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'rome_3',
@@ -107,6 +120,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'At its peak, it covered ~5 million km², similar to the EU.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'rome_4',
@@ -115,6 +129,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'Caesar told the pirates he would return and kill them, and he did.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'rome_5',
@@ -123,6 +138,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'The velarium protected spectators from the sun.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'rome_6',
@@ -131,6 +147,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'It was built in northern England.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'rome_7',
@@ -139,6 +156,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'They mostly ate beans and barley for strength.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'rome_8',
@@ -147,6 +165,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Mount Vesuvius eruption preserved the city in ash.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'rome_9',
@@ -155,6 +174,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'The Byzantine Empire lasted until the fall of Constantinople in 1453.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'rome_10',
@@ -163,6 +183,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'He led 37 elephants across the mountains in 218 BC.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.medium,
     ),
   ],
   'Science & Nature': [
@@ -173,6 +194,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'They have two branchial hearts and one systemic heart.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'sci_2',
@@ -181,6 +203,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'Venus has a retrograde rotation.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'sci_3',
@@ -189,6 +212,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'Botanically, a banana is a berry.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'sci_4',
@@ -197,6 +221,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Certain species of bamboo can grow 35 inches in a day.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'sci_5',
@@ -205,6 +230,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'The cubic shape stops it from rolling away.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'sci_6',
@@ -213,6 +239,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'It is the most distant object visible to the naked eye.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'sci_7',
@@ -221,6 +248,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'There are ~3 trillion trees, but only ~400 billion stars in our galaxy.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'sci_8',
@@ -229,6 +257,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'She won in Physics and Chemistry.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'sci_9',
@@ -237,6 +266,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'Enamel is not a living tissue.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'sci_10',
@@ -245,6 +275,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 3,
       explanation: 'Some snails can hibernate for 3 years to survive dry conditions.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
   ],
   'Indus Valley': [
@@ -255,6 +286,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'Archaeologists found uniform weights across distant cities, indicating centralised trade regulation.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'indus_2',
@@ -263,6 +295,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Mohenjo-daro and Harappa were the two largest known cities of the civilisation.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'indus_3',
@@ -271,6 +304,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'The Indus script remains undeciphered — it is one of the great unsolved puzzles of archaeology.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'indus_4',
@@ -284,6 +318,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Covered brick sewers running beneath streets reduced waterborne disease, enabling city populations of up to 50,000.',
       type: QuestionType.causeAndEffect,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'indus_5',
@@ -292,6 +327,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'The civilisation peaked around 2600–1900 BC during the Mature Harappan period.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'indus_6',
@@ -300,6 +336,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'The structure\'s careful waterproofing and central location suggest ceremonial bathing rites.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'indus_7',
@@ -313,6 +350,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'Climate studies show a prolonged aridification event weakened the monsoon, collapsing agriculture and trade networks.',
       type: QuestionType.causeAndEffect,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'indus_8',
@@ -321,6 +359,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'Unlike contemporaries, no large palace or temple has been identified, suggesting a less hierarchical social structure.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'indus_9',
@@ -329,6 +368,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'Thousands of steatite seals carved with animals and script have been found across the region.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'indus_10',
@@ -337,6 +377,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Lapis lazuli, carnelian beads and Indus seals have been found in Mesopotamian archaeological sites.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
     ),
   ],
   'The Renaissance': [
@@ -347,6 +388,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'It originated in the Italian city-states during the 14th century, fuelled by wealthy merchant patrons.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'ren_2',
@@ -355,6 +397,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'The Sistine Chapel ceiling was painted by Michelangelo between 1508 and 1512.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'ren_3',
@@ -368,6 +411,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Medici funding directly enabled iconic works — without patronage, most Renaissance masterpieces would not have been created.',
       type: QuestionType.causeAndEffect,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'ren_4',
@@ -376,6 +420,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Copernicus published his heliocentric model in "De revolutionibus" in 1543.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'ren_5',
@@ -384,6 +429,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'The press allowed mass production of books, democratising knowledge and accelerating the spread of humanist ideas.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'ren_6',
@@ -392,6 +438,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Linear perspective, formalised by Brunelleschi, gave paintings a mathematically accurate sense of three-dimensional space.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'ren_7',
@@ -405,6 +452,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Cheap printed books enabled commoners to read the Bible themselves, directly fuelling the Protestant Reformation.',
       type: QuestionType.causeAndEffect,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'ren_8',
@@ -413,6 +461,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: '"The Prince" by Machiavelli is one of the first works of modern political philosophy.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'ren_9',
@@ -421,6 +470,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Humanism was defined by a revival of classical Greco-Roman texts and a focus on human potential.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.medium,
     ),
     QuizQuestion(
       id: 'ren_10',
@@ -429,6 +479,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'Michelangelo\'s David (1501–1504) stands 5.17 metres tall in the Galleria dell\'Accademia, Florence.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
     ),
   ],
   'The Space Race': [
@@ -439,6 +490,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'Sputnik 1 launched on 4 October 1957, shocking the Western world and igniting the Space Race.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'space_2',
@@ -447,6 +499,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'Yuri Gagarin completed one orbit of Earth on 12 April 1961 aboard Vostok 1.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'space_3',
@@ -460,6 +513,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Sputnik panic directly led to the creation of NASA (1958) and a massive increase in US science education funding.',
       type: QuestionType.causeAndEffect,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'space_4',
@@ -468,6 +522,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Apollo 11 landed on 20 July 1969. Neil Armstrong became the first human to walk on the Moon.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'space_5',
@@ -476,6 +531,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'An oxygen tank exploded, aborting the Moon landing. The crew survived through improvised engineering.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'space_6',
@@ -489,6 +545,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Using the Lunar Module "Aquarius" as a lifeboat was the critical improvisation that brought the crew home alive.',
       type: QuestionType.causeAndEffect,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'space_7',
@@ -497,6 +554,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'Laika, a Soviet stray dog, was launched aboard Sputnik 2 in November 1957.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'space_8',
@@ -505,6 +563,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'The Apollo-Soyuz Test Project (1975) was a symbolic end to the Space Race and the start of US-Soviet cooperation.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'space_9',
@@ -518,6 +577,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Armstrong intended "one small step for a man" — the missing "a" changes the grammatical meaning entirely.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'space_10',
@@ -526,6 +586,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Saturn V remains the most powerful rocket ever successfully launched, standing 111 metres tall.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
   ],
   'Meiji Restoration': [
@@ -536,6 +597,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'The restoration of imperial rule began in 1868 when Emperor Meiji assumed power from the Tokugawa shogunate.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'meiji_2',
@@ -544,6 +606,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'The Tokugawa Sakoku policy (1603–1868) severely restricted foreign trade and contact.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'meiji_3',
@@ -557,6 +620,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'Perry\'s "Black Ships" revealed the shogunate could not defend Japan, delegitimising its authority and fuelling the Meiji reformers.',
       type: QuestionType.causeAndEffect,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'meiji_4',
@@ -565,6 +629,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 2,
       explanation: 'The Meiji Constitution of 1889 was heavily influenced by the Prussian model, emphasising imperial authority.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'meiji_5',
@@ -573,6 +638,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'The Sword Abolition Edict of 1876 stripped samurai of their defining privilege, ending centuries of feudal warrior culture.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'meiji_6',
@@ -586,6 +652,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Japan\'s victory over Qing China shocked the world — it proved an Asian nation could defeat a major power using Western military methods.',
       type: QuestionType.causeAndEffect,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'meiji_7',
@@ -599,6 +666,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: '"Fukoku Kyōhei" guided Meiji policy — economic growth and military strength were inseparable goals.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'meiji_8',
@@ -607,6 +675,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'Japan defeated Russia in the Russo-Japanese War (1904–1905), a seismic shock to European imperial confidence worldwide.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'meiji_9',
@@ -620,6 +689,7 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 1,
       explanation: 'Over 100 officials toured the US and Europe for nearly two years, returning with reforms for law, education, and industry.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
     ),
     QuizQuestion(
       id: 'meiji_10',
@@ -628,6 +698,179 @@ final Map<String, List<QuizQuestion>> quizPool = {
       correctAnswerIndex: 0,
       explanation: 'Compulsory education introduced in 1872 brought literacy rates above 90% within a generation.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.hard,
+    ),
+  ],
+  'Place_giza_pyramid': [
+    // Beginner
+    QuizQuestion(
+      id: 'giza_beg_1',
+      question: 'In which country is the Great Pyramid of Giza located?',
+      options: ['Greece', 'Egypt', 'Mexico', 'China'],
+      correctAnswerIndex: 1,
+      explanation: 'The Great Pyramid of Giza is located on the Giza plateau in Egypt.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
+    ),
+    QuizQuestion(
+      id: 'giza_beg_2',
+      question: 'What material was primarily used to build the core of the Great Pyramid?',
+      options: ['Brick', 'Limestone', 'Wood', 'Marble'],
+      correctAnswerIndex: 1,
+      explanation: 'Most of the pyramid was built using locally quarried limestone.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
+    ),
+    QuizQuestion(
+      id: 'giza_beg_3',
+      question: 'The Great Pyramid is the oldest of the Seven Wonders of the Ancient World.',
+      options: ['True', 'False'],
+      correctAnswerIndex: 0,
+      explanation: 'It is the oldest of the Seven Wonders and the only one to remain largely intact.',
+      type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
+    ),
+    // Enthusiast
+    QuizQuestion(
+      id: 'giza_ent_1',
+      question: 'Which Pharaoh was the Great Pyramid of Giza built for?',
+      options: ['Tutankhamun', 'Khufu', 'Ramesses II', 'Akhenaten'],
+      correctAnswerIndex: 1,
+      explanation: 'The Great Pyramid was built as a tomb for the Fourth Dynasty pharaoh Khufu (Cheops).',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
+    ),
+    QuizQuestion(
+      id: 'giza_ent_2',
+      question: 'Approximately how many stone blocks make up the Great Pyramid?',
+      options: ['500,000', '1 million', '2.3 million', '5 million'],
+      correctAnswerIndex: 2,
+      explanation: 'It is estimated to consist of about 2.3 million stone blocks.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
+    ),
+    QuizQuestion(
+      id: 'giza_ent_3',
+      question: 'The Great Pyramid was originally covered in smooth white "casing stones".',
+      options: ['True', 'False'],
+      correctAnswerIndex: 0,
+      explanation: 'Highly polished white limestone casing stones once covered the pyramid, reflecting the sun.',
+      type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.medium,
+    ),
+    // Expert
+    QuizQuestion(
+      id: 'giza_exp_1',
+      question: 'The Great Pyramid is the only Egyptian pyramid known to contain both ascending and descending passages.',
+      options: ['True', 'False'],
+      correctAnswerIndex: 0,
+      explanation: 'It has a unique internal system including the Grand Gallery and multiple chambers.',
+      type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.hard,
+    ),
+    QuizQuestion(
+      id: 'giza_exp_2',
+      question: 'The sides of the Great Pyramid are aligned almost exactly to the four cardinal points of the compass.',
+      options: ['True', 'False'],
+      correctAnswerIndex: 0,
+      explanation: 'The alignment is accurate to within a fraction of a degree.',
+      type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.hard,
+    ),
+    QuizQuestion(
+      id: 'giza_exp_3',
+      question: 'What is the "Air Shaft" in the King\'s Chamber believed by some to be aligned with?',
+      options: ['The North Star', 'The constellation Orion', 'The Sun', 'The Moon'],
+      correctAnswerIndex: 1,
+      explanation: 'Many researchers believe the shafts were pointed toward specific stars or constellations like Orion.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
+    ),
+  ],
+  'Char_cleopatra': [
+    // Beginner
+    QuizQuestion(
+      id: 'cleo_beg_1',
+      question: 'Cleopatra was the queen of which ancient kingdom?',
+      options: ['Greece', 'Rome', 'Egypt', 'Persia'],
+      correctAnswerIndex: 2,
+      explanation: 'Cleopatra VII was the last active ruler of the Ptolemaic Kingdom of Egypt.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
+    ),
+    QuizQuestion(
+      id: 'cleo_beg_2',
+      question: 'Cleopatra was famous for her relationships with which two Roman leaders?',
+      options: ['Augustus & Nero', 'Julius Caesar & Mark Antony', 'Cicero & Pompey', 'Trajan & Hadrian'],
+      correctAnswerIndex: 1,
+      explanation: 'She had well-known political and personal alliances with Caesar and Antony.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
+    ),
+    QuizQuestion(
+      id: 'cleo_beg_3',
+      question: 'Cleopatra was actually of Greek (Macedonian) descent, not ethnic Egyptian.',
+      options: ['True', 'False'],
+      correctAnswerIndex: 0,
+      explanation: 'The Ptolemaic dynasty was founded by Alexander the Great\'s general Ptolemy I Soter.',
+      type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
+    ),
+    // Enthusiast
+    QuizQuestion(
+      id: 'cleo_ent_1',
+      question: 'Cleopatra was the first member of her dynasty to learn which language?',
+      options: ['Latin', 'Greek', 'Egyptian', 'Hebrew'],
+      correctAnswerIndex: 2,
+      explanation: 'Unlike her predecessors, she learned the Egyptian language and presented herself as a new Isis.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
+    ),
+    QuizQuestion(
+      id: 'cleo_ent_2',
+      question: 'In which naval battle were Cleopatra and Mark Antony defeated by Octavian?',
+      options: ['Battle of Salamis', 'Battle of Actium', 'Battle of Lepanto', 'Battle of Trafalgar'],
+      correctAnswerIndex: 1,
+      explanation: 'The Battle of Actium in 31 BC led to their ultimate defeat.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
+    ),
+    QuizQuestion(
+      id: 'cleo_ent_3',
+      question: 'How many languages is Cleopatra said to have spoken fluently?',
+      options: ['3', '5', '9', '12'],
+      correctAnswerIndex: 2,
+      explanation: 'Plutarch recorded that she could speak at least nine languages.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
+    ),
+    // Expert
+    QuizQuestion(
+      id: 'cleo_exp_1',
+      question: 'What was the title of the intellectual and cosmetic works attributed to Cleopatra?',
+      options: ['The Royal Recipes', 'Cosmeticon', 'Egyptian Wisdom', 'The Art of Beauty'],
+      correctAnswerIndex: 1,
+      explanation: 'She was known as a scholar and author of medical and cosmetic treatises.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
+    ),
+    QuizQuestion(
+      id: 'cleo_exp_2',
+      question: 'What were the "Donations of Alexandria"?',
+      options: ['Gifts to the poor', 'Territorial grants to Cleopatra\'s children', 'Taxes paid to Rome', 'Library donations'],
+      correctAnswerIndex: 1,
+      explanation: 'Mark Antony distributed Roman eastern lands to Cleopatra and her children, causing outrage in Rome.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
+    ),
+    QuizQuestion(
+      id: 'cleo_exp_3',
+      question: 'Which goddess did Cleopatra frequently identify herself with in public imagery?',
+      options: ['Athena', 'Hera', 'Isis', 'Aphrodite'],
+      correctAnswerIndex: 2,
+      explanation: 'She styled herself as the "New Isis" to consolidate her religious and political authority.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.hard,
     ),
   ],
 };

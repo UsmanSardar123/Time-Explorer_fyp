@@ -6,16 +6,23 @@ import 'package:timeexplorer/core/widgets/fade_slide_in.dart';
 import 'package:timeexplorer/core/widgets/tap_scale.dart';
 import '../../domain/entities/quiz_topic.dart';
 
-class QuizDashboardPage extends StatelessWidget {
+class QuizDashboardPage extends StatefulWidget {
   const QuizDashboardPage({super.key});
 
   // ── Design Tokens ─────────────────────────────────────────────────────────
-  static const _primary = AppTheme.primaryContainer;
-  static const _bg = AppTheme.background;
-  static const _surfaceLow = AppTheme.surfaceLow;
-  static const _surfaceCard = AppTheme.surface;
-  static const _textDark = AppTheme.onSurface;
-  static const _textMuted = AppTheme.onSurfaceVariant;
+  static const primary = AppTheme.primaryContainer;
+  static const background = AppTheme.background;
+  static const surfaceLow = AppTheme.surfaceLow;
+  static const surfaceCard = AppTheme.surface;
+  static const textDark = AppTheme.onSurface;
+  static const textMuted = AppTheme.onSurfaceVariant;
+
+  @override
+  State<QuizDashboardPage> createState() => _QuizDashboardPageState();
+}
+
+class _QuizDashboardPageState extends State<QuizDashboardPage> {
+  DifficultyLevel? _selectedDifficulty;
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +38,11 @@ class QuizDashboardPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: QuizDashboardPage.background,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // 1. Header
+          // 1. Header with Difficulty Selection
           SliverToBoxAdapter(child: _buildHeader()),
           
           SliverPadding(
@@ -48,13 +55,13 @@ class QuizDashboardPage extends StatelessWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: _textDark,
+                    color: QuizDashboardPage.textDark,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                    'Master knowledge from different timelines',
-                   style: GoogleFonts.beVietnamPro(fontSize: 14, color: _textMuted),
+                   style: GoogleFonts.beVietnamPro(fontSize: 14, color: QuizDashboardPage.textMuted),
                 ),
                 
                 const SizedBox(height: 24),
@@ -73,7 +80,7 @@ class QuizDashboardPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 70, 24, 40),
       decoration: const BoxDecoration(
-        color: _textDark,
+        color: QuizDashboardPage.textDark,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(44),
           bottomRight: Radius.circular(44),
@@ -92,10 +99,117 @@ class QuizDashboardPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Journey through questions that shaped the world',
+            'Select a difficulty to start your daily mission',
             style: GoogleFonts.beVietnamPro(color: Colors.white60, fontSize: 14),
           ),
+          const SizedBox(height: 32),
+          
+          // Difficulty Selector
+          _buildDifficultySelector(),
+          
+          const SizedBox(height: 24),
+          
+          // Start Button
+          _buildStartButton(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDifficultySelector() {
+    return Row(
+      children: [
+        _buildDifficultyCard(DifficultyLevel.easy, 'Beginner', Colors.greenAccent),
+        const SizedBox(width: 12),
+        _buildDifficultyCard(DifficultyLevel.medium, 'Enthusiast', Colors.amberAccent),
+        const SizedBox(width: 12),
+        _buildDifficultyCard(DifficultyLevel.hard, 'Expert', Colors.redAccent),
+      ],
+    );
+  }
+
+  Widget _buildDifficultyCard(DifficultyLevel level, String label, Color color) {
+    final isSelected = _selectedDifficulty == level;
+    
+    return Expanded(
+      child: TapScale(
+        onTap: () => setState(() => _selectedDifficulty = level),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? color : Colors.white24,
+              width: 2,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                isSelected ? Icons.check_circle : Icons.circle_outlined,
+                color: isSelected ? color : Colors.white38,
+                size: 20,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  color: isSelected ? color : Colors.white70,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStartButton() {
+    final isEnabled = _selectedDifficulty != null;
+    
+    return TapScale(
+      onTap: isEnabled ? () {
+        context.push(
+          '/quiz-play', 
+          extra: QuizTopic(
+            title: 'Daily History Challenge',
+            description: 'A 10-question challenge at the ${_selectedDifficulty!.label} level.',
+            difficultyLevel: _selectedDifficulty!,
+            epochCategory: EpochCategory.global,
+            imageUrl: '', 
+            icon: Icons.history_edu,
+            color: QuizDashboardPage.primary,
+          ),
+        );
+      } : null,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: isEnabled ? QuizDashboardPage.primary : Colors.white10,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: isEnabled ? [
+            BoxShadow(
+              color: QuizDashboardPage.primary.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
+          ] : null,
+        ),
+        child: Center(
+          child: Text(
+            'START DAILY QUIZ',
+            style: GoogleFonts.plusJakartaSans(
+              color: isEnabled ? QuizDashboardPage.textDark : Colors.white24,
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -106,19 +220,19 @@ class QuizDashboardPage extends StatelessWidget {
       padding: const EdgeInsets.only(top: 24, bottom: 12),
       child: Row(
         children: [
-          Container(height: 1, width: 24, color: _primary.withValues(alpha: 0.3)),
+          Container(height: 1, width: 24, color: QuizDashboardPage.primary.withValues(alpha: 0.3)),
           const SizedBox(width: 12),
           Text(
             name,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: _primary,
+              color: QuizDashboardPage.primary,
               letterSpacing: 2.0,
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(child: Divider(color: _surfaceCard)),
+          const Expanded(child: Divider(color: QuizDashboardPage.surfaceCard)),
         ],
       ),
     );
@@ -152,7 +266,7 @@ class QuizDashboardPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: _textDark.withValues(alpha: 0.04),
+              color: QuizDashboardPage.textDark.withValues(alpha: 0.04),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -164,10 +278,10 @@ class QuizDashboardPage extends StatelessWidget {
           leading: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _surfaceLow,
+              color: QuizDashboardPage.surfaceLow,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(Icons.bolt_rounded, color: _primary, size: 24),
+            child: const Icon(Icons.bolt_rounded, color: QuizDashboardPage.primary, size: 24),
           ),
           title: Text(
             topic.title,
@@ -175,9 +289,9 @@ class QuizDashboardPage extends StatelessWidget {
           ),
           subtitle: Text(
             '10 Questions • ${topic.difficultyLevel.label}',
-            style: GoogleFonts.beVietnamPro(fontSize: 13, color: _textMuted),
+            style: GoogleFonts.beVietnamPro(fontSize: 13, color: QuizDashboardPage.textMuted),
           ),
-          trailing: const Icon(Icons.play_circle_fill_rounded, color: _primary, size: 32),
+          trailing: const Icon(Icons.play_circle_fill_rounded, color: QuizDashboardPage.primary, size: 32),
         ),
       ),
     );

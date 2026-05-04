@@ -30,6 +30,8 @@ class PlaceModel extends Place {
     super.createdAt,
     super.wikimediaTags,
     super.images,
+    super.imageUrls = const [],
+    super.imageCaptions = const {},
     super.keyFacts,
     super.openingHours,
     super.ticketPrice,
@@ -80,6 +82,12 @@ class PlaceModel extends Place {
       createdAt: data['createdAt']?.toString(),
       wikimediaTags: data['wikimediaTags'] != null ? List<String>.from(data['wikimediaTags']) : null,
       images: data['images'] != null ? List<String>.from(data['images']) : null,
+      imageUrls: data['imageUrls'] != null
+          ? List<String>.from(data['imageUrls'])
+          : [(data['imageUrl'] as String? ?? '')].where((s) => s.isNotEmpty).toList(),
+      imageCaptions: data['imageCaptions'] != null
+          ? Map<String, String>.from(data['imageCaptions'])
+          : {},
       keyFacts: data['keyFacts'] != null ? List<String>.from(data['keyFacts']) : null,
       openingHours: data['openingHours'],
       ticketPrice: data['ticketPrice'],
@@ -151,7 +159,9 @@ class PlaceModel extends Place {
       'createdAt': createdAt ?? DateTime.now().toIso8601String(),
       'wikimediaTags': wikimediaTags,
       'images': images,
-      'galleryImages': images, 
+      'galleryImages': images,
+      'imageUrls': imageUrls,
+      'imageCaptions': imageCaptions,
       'keyFacts': keyFacts,
       'openingHours': openingHours,
       'ticketPrice': ticketPrice,

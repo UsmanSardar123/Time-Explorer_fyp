@@ -8,17 +8,22 @@ class WikipediaService {
   static const _boxName = 'wikipedia_cache';
   static const _ua = 'TimeExplorer/1.0 (contact@example.com)';
 
+  Box<String>? get _box =>
+      Hive.isBoxOpen(_boxName) ? Hive.box<String>(_boxName) : null;
+
   /// Returns {builtBy, yearBuilt, civilization, archStyle, fallback} for [placeName].
   Future<Map<String, String?>> fetchMetadata(String placeName) async {
-    final box = Hive.box<String>(_boxName);
-    final cached = box.get(placeName);
-    if (cached != null) {
-      try {
-        final decoded = Map<String, String?>.from(json.decode(cached) as Map);
-        if (decoded.containsKey('fallback') && (decoded['civilization']?.toLowerCase() != 'unknown' && decoded['civilization'] != null)) {
-          return decoded;
-        }
-      } catch (_) {}
+    final box = _box;
+    if (box != null) {
+      final cached = box.get(placeName);
+      if (cached != null) {
+        try {
+          final decoded = Map<String, String?>.from(json.decode(cached) as Map);
+          if (decoded.containsKey('fallback') && (decoded['civilization']?.toLowerCase() != 'unknown' && decoded['civilization'] != null)) {
+            return decoded;
+          }
+        } catch (_) {}
+      }
     }
 
     try {
@@ -29,9 +34,9 @@ class WikipediaService {
       if (res.statusCode == 200) {
         final body = json.decode(res.body) as Map<String, dynamic>;
         final extract = (body['extract'] as String? ?? '');
-        
+
         var civilization = _civilization(extract);
-        
+
         // DEEP SEARCH FALLBACK for Civilization
         if (civilization == null || civilization.toLowerCase() == 'unknown') {
           debugPrint('[WikipediaService] Deep searching civilization for "$placeName"...');
@@ -41,12 +46,12 @@ class WikipediaService {
         final result = <String, String?>{
           'builtBy': _builtBy(extract),
           'yearBuilt': _yearBuilt(extract),
-          'civilization': civilization ?? 'Historical Civilization', // Universal fallback
+          'civilization': civilization ?? 'Historical Civilization',
           'archStyle': _architecturalStyle(extract),
           'fallback': _firstTwoSentences(extract),
         };
-        
-        await box.put(placeName, json.encode(result));
+
+        _box?.put(placeName, json.encode(result));
         return result;
       }
     } catch (e) {
@@ -176,11 +181,13 @@ class WikipediaService {
   /// Fetches a short description for a specific entity (e.g. "Mughal Empire").
   Future<String?> findEntitySummary(String entityName) async {
     if (entityName.toLowerCase() == 'unknown') return null;
-    
-    final box = Hive.box<String>(_boxName);
+
+    final box = _box;
     final cacheKey = 'summary_$entityName';
-    final cached = box.get(cacheKey);
-    if (cached != null) return cached;
+    if (box != null) {
+      final cached = box.get(cacheKey);
+      if (cached != null) return cached;
+    }
 
     try {
       final slug = Uri.encodeComponent(entityName.replaceAll(' ', '_'));
@@ -192,7 +199,7 @@ class WikipediaService {
         final extract = body['extract'] as String? ?? '';
         final summary = _firstTwoSentences(extract);
         if (summary != null) {
-          await box.put(cacheKey, summary);
+          _box?.put(cacheKey, summary);
           return summary;
         }
       }

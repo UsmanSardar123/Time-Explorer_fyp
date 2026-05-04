@@ -218,10 +218,14 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         SetOptions(merge: true),
       );
 
-      // Sync to Firebase Auth user record
+      // Sync to Firebase Auth user record (best-effort; Firestore is source of truth)
       final user = _firebaseAuth.currentUser;
       if (user != null && user.uid == userId) {
-        await user.updatePhotoURL(downloadUrl);
+        try {
+          await user.updatePhotoURL(downloadUrl);
+        } catch (e) {
+          debugPrint('[PROFILE] ⚠️ Auth photoURL sync failed (non-fatal): $e');
+        }
       }
 
       return downloadUrl;

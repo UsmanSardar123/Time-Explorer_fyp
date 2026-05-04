@@ -7,21 +7,29 @@ class PlaceProvider extends ChangeNotifier {
   final PlaceRepositoryImpl _repository = PlaceRepositoryImpl();
   late final GetPlacesUseCase _getPlacesUseCase;
 
-  List<PlaceEntity> _places = [];
+  // Full unfiltered list — category and search filtering happen in the getter.
+  List<PlaceEntity> _allPlaces = [];
   bool _isLoading = false;
+  bool _hasLoaded = false;
   String? _error;
   String _selectedCategory = 'All';
   String _searchQuery = '';
 
   List<PlaceEntity> get places {
-    if (_searchQuery.isEmpty) return _places;
-    final query = _searchQuery.toLowerCase();
-    return _places.where((p) => 
-      p.name.toLowerCase().contains(query) || 
-      p.description.toLowerCase().contains(query) ||
-      p.location.toLowerCase().contains(query)
-    ).toList();
+    Iterable<PlaceEntity> result = _allPlaces;
+    if (_selectedCategory != 'All') {
+      result = result.where((p) => p.category == _selectedCategory);
+    }
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      result = result.where((p) =>
+          p.name.toLowerCase().contains(query) ||
+          p.description.toLowerCase().contains(query) ||
+          p.location.toLowerCase().contains(query));
+    }
+    return result.toList();
   }
+
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get selectedCategory => _selectedCategory;
@@ -38,14 +46,14 @@ class PlaceProvider extends ChangeNotifier {
 
   PlaceProvider() {
     _getPlacesUseCase = GetPlacesUseCase(_repository);
-    loadPlaces();
+    // Do NOT call loadPlaces() here — the first page that needs data calls it.
   }
 
+  // Category change is pure in-memory filtering; no Firestore call.
   void setCategory(String category) {
-    if (_selectedCategory != category) {
-      _selectedCategory = category;
-      loadPlaces();
-    }
+    if (_selectedCategory == category) return;
+    _selectedCategory = category;
+    notifyListeners();
   }
 
   void setSearchQuery(String query) {
@@ -54,18 +62,36 @@ class PlaceProvider extends ChangeNotifier {
   }
 
   Future<void> loadPlaces() async {
+    // Guard: already loaded and data is present — no need to re-fetch.
+    if (_hasLoaded && _allPlaces.isNotEmpty) return;
+    // Guard: a fetch is already in flight.
+    if (_isLoading) return;
+
     _isLoading = true;
     _error = null;
     notifyListeners();
     try {
-      _places = await _getPlacesUseCase(
-        category: _selectedCategory == 'All' ? null : _selectedCategory,
-      );
+      _allPlaces = await _getPlacesUseCase();
+      debugPrint('[PlaceProvider] Loaded ${_allPlaces.length} places.');
+      // Only mark as loaded when we actually have data — empty result keeps
+      // _hasLoaded false so the next navigation triggers a retry.
+      _hasLoaded = _allPlaces.isNotEmpty;
+      if (_allPlaces.isEmpty) {
+        _error = 'No places available. Pull down to retry.';
+      }
     } catch (e) {
+      debugPrint('[PlaceProvider] Error loading places: $e');
       _error = e.toString();
+      _hasLoaded = false;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> refresh() async {
+    _repository.invalidateCache();
+    _hasLoaded = false;
+    await loadPlaces();
   }
 }

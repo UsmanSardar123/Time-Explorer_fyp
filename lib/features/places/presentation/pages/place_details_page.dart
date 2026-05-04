@@ -10,8 +10,8 @@ import 'package:timeexplorer/features/places/domain/usecases/get_nearby_places.d
 import 'package:timeexplorer/features/places/domain/usecases/get_place_details.dart';
 import 'package:timeexplorer/features/places/presentation/cubit/place_details_cubit.dart';
 import 'package:timeexplorer/features/places/presentation/cubit/place_details_state.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeexplorer/core/widgets/app_cached_image.dart';
+import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_provider.dart';
@@ -19,7 +19,7 @@ import 'package:timeexplorer/features/explore/domain/entities/place_entity.dart'
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/core/widgets/tap_scale.dart';
 import 'package:timeexplorer/features/places/presentation/widgets/place_card.dart' show eraColor;
-import 'package:timeexplorer/features/places/presentation/widgets/place_image_gallery.dart';
+import 'package:timeexplorer/features/places/presentation/widgets/place_gallery_widget.dart';
 import 'package:timeexplorer/features/places/presentation/widgets/facts_carousel.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -29,11 +29,20 @@ import 'package:timeexplorer/features/places/presentation/widgets/associated_cha
 import 'package:timeexplorer/features/places/presentation/widgets/nearby_places_widget.dart';
 import 'package:timeexplorer/features/places/data/services/user_progress_service.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
+import 'package:timeexplorer/features/quiz/domain/entities/quiz_topic.dart';
+import 'package:timeexplorer/features/quiz/presentation/widgets/difficulty_selection_section.dart';
 
-class PlaceDetailsPage extends StatelessWidget {
+class PlaceDetailsPage extends StatefulWidget {
   final String placeId;
 
   const PlaceDetailsPage({super.key, required this.placeId});
+
+  @override
+  State<PlaceDetailsPage> createState() => _PlaceDetailsPageState();
+}
+
+class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
+  DifficultyLevel? _selectedDifficulty;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +54,7 @@ class PlaceDetailsPage extends StatelessWidget {
         getNearbyPlaces: GetNearbyPlacesUseCase(
           PlacesRepositoryImpl(remoteDataSource: PlacesRemoteDataSourceImpl()),
         ),
-      )..loadPlaceDetails(placeId),
+      )..loadPlaceDetails(widget.placeId),
       child: BlocConsumer<PlaceDetailsCubit, PlaceDetailsState>(
         listenWhen: (prev, curr) =>
             curr is PlaceDetailsLoaded && prev is! PlaceDetailsLoaded,
@@ -74,7 +83,7 @@ class PlaceDetailsPage extends StatelessWidget {
                     Text('Error: ${state.message}', textAlign: TextAlign.center),
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () => context.read<PlaceDetailsCubit>().loadPlaceDetails(placeId),
+                      onPressed: () => context.read<PlaceDetailsCubit>().loadPlaceDetails(widget.placeId),
                       child: const Text('Retry'),
                     ),
                   ],
@@ -85,7 +94,6 @@ class PlaceDetailsPage extends StatelessWidget {
 
           if (state is PlaceDetailsLoaded) {
             final place = state.place;
-            final images = place.images ?? [];
 
             final accentColor = place.colorThemeHex != null
                 ? Color(int.parse(
@@ -98,7 +106,6 @@ class PlaceDetailsPage extends StatelessWidget {
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   _buildSliverAppBar(context, place),
-                  // Era color banner
                   SliverToBoxAdapter(
                     child: Container(height: 8, color: accentColor),
                   ),
@@ -116,18 +123,19 @@ class PlaceDetailsPage extends StatelessWidget {
                           const SizedBox(height: 24),
                           _buildAnimatedSection(child: _buildTalkToLocalButton(context, place), delay: 250),
                           const SizedBox(height: 32),
-                          if (images.isNotEmpty) ...[
-                            _buildAnimatedSection(child: _buildSectionTitle('Gallery'), delay: 300),
-                            const SizedBox(height: 16),
-                            _buildAnimatedSection(
-                              child: PlaceImageGallery(
-                                placeId: place.id,
-                                imageUrls: images,
-                              ),
-                              delay: 400,
+                          _buildAnimatedSection(child: _buildSectionTitle('Gallery'), delay: 300),
+                          const SizedBox(height: 16),
+                          _buildAnimatedSection(
+                            child: PlaceGalleryWidget(
+                              imageUrls: place.imageUrls,
+                              imageCaptions: place.imageCaptions,
+                              heroTag: 'place_cover_${place.id}',
+                              accentColor: accentColor,
+                              placeName: place.name,
                             ),
-                            const SizedBox(height: 32),
-                          ],
+                            delay: 400,
+                          ),
+                          const SizedBox(height: 32),
                           if (place.timeline != null && place.timeline!.isNotEmpty) ...[
                             _buildAnimatedSection(child: _buildSectionTitle('Historical Timeline'), delay: 500),
                             const SizedBox(height: 16),
@@ -169,9 +177,7 @@ class PlaceDetailsPage extends StatelessWidget {
                             delay: 1300,
                           ),
                           const SizedBox(height: 32),
-                          _buildAnimatedSection(child: _buildSectionTitle('Knowledge Check'), delay: 1400),
-                          const SizedBox(height: 16),
-                          _buildAnimatedSection(child: _buildQuizSection(place), delay: 1500),
+                          _buildAnimatedSection(child: _buildQuizSection(place), delay: 1400),
                           const SizedBox(height: 32),
                           _buildAnimatedSection(child: _buildMapIntegration(place), delay: 1600),
                           const SizedBox(height: 32),
@@ -288,12 +294,13 @@ class PlaceDetailsPage extends StatelessWidget {
           children: [
             Hero(
               tag: 'place-hero-${place.id}',
-              child: AppCachedImage(
-                imageUrl: place.imageUrl,
+              child: DynamicPlaceImage(
+                query: place.name,
+                placeId: place.id,
+                fallbackUrl: place.imageUrl.isNotEmpty ? place.imageUrl : null,
                 fit: BoxFit.cover,
               ),
             ),
-            // Multi-layered gradient for depth and readability
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -383,151 +390,6 @@ class PlaceDetailsPage extends StatelessWidget {
         fontSize: 15,
         height: 1.7,
         color: const Color(0xFF4B5563),
-      ),
-    );
-  }
-
-  Widget _buildTimeline(Place place) {
-    final timeline = place.timeline!;
-    return SizedBox(
-      height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: timeline.length,
-        itemBuilder: (context, index) {
-          return _buildTimelineItem(
-            timeline[index].year,
-            timeline[index].event,
-            index == 0,
-            index == timeline.length - 1,
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildTimelineItem(String year, String event, bool isFirst, bool isLast) {
-    return SizedBox(
-      width: 180,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(color: AppTheme.primaryColor.withValues(alpha: 0.3), blurRadius: 4),
-                  ],
-                ),
-              ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    height: 2,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            year,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Expanded(
-            child: Text(
-              event,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: const Color(0xFF4B5563),
-                height: 1.4,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImageGallery(Place place) {
-    final images = place.images ?? [];
-    if (images.isEmpty) return const SizedBox.shrink();
-
-    return SizedBox(
-      height: 160,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.zero,
-        itemCount: images.length,
-        itemBuilder: (context, index) {
-          final imageUrl = images[index];
-          return GestureDetector(
-            onTap: () => _showFullImage(context, imageUrl),
-            child: Container(
-              margin: const EdgeInsets.only(right: 14),
-              width: 240,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: const Color(0xFFF3F4F6),
-                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: const Color(0xFFF3F4F6),
-                    child: const Icon(Icons.broken_image_rounded, color: Colors.grey),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showFullImage(BuildContext context, String imageUrl) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(16),
-        child: Stack(
-          alignment: Alignment.topRight,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: CachedNetworkImage(
-                imageUrl: imageUrl,
-                fit: BoxFit.contain,
-              ),
-            ),
-            IconButton(
-              icon: const CircleAvatar(
-                backgroundColor: Colors.black54,
-                child: Icon(Icons.close, color: Colors.white),
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -706,53 +568,56 @@ class PlaceDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFunFactsList(Place place) {
-    final facts = place.facts ?? place.funFacts ?? [];
+  Widget _buildQuizSection(Place place) {
     return Column(
-      children: facts.map((fact) => Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[100]!),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            const Icon(Icons.auto_awesome, size: 16, color: Colors.orangeAccent),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                fact,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: const Color(0xFF374151),
-                  height: 1.5,
-                ),
+            const Icon(Icons.auto_awesome_rounded, color: AppTheme.primaryColor, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              'Knowledge Check',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.deepNavy,
               ),
             ),
           ],
         ),
-      )).toList(),
+        const SizedBox(height: 8),
+        Text(
+          'Master the history of ${place.name} by choosing your challenge level.',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: const Color(0xFF6B7280),
+          ),
+        ),
+        const SizedBox(height: 24),
+        DifficultySelectionSection(
+          title: 'Challenge Level',
+          subtitle: 'Choose how deep you want to go',
+          onDifficultySelected: (level) {
+            setState(() => _selectedDifficulty = level);
+          },
+          onStart: () {
+            context.push(
+              '/quiz-play',
+              extra: QuizTopic(
+                title: 'Place_${place.id}',
+                description: 'Knowledge check for ${place.name}',
+                imageUrl: place.imageUrl,
+                icon: Icons.place_rounded,
+                color: AppTheme.primaryColor,
+                difficultyLevel: _selectedDifficulty!,
+                epochCategory: EpochCategory.global,
+              ),
+            );
+          },
+        ),
+      ],
     );
-  }
-
-  Widget _buildQuizSection(Place place) {
-    final quizzes = place.quizzes ?? [
-      PlaceQuiz(
-        question: 'What is the most unique architectural feature of ${place.name}?',
-        options: ['The structural material', 'The orientation', 'The geometric symmetry', 'The decoration'],
-        correctAnswerIndex: 2,
-      ),
-      PlaceQuiz(
-        question: 'Which civilization is primarily associated with this location?',
-        options: [place.civilization ?? 'Roman', 'Greek', 'Persian', 'Mayan'],
-        correctAnswerIndex: 0,
-      ),
-    ];
-
-    return PlaceQuizCard(quizzes: quizzes);
   }
 
   Widget _buildMapIntegration(Place place) {
@@ -927,139 +792,6 @@ class PlaceDetailsPage extends StatelessWidget {
   }
 }
 
-class PlaceQuizCard extends StatefulWidget {
-  final List<PlaceQuiz> quizzes;
-  const PlaceQuizCard({super.key, required this.quizzes});
-
-  @override
-  State<PlaceQuizCard> createState() => _PlaceQuizCardState();
-}
-
-class _PlaceQuizCardState extends State<PlaceQuizCard> {
-  int _currentIndex = 0;
-  int? _selectedAnswerIndex;
-  bool _hasAnswered = false;
-
-  void _handleAnswer(int index) {
-    if (_hasAnswered) return;
-    setState(() {
-      _selectedAnswerIndex = index;
-      _hasAnswered = true;
-    });
-  }
-
-  void _nextQuestion() {
-    setState(() {
-      _currentIndex = (_currentIndex + 1) % widget.quizzes.length;
-      _selectedAnswerIndex = null;
-      _hasAnswered = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final quiz = widget.quizzes[_currentIndex];
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey[100]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'QUESTION ${_currentIndex + 1}/${widget.quizzes.length}',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              if (_hasAnswered)
-                TextButton(
-                  onPressed: _nextQuestion,
-                  child: Text(
-                    'NEXT',
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            quiz.question,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1F2937),
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ...List.generate(quiz.options.length, (index) {
-            final option = quiz.options[index];
-            Color borderColor = Colors.grey[200]!;
-            Color bgColor = Colors.white;
-            IconData? icon;
-
-            if (_hasAnswered) {
-              if (index == quiz.correctAnswerIndex) {
-                borderColor = AppTheme.accentGreen;
-                bgColor = AppTheme.accentGreen.withValues(alpha: 0.05);
-                icon = Icons.check_circle_rounded;
-              } else if (index == _selectedAnswerIndex) {
-                borderColor = AppTheme.error;
-                bgColor = AppTheme.error.withValues(alpha: 0.05);
-                icon = Icons.cancel_rounded;
-              }
-            }
-
-            return GestureDetector(
-              onTap: () => _handleAnswer(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: borderColor, width: 2),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        option,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: _selectedAnswerIndex == index ? FontWeight.w700 : FontWeight.w500,
-                          color: const Color(0xFF374151),
-                        ),
-                      ),
-                    ),
-                    if (icon != null)
-                      Icon(icon, size: 20, color: borderColor),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-}
 
 
 

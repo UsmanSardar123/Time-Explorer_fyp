@@ -60,6 +60,8 @@ class Place extends Equatable {
   final String? createdAt;
   final List<String>? wikimediaTags;
   final List<String>? images;
+  final List<String> imageUrls;
+  final Map<String, String> imageCaptions;
   final List<String>? keyFacts;
   final String? openingHours;
   final String? ticketPrice;
@@ -114,6 +116,8 @@ class Place extends Equatable {
     this.createdAt,
     this.wikimediaTags,
     this.images,
+    this.imageUrls = const [],
+    this.imageCaptions = const {},
     this.keyFacts,
     this.openingHours,
     this.ticketPrice,
@@ -164,6 +168,8 @@ class Place extends Equatable {
         createdAt,
         wikimediaTags,
         images,
+        imageUrls,
+        imageCaptions,
         keyFacts,
         openingHours,
         ticketPrice,

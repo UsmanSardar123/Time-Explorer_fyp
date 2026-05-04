@@ -1,5 +1,6 @@
 import '../../domain/entities/quiz_question.dart';
 import '../../domain/entities/quiz.dart';
+import '../../domain/entities/quiz_topic.dart';
 
 final dummyDailyQuiz = Quiz(
   id: 'daily_quiz_001',
@@ -13,6 +14,7 @@ final dummyDailyQuiz = Quiz(
       correctAnswerIndex: 1,
       explanation: 'The Great Pyramid of Giza is the largest of the Egyptian pyramids and is located in Giza, Egypt.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'q2',
@@ -21,6 +23,7 @@ final dummyDailyQuiz = Quiz(
       correctAnswerIndex: 0,
       explanation: 'The Colosseum is an oval amphitheatre in the centre of the city of Rome, Italy.',
       type: QuestionType.trueFalse,
+      difficulty: DifficultyLevel.easy,
     ),
     QuizQuestion(
       id: 'q3',
@@ -29,6 +32,7 @@ final dummyDailyQuiz = Quiz(
       correctAnswerIndex: 2,
       explanation: 'The Taj Mahal was commissioned by the Mughal emperor Shah Jahan in 1632 to house the tomb of his favourite wife, Mumtaz Mahal.',
       type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
     ),
   ],
 );

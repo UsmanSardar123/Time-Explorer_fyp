@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 
+String _safeUrl(String url) {
+  try {
+    return Uri.encodeFull(Uri.decodeFull(url));
+  } catch (_) {
+    return url;
+  }
+}
+
 class AppCachedImage extends StatelessWidget {
   final String imageUrl;
   final double? width;
@@ -29,11 +37,17 @@ class AppCachedImage extends StatelessWidget {
     if (imageUrl.isEmpty) {
       imageContent = _buildErrorFallback(bgColor);
     } else {
+      final encodedUrl = _safeUrl(imageUrl);
       imageContent = CachedNetworkImage(
-        imageUrl: imageUrl,
+        imageUrl: encodedUrl,
+        key: ValueKey(encodedUrl),
         width: width,
         height: height,
         fit: fit,
+        httpHeaders: const {
+          'User-Agent': 'TimeExplorer/1.0 (Flutter)',
+          'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+        },
         placeholder: (context, url) => Container(
           width: width,
           height: height,

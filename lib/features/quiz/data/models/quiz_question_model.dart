@@ -1,4 +1,5 @@
 import '../../domain/entities/quiz_question.dart';
+import '../../domain/entities/quiz_topic.dart';
 
 class QuizQuestionModel extends QuizQuestion {
   const QuizQuestionModel({
@@ -8,6 +9,7 @@ class QuizQuestionModel extends QuizQuestion {
     required super.correctAnswerIndex,
     required super.explanation,
     required super.type,
+    required super.difficulty,
     super.imageUrl,
   });
 
@@ -19,6 +21,7 @@ class QuizQuestionModel extends QuizQuestion {
       correctAnswerIndex: json['correctAnswerIndex'],
       explanation: json['explanation'],
       type: QuestionType.values.byName(json['type']),
+      difficulty: DifficultyLevel.values.byName(json['difficulty']),
       imageUrl: json['imageUrl'],
     );
   }
@@ -31,6 +34,7 @@ class QuizQuestionModel extends QuizQuestion {
       'correctAnswerIndex': correctAnswerIndex,
       'explanation': explanation,
       'type': type.name,
+      'difficulty': difficulty.name,
       'imageUrl': imageUrl,
     };
   }
