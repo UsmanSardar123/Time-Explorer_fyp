@@ -84,7 +84,7 @@ class PlaceModel extends Place {
       images: data['images'] != null ? List<String>.from(data['images']) : null,
       imageUrls: data['imageUrls'] != null
           ? List<String>.from(data['imageUrls'])
-          : [(data['imageUrl'] as String? ?? '')].where((s) => s.isNotEmpty).toList(),
+          : const [],
       imageCaptions: data['imageCaptions'] != null
           ? Map<String, String>.from(data['imageCaptions'])
           : {},
