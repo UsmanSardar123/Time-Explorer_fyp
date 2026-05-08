@@ -40,6 +40,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
       final data = userDoc.data() ?? {};
 
+      await _firestore.collection('users').doc(user.uid).set(
+        {'lastActive': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+
       debugPrint('[AUTH] Sign in successful via Firebase');
       return UserEntity(
         id: user.uid,
@@ -73,6 +78,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'email': email,
         'displayName': name,
         'dob': dob,
+        'xp': 0,
+        'level': 1,
+        'streak': 0,
+        'lastActive': FieldValue.serverTimestamp(),
+        'fcmToken': null,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -119,11 +129,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'email': user.email ?? '',
           'displayName': user.displayName ?? '',
           'photoUrl': user.photoURL,
+          'streak': 0,
+          'lastActive': FieldValue.serverTimestamp(),
+          'fcmToken': null,
           'createdAt': FieldValue.serverTimestamp(),
         };
         await _firestore.collection('users').doc(user.uid).set(data);
       } else {
         data = userDoc.data()!;
+        await _firestore.collection('users').doc(user.uid).set(
+          {'lastActive': FieldValue.serverTimestamp()},
+          SetOptions(merge: true),
+        );
       }
 
       debugPrint('[AUTH] Google sign in successful via Firebase');

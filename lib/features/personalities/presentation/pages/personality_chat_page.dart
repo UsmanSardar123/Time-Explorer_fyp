@@ -12,6 +12,7 @@ import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 import '../../data/services/analytics_service.dart';
 import '../../domain/entities/character.dart';
+import '../../domain/entities/character_category.dart';
 import '../cubit/chat_cubit.dart';
 import '../cubit/chat_state.dart';
 import '../widgets/message_bubble.dart';
@@ -173,7 +174,10 @@ class _ChatHeader extends StatelessWidget {
                 color: AppTheme.onSurface, size: 18),
             onPressed: () => context.pop(),
           ),
-          _HeaderAvatar(imageUrl: character.imageUrl),
+          _HeaderAvatar(
+            imageUrl: character.imageUrl,
+            category: character.category,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -192,7 +196,19 @@ class _ChatHeader extends StatelessWidget {
                     Text('Live',
                         style: GoogleFonts.beVietnamPro(
                             fontSize: 11, color: AppTheme.onSurfaceVariant)),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
+                    Icon(character.category.icon,
+                        size: 11, color: AppTheme.onSurfaceVariant),
+                    const SizedBox(width: 3),
+                    Flexible(
+                      child: Text(
+                        character.category.displayName,
+                        style: GoogleFonts.beVietnamPro(
+                            fontSize: 11, color: AppTheme.onSurfaceVariant),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     _EraBadge(era: character.era),
                   ],
                 ),
@@ -207,7 +223,8 @@ class _ChatHeader extends StatelessWidget {
 
 class _HeaderAvatar extends StatelessWidget {
   final String imageUrl;
-  const _HeaderAvatar({required this.imageUrl});
+  final CharacterCategory category;
+  const _HeaderAvatar({required this.imageUrl, required this.category});
 
   @override
   Widget build(BuildContext context) {
@@ -215,15 +232,20 @@ class _HeaderAvatar extends StatelessWidget {
       radius: 20,
       backgroundColor: AppTheme.surfaceLow,
       child: ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          httpHeaders: const {'User-Agent': 'TimeExplorer/1.0 (Flutter)'},
-          width: 40,
-          height: 40,
-          fit: BoxFit.cover,
-          errorWidget: (_, _, _) => const Icon(Icons.person_rounded,
-              color: AppTheme.onSurfaceVariant, size: 20),
-        ),
+        child: imageUrl.isEmpty
+            ? Icon(category.icon, color: AppTheme.onSurfaceVariant, size: 20)
+            : CachedNetworkImage(
+                imageUrl: imageUrl,
+                httpHeaders: const {'User-Agent': 'TimeExplorer/1.0 (Flutter)'},
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                errorWidget: (_, _, _) => Icon(
+                  category.icon,
+                  color: AppTheme.onSurfaceVariant,
+                  size: 20,
+                ),
+              ),
       ),
     );
   }
@@ -335,37 +357,75 @@ class _ChatBody extends StatelessWidget {
       children: [
         if (state.isOffline) const _OfflineBanner(),
         Expanded(
-          child: CustomScrollView(
-            controller: scroll,
-            reverse: true,
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (_, i) {
-                      if (i == 0 && hasTimeout) {
-                        return _TimeoutRetryCard(onRetry: onRetry);
-                      }
-                      final afterTimeout = hasTimeout ? 1 : 0;
-                      if (i == afterTimeout && hasError) {
-                        return _ErrorBubble(message: state.error!);
-                      }
-                      if (i == afterTimeout + (hasError ? 1 : 0) &&
-                          state.isTyping) {
-                        return TypingIndicator(imageUrl: character.imageUrl);
-                      }
-                      final msg = reversed[i - extraCount];
-                      return MessageBubble(
-                        key: ValueKey(msg.id),
-                        message: msg,
-                        character: character,
-                        isStreaming: msg.id == state.streamingMessageId,
-                        contextFacts: state.contextFacts,
-                      );
-                    },
-                    childCount: reversed.length + extraCount,
+          child: Stack(
+            children: [
+              // ── Background Decoration ───────────────────────────────────────
+              Positioned.fill(
+                child: Container(
+                  color: AppTheme.background,
+                  child: Opacity(
+                    opacity: 0.03,
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                      ),
+                      itemBuilder: (_, __) => const Icon(Icons.auto_stories_rounded, size: 80),
+                    ),
                   ),
+                ),
+              ),
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.background.withValues(alpha: 0.0),
+                        AppTheme.background,
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: const [0.0, 0.9],
+                    ),
+                  ),
+                ),
+              ),
+              // ── Chat List ──────────────────────────────────────────────────
+              Positioned.fill(
+                child: CustomScrollView(
+                  controller: scroll,
+                  reverse: true,
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (_, i) {
+                            if (i == 0 && hasTimeout) {
+                              return _TimeoutRetryCard(onRetry: onRetry);
+                            }
+                            final afterTimeout = hasTimeout ? 1 : 0;
+                            if (i == afterTimeout && hasError) {
+                              return _ErrorBubble(message: state.error!);
+                            }
+                            if (i == afterTimeout + (hasError ? 1 : 0) &&
+                                state.isTyping) {
+                              return TypingIndicator(imageUrl: character.imageUrl);
+                            }
+                            final msg = reversed[i - extraCount];
+                            return MessageBubble(
+                              key: ValueKey(msg.id),
+                              message: msg,
+                              character: character,
+                              isStreaming: msg.id == state.streamingMessageId,
+                              contextFacts: state.contextFacts,
+                            );
+                          },
+                          childCount: reversed.length + extraCount,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

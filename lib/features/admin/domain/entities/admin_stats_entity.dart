@@ -3,6 +3,7 @@ class AdminStatsEntity {
   final int totalPlaces;
   final int totalHistoricalFacts;
   final int totalCharacters;
+  final int totalEvents;
   final int totalActiveSessions;
 
   AdminStatsEntity({
@@ -10,6 +11,7 @@ class AdminStatsEntity {
     required this.totalPlaces,
     required this.totalHistoricalFacts,
     required this.totalCharacters,
+    required this.totalEvents,
     required this.totalActiveSessions,
   });
 
@@ -18,6 +20,7 @@ class AdminStatsEntity {
         totalPlaces: 0,
         totalHistoricalFacts: 0,
         totalCharacters: 0,
+        totalEvents: 0,
         totalActiveSessions: 0,
       );
 }

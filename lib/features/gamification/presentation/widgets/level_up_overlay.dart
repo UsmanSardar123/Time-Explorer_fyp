@@ -111,17 +111,17 @@ class _LevelUpAnimationState extends State<_LevelUpAnimation>
                   const Text('⭐', style: TextStyle(fontSize: 48)),
                   const SizedBox(height: 12),
                   Text(
-                    'LEVEL UP!',
+                    'EPOCH ADVANCED!',
                     style: GoogleFonts.poppins(
-                      fontSize: 32,
+                      fontSize: 26,
                       fontWeight: FontWeight.w900,
                       color: _accent,
-                      letterSpacing: 3,
+                      letterSpacing: 2,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Level ${widget.level}  ·  ${widget.rank}',
+                    'Epoch ${widget.level}  ·  ${widget.rank}',
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       color: Colors.white70,

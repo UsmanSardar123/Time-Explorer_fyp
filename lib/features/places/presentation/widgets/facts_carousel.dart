@@ -20,8 +20,6 @@ class FactsCarousel extends StatefulWidget {
 }
 
 class _FactsCarouselState extends State<FactsCarousel> {
-  int _current = 0;
-
   @override
   Widget build(BuildContext context) {
     if (widget.facts.isEmpty) return const SizedBox.shrink();
@@ -31,7 +29,6 @@ class _FactsCarouselState extends State<FactsCarousel> {
       child: PageView.builder(
         physics: const BouncingScrollPhysics(),
         itemCount: widget.facts.length,
-        onPageChanged: (i) => setState(() => _current = i),
         itemBuilder: (_, index) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),

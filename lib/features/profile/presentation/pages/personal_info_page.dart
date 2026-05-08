@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:timeexplorer/core/theme/app_theme.dart';
+import 'package:timeexplorer/features/auth/presentation/providers/auth_provider.dart';
 import 'package:timeexplorer/features/profile/domain/entities/profile_entity.dart';
 import 'package:timeexplorer/features/profile/presentation/providers/profile_provider.dart';
 
@@ -12,110 +15,191 @@ class PersonalInfoPage extends StatefulWidget {
 }
 
 class _PersonalInfoPageState extends State<PersonalInfoPage> {
-  late TextEditingController _dobController;
-  late TextEditingController _phoneController;
-  late TextEditingController _addressController;
+  late final TextEditingController _nameController;
+  late final TextEditingController _dobController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _addressController;
   String? _gender;
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    _dobController = TextEditingController(text: widget.profile.dob ?? '');
-    _phoneController = TextEditingController(text: widget.profile.phoneNumber ?? '');
-    _addressController = TextEditingController(text: widget.profile.address ?? '');
+    _nameController =
+        TextEditingController(text: widget.profile.displayName);
+    _dobController =
+        TextEditingController(text: widget.profile.dob ?? '');
+    _phoneController =
+        TextEditingController(text: widget.profile.phoneNumber ?? '');
+    _addressController =
+        TextEditingController(text: widget.profile.address ?? '');
     _gender = widget.profile.gender;
   }
 
   @override
   void dispose() {
+    _nameController.dispose();
     _dobController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
     super.dispose();
   }
 
+  // ── Save ──────────────────────────────────────────────────────────────────
+
   Future<void> _saveInfo() async {
-    if (_formKey.currentState!.validate()) {
-      final updatedProfile = widget.profile.copyWith(
-        dob: _dobController.text,
-        phoneNumber: _phoneController.text,
-        address: _addressController.text,
-        gender: _gender,
-      );
+    if (!_formKey.currentState!.validate()) return;
 
-      await context.read<ProfileProvider>().updateProfile(updatedProfile);
+    final updatedProfile = ProfileEntity(
+      id: widget.profile.id,
+      email: widget.profile.email,
+      displayName: _nameController.text.trim(),
+      username: widget.profile.username,
+      photoUrl: widget.profile.photoUrl,
+      bio: widget.profile.bio,
+      dob: _dobController.text.trim().isEmpty
+          ? null
+          : _dobController.text.trim(),
+      phoneNumber: _phoneController.text.trim().isEmpty
+          ? null
+          : _phoneController.text.trim(),
+      address: _addressController.text.trim().isEmpty
+          ? null
+          : _addressController.text.trim(),
+      gender: _gender,
+      privacySettings: widget.profile.privacySettings,
+    );
 
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Personal information updated')),
-        );
+    try {
+      final profileProvider = context.read<ProfileProvider>();
+      await profileProvider.updateProfile(updatedProfile);
+
+      if (!mounted) return;
+
+      if (profileProvider.error != null) {
+        _showSnackbar(profileProvider.error!, isError: true);
+        return;
       }
+
+      await context.read<AuthProvider>().refreshCurrentUser();
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      _showSnackbar('Personal information updated successfully.');
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackbar('Failed to save. Please try again.', isError: true);
     }
   }
 
+  void _showSnackbar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.beVietnamPro(color: Colors.white),
+        ),
+        backgroundColor:
+            isError ? AppTheme.error : AppTheme.accentGreen,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  // ── Date picker ──────────────────────────────────────────────────────────
+
+  Future<void> _pickDate() async {
+    final initial = _parseDob(_dobController.text) ??
+        DateTime.now().subtract(const Duration(days: 365 * 18));
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && mounted) {
+      final d = picked.day.toString().padLeft(2, '0');
+      final m = picked.month.toString().padLeft(2, '0');
+      _dobController.text = '$d/$m/${picked.year}';
+    }
+  }
+
+  DateTime? _parseDob(String text) {
+    try {
+      final parts = text.split('/');
+      if (parts.length == 3) {
+        return DateTime(
+          int.parse(parts[2]),
+          int.parse(parts[1]),
+          int.parse(parts[0]),
+        );
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-    final cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Personal Information'),
-        elevation: 0,
-        actions: [
-          IconButton(onPressed: _saveInfo, icon: const Icon(Icons.check_rounded)),
-        ],
-      ),
+      backgroundColor: AppTheme.background,
+      appBar: _buildAppBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTextField(
+              _buildField(
+                controller: _nameController,
+                label: 'Full Name',
+                icon: Icons.person_outline_rounded,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Please enter your full name'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
                 controller: _dobController,
                 label: 'Date of Birth',
                 icon: Icons.calendar_today_rounded,
-                cardColor: cardColor,
                 readOnly: true,
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime.now(),
-                  );
-                  if (date != null) {
-                    _dobController.text = "${date.day}/${date.month}/${date.year}";
-                  }
-                },
+                onTap: _pickDate,
               ),
               const SizedBox(height: 16),
-              _buildTextField(
+              _buildField(
                 controller: _phoneController,
                 label: 'Phone Number',
                 icon: Icons.phone_android_rounded,
-                cardColor: cardColor,
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 16),
-              _buildTextField(
+              _buildField(
                 controller: _addressController,
                 label: 'Address',
                 icon: Icons.location_on_outlined,
-                cardColor: cardColor,
                 maxLines: 2,
               ),
-              const SizedBox(height: 24),
-              const Padding(
-                padding: EdgeInsets.only(left: 8.0, bottom: 12),
-                child: Text('Gender', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 28),
+              Text(
+                'Gender',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.onSurface,
+                ),
               ),
-              _buildGenderSelector(cardColor),
+              const SizedBox(height: 12),
+              _GenderSelector(
+                selected: _gender,
+                onChanged: (val) => setState(() => _gender = val),
+              ),
             ],
           ),
         ),
@@ -123,62 +207,160 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
     );
   }
 
-  Widget _buildGenderSelector(Color cardColor) {
-    final genders = ['Male', 'Female', 'Other', 'Prefer not to say'];
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: RadioGroup<String>(
-        groupValue: _gender,
-        onChanged: (val) => setState(() => _gender = val),
-        child: Column(
-          children: genders.map((g) => RadioListTile<String>(
-            title: Text(g),
-            value: g,
-            fillColor: WidgetStatePropertyAll(Colors.teal.shade500),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          )).toList(),
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppTheme.background,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      title: Text(
+        'Personal Information',
+        style: GoogleFonts.plusJakartaSans(
+          fontWeight: FontWeight.w800,
+          fontSize: 20,
+          color: AppTheme.onSurface,
         ),
       ),
+      actions: [
+        Consumer<ProfileProvider>(
+          builder: (_, pp, child) => pp.isLoading
+              ? const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.primaryContainer,
+                    ),
+                  ),
+                )
+              : IconButton(
+                  onPressed: _saveInfo,
+                  icon: const Icon(
+                    Icons.check_rounded,
+                    color: AppTheme.primaryContainer,
+                  ),
+                  tooltip: 'Save',
+                ),
+        ),
+      ],
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    required Color cardColor,
     int maxLines = 1,
     bool readOnly = false,
     VoidCallback? onTap,
     TextInputType? keyboardType,
+    String? Function(String?)? validator,
   }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      readOnly: readOnly,
+      onTap: onTap,
+      keyboardType: keyboardType,
+      validator: validator,
+      style: GoogleFonts.beVietnamPro(
+          fontSize: 15, color: AppTheme.onSurface),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon:
+            Icon(icon, color: AppTheme.primaryContainer, size: 20),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide:
+              const BorderSide(color: AppTheme.outlineVariant),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide:
+              const BorderSide(color: AppTheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(
+              color: AppTheme.primaryContainer, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppTheme.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide:
+              const BorderSide(color: AppTheme.error, width: 2),
+        ),
+        filled: true,
+        fillColor: AppTheme.surfaceLowest,
+        labelStyle: GoogleFonts.beVietnamPro(
+            color: AppTheme.onSurfaceVariant, fontSize: 14),
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16, vertical: 16),
+      ),
+    );
+  }
+}
+
+// ── Gender Selector ───────────────────────────────────────────────────────────
+
+class _GenderSelector extends StatelessWidget {
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+
+  const _GenderSelector(
+      {required this.selected, required this.onChanged});
+
+  static const _options = [
+    'Male',
+    'Female',
+    'Other',
+    'Prefer not to say',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: cardColor,
+        color: AppTheme.surfaceLowest,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        border: Border.all(color: AppTheme.outlineVariant),
       ),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        readOnly: readOnly,
-        onTap: onTap,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: Colors.teal.shade500),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-          filled: true,
-          fillColor: Colors.transparent,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: RadioGroup<String>(
+        groupValue: selected,
+        onChanged: onChanged,
+        child: Column(
+          children: List.generate(_options.length, (i) {
+            final option = _options[i];
+            final isLast = i == _options.length - 1;
+            return Column(
+              children: [
+                RadioListTile<String>(
+                  value: option,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16),
+                  title: Text(
+                    option,
+                    style: GoogleFonts.beVietnamPro(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.onSurface,
+                    ),
+                  ),
+                ),
+                if (!isLast)
+                  const Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                    color: AppTheme.outlineVariant,
+                  ),
+              ],
+            );
+          }),
         ),
       ),
     );

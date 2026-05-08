@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
+import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_provider.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
-import 'package:timeexplorer/features/quiz/domain/entities/quiz_question.dart';
 import 'package:timeexplorer/features/quiz/domain/entities/quiz_topic.dart';
 import 'package:timeexplorer/features/quiz/presentation/widgets/difficulty_selection_section.dart';
 import '../../domain/entities/character.dart';
@@ -92,9 +92,35 @@ class _HeroAppBar extends StatelessWidget {
       stretch: true,
       backgroundColor: AppTheme.primary,
       leading: const _BackButton(),
+      actions: [_BookmarkButton(character: character)],
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [StretchMode.zoomBackground],
         background: _HeroBanner(character: character),
+      ),
+    );
+  }
+}
+
+class _BookmarkButton extends StatelessWidget {
+  final Character character;
+  const _BookmarkButton({required this.character});
+
+  @override
+  Widget build(BuildContext context) {
+    final bp = context.watch<BookmarkProvider>();
+    final saved = bp.isCharacterBookmarked(character.id);
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: CircleAvatar(
+        backgroundColor: Colors.black45,
+        child: IconButton(
+          icon: Icon(
+            saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+            color: saved ? Colors.amber : Colors.white,
+            size: 20,
+          ),
+          onPressed: () => bp.toggleCharacterBookmark(character),
+        ),
       ),
     );
   }

@@ -1,7 +1,9 @@
 import 'package:timeexplorer/features/admin/domain/entities/admin_stats_entity.dart';
 import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
 import 'package:timeexplorer/features/admin/data/models/character_model.dart';
+import 'package:timeexplorer/features/admin/data/models/event_model.dart';
 import 'package:timeexplorer/features/admin/domain/repositories/admin_repository.dart';
+import 'package:timeexplorer/features/event_explorer/domain/entities/historical_event.dart';
 import 'package:timeexplorer/features/places/data/models/place_model.dart';
 import 'package:timeexplorer/features/places/domain/entities/place.dart';
 import 'package:timeexplorer/features/profile/domain/entities/profile_entity.dart';
@@ -15,6 +17,7 @@ class MockAdminRepository implements AdminRepository {
       totalPlaces: 342,
       totalHistoricalFacts: 1890,
       totalCharacters: 58,
+      totalEvents: 0,
       totalActiveSessions: 420,
     ));
   }
@@ -82,4 +85,17 @@ class MockAdminRepository implements AdminRepository {
 
   @override
   Future<void> deleteCharacter(String characterId) async {}
+
+  // Events stubs
+  @override
+  Future<List<HistoricalEvent>> getAllEvents() async => [];
+
+  @override
+  Future<void> createEvent(EventModel event) async {}
+
+  @override
+  Future<void> updateEvent(EventModel event) async {}
+
+  @override
+  Future<void> deleteEvent(String eventId) async {}
 }

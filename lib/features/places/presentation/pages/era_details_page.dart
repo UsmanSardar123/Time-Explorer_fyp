@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:timeexplorer/features/places/domain/entities/era.dart';
 import 'package:timeexplorer/features/places/presentation/providers/era_provider.dart';
 import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
+import 'package:timeexplorer/core/widgets/themed_loading.dart';
 import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_provider.dart';
 import 'package:timeexplorer/features/explore/domain/entities/place_entity.dart';
 
@@ -73,9 +74,42 @@ class _EraDetailsPageState extends State<EraDetailsPage> {
                       height: 1.7,
                     ),
                   ),
-                  
+
+                  // 3b. Key Events Section
+                  if (widget.era.keyEvents.isNotEmpty) ...[
+                    const SizedBox(height: 36),
+                    _EraSection(
+                      label: 'KEY EVENTS',
+                      accentColor: _primary,
+                      child: Column(
+                        children: widget.era.keyEvents
+                            .map((e) => _KeyEventTile(text: e))
+                            .toList(),
+                      ),
+                    ),
+                  ],
+
+                  // 3c. Interesting Facts Section
+                  if (widget.era.interestingFacts.isNotEmpty) ...[
+                    const SizedBox(height: 28),
+                    _EraSection(
+                      label: 'INTERESTING FACTS',
+                      accentColor: _primary,
+                      child: Column(
+                        children: widget.era.interestingFacts
+                            .asMap()
+                            .entries
+                            .map((e) => _FactTile(
+                                  number: e.key + 1,
+                                  text: e.value,
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 48),
-                  
+
                   // 4. Places Section
                   Text(
                     'Landmarks of this Era',
@@ -213,7 +247,25 @@ class _EraDetailsPageState extends State<EraDetailsPage> {
       builder: (context, provider, child) {
         if (provider.isLoadingPlaces) {
           return const SliverToBoxAdapter(
-            child: Center(child: CircularProgressIndicator(color: _primary)),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: ThemedLoading(context: 'events'),
+            ),
+          );
+        }
+
+        if (provider.error != null) {
+          return SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  'Error: ${provider.error}',
+                  style: GoogleFonts.beVietnamPro(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
           );
         }
 
@@ -233,7 +285,7 @@ class _EraDetailsPageState extends State<EraDetailsPage> {
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.75,
+              childAspectRatio: 0.8, // Slightly taller for more text space
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -338,21 +390,25 @@ class _EraDetailsPageState extends State<EraDetailsPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  loc.name,
-                                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  loc.location,
-                                  style: GoogleFonts.beVietnamPro(fontSize: 11, color: _textMuted),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      loc.name,
+                                      style: GoogleFonts.plusJakartaSans(
+                                          fontWeight: FontWeight.w700, fontSize: 13),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    loc.location,
+                                    style: GoogleFonts.beVietnamPro(
+                                        fontSize: 11, color: _textMuted),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                           ),
                         ),
                       ),
@@ -366,6 +422,136 @@ class _EraDetailsPageState extends State<EraDetailsPage> {
           ),
         );
       },
+    );
+  }
+}
+
+// ── Shared Section Header + Content Wrapper ────────────────────────────────────
+
+class _EraSection extends StatelessWidget {
+  final String label;
+  final Color accentColor;
+  final Widget child;
+
+  const _EraSection({
+    required this.label,
+    required this.accentColor,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: accentColor,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        child,
+      ],
+    );
+  }
+}
+
+// ── Key Event Tile ─────────────────────────────────────────────────────────────
+
+class _KeyEventTile extends StatelessWidget {
+  final String text;
+  const _KeyEventTile({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(top: 6, right: 12),
+            decoration: const BoxDecoration(
+              color: AppTheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.beVietnamPro(
+                fontSize: 14,
+                color: AppTheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Interesting Fact Tile ──────────────────────────────────────────────────────
+
+class _FactTile extends StatelessWidget {
+  final int number;
+  final String text;
+  const _FactTile({required this.number, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryContainer.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.primaryContainer.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryContainer,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                '$number',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: GoogleFonts.beVietnamPro(
+                  fontSize: 14,
+                  color: AppTheme.onSurface,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 import 'package:timeexplorer/features/explore/presentation/providers/place_provider.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/core/widgets/gamified_components.dart';
@@ -57,7 +56,10 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
           slivers: [
             // 1. Progress Header (authenticated users only)
             SliverToBoxAdapter(
-              child: ProgressHeader(totalPlaces: placeProvider.places.length),
+              child: ProgressHeader(
+                totalPlaces: placeProvider.totalPlaces,
+                knownPlaceIds: placeProvider.allPlaceIds,
+              ),
             ),
 
             // 2. Top Search Bar

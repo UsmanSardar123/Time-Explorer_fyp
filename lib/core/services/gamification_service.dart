@@ -3,8 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/gamification/data/services/mission_catalog.dart';
+import '../../features/gamification/domain/entities/daily_mission.dart';
 import '../../features/gamification/domain/entities/user_progress.dart';
 import '../../features/gamification/domain/entities/badge.dart';
+
+enum StreakStatus { normal, atRisk, broken }
 
 class GamificationService {
   static const String _kUserProgressKey = 'user_progress_data';
@@ -29,6 +33,10 @@ class GamificationService {
   static const String badgeHistorian = 'historian';
   static const String badgeTrailblazer = 'trailblazer';
   static const String badgeArchaeologist = 'archaeologist';
+  static const String badgeChronicler = 'chronicler';
+  static const String badgeEpochMaster = 'epoch_master';
+  static const String badgeQuizWhiz = 'quiz_whiz';
+  static const String badgeQuestKeeper = 'quest_keeper';
 
   final List<Badge> _availableBadges = [
     const Badge(
@@ -72,6 +80,30 @@ class GamificationService {
       name: 'Archaeologist',
       description: 'Explore 15 historical places.',
       icon: '⛏️',
+    ),
+    const Badge(
+      id: badgeChronicler,
+      name: 'Chronicler',
+      description: 'Read 5 historical events.',
+      icon: '📖',
+    ),
+    const Badge(
+      id: badgeEpochMaster,
+      name: 'Epoch Master',
+      description: 'Read 15 historical events.',
+      icon: '🏆',
+    ),
+    const Badge(
+      id: badgeQuizWhiz,
+      name: 'Quiz Whiz',
+      description: 'Answer 10 quiz questions correctly.',
+      icon: '🧠',
+    ),
+    const Badge(
+      id: badgeQuestKeeper,
+      name: 'Quest Keeper',
+      description: 'Claim your first daily mission.',
+      icon: '🎯',
     ),
   ];
 
@@ -124,7 +156,13 @@ class GamificationService {
     FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
-        .set({_kFirestoreField: progress.toJson()}, SetOptions(merge: true))
+        .set({
+          _kFirestoreField: progress.toJson(),
+          'xp': progress.xp,
+          'level': progress.level,
+          'streak': progress.streakDays,
+          'lastActive': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true))
         .then((_) => debugPrint('[GAMIFICATION] Firestore write ok: xp=${progress.xp}, streak=${progress.streakDays}'))
         .catchError((e) => debugPrint('[GAMIFICATION] Firestore write failed: $e'));
   }
@@ -147,6 +185,29 @@ class GamificationService {
     return updated;
   }
 
+  /// Ensures [progress] has today's mission set; rotates if stale.
+  /// Pure — does not persist; callers save via the existing flow.
+  UserProgress _ensureMission(UserProgress progress) {
+    final today = MissionCatalog.todayKey();
+    if (progress.dailyMission?.dateKey == today) return progress;
+    return progress.copyWith(
+      dailyMission: MissionCatalog.missionFor(DateTime.now().toUtc()),
+    );
+  }
+
+  /// Increments mission progress in-place when today's mission matches [taskKey].
+  /// No-op otherwise. Pure — caller saves.
+  UserProgress _bumpMission(UserProgress progress, String taskKey,
+      [int amount = 1]) {
+    final m = progress.dailyMission;
+    if (m == null) return progress;
+    if (m.dateKey != MissionCatalog.todayKey()) return progress;
+    if (m.taskKey != taskKey) return progress;
+    if (m.progress >= m.target) return progress;
+    final next = (m.progress + amount).clamp(0, m.target);
+    return progress.copyWith(dailyMission: m.copyWith(progress: next));
+  }
+
   // ── Public XP actions ────────────────────────────────────────────────────────
 
   Future<UserProgress> addXP(int amount, {DateTime? customTime}) async {
@@ -156,7 +217,8 @@ class GamificationService {
 
   /// +10 XP per correct answer. Not idempotent — called once per answered question.
   Future<UserProgress> recordCorrectAnswer() async {
-    final progress = await loadProgress();
+    var progress = await loadProgress();
+    progress = _bumpMission(progress, MissionCatalog.taskAnswerQuiz);
     return _addXPAndSave(progress, xpCorrectAnswer);
   }
 
@@ -190,6 +252,7 @@ class GamificationService {
       level: UserProgress.calculateLevel(newXP),
       lastFactDate: now,
     );
+    progress = _bumpMission(progress, MissionCatalog.taskViewFact);
     await saveProgress(progress);
     return progress;
   }
@@ -249,10 +312,55 @@ class GamificationService {
       exploredPlaceIds: newList,
     );
     progress = await _checkAndUnlockBadges(progress);
+    progress = _bumpMission(progress, MissionCatalog.taskDiscoverPlaces);
     progress = progress.copyWith(level: UserProgress.calculateLevel(progress.xp));
     await saveProgress(progress);
     return progress;
   }
+
+  /// +15 XP for viewing an event for the first time (idempotent per eventId).
+  Future<UserProgress> recordEventCompleted(String eventId) async {
+    var progress = await loadProgress();
+    if (progress.completedEventIds.contains(eventId)) return progress;
+
+    final newList = List<String>.from(progress.completedEventIds)..add(eventId);
+    progress = progress.copyWith(
+      xp: progress.xp + 15,
+      completedEventIds: newList,
+    );
+    progress = _bumpMission(progress, MissionCatalog.taskExploreEvents);
+    progress = await _checkAndUnlockBadges(progress);
+    progress = progress.copyWith(level: UserProgress.calculateLevel(progress.xp));
+    await saveProgress(progress);
+    return progress;
+  }
+
+  /// Records the answer to a single mini-quiz question. Awards
+  /// [xpCorrectAnswer] XP only on the FIRST correct answer per [questionId].
+  /// Wrong answers do not consume the question — the user can retry.
+  Future<UserProgress> recordEventQuizAnswer({
+    required String questionId,
+    required bool isCorrect,
+  }) async {
+    var progress = await loadProgress();
+    if (progress.answeredQuestionIds.contains(questionId)) return progress;
+    if (!isCorrect) return progress;
+
+    final newList = List<String>.from(progress.answeredQuestionIds)
+      ..add(questionId);
+    progress = progress.copyWith(
+      xp: progress.xp + xpCorrectAnswer,
+      answeredQuestionIds: newList,
+    );
+    progress = _bumpMission(progress, MissionCatalog.taskAnswerQuiz);
+    progress = await _checkAndUnlockBadges(progress);
+    progress = progress.copyWith(
+      level: UserProgress.calculateLevel(progress.xp),
+    );
+    await saveProgress(progress);
+    return progress;
+  }
+
 
   /// +20 XP for completing a quiz for the first time (idempotent per quizId).
   Future<UserProgress> recordQuizCompleted(String quizId) async {
@@ -271,6 +379,17 @@ class GamificationService {
     return progress;
   }
 
+  /// Returns streak risk level based on hours since last login.
+  /// Call BEFORE recordDailyOpen() to read the pre-update status.
+  StreakStatus checkStreakStatus(UserProgress progress, {DateTime? customTime}) {
+    if (progress.lastLoginDate == null) return StreakStatus.normal;
+    final now = customTime ?? DateTime.now();
+    final gapHours = now.difference(progress.lastLoginDate!.toLocal()).inHours;
+    if (gapHours > 24) return StreakStatus.broken;
+    if (gapHours >= 18) return StreakStatus.atRisk;
+    return StreakStatus.normal;
+  }
+
   /// Handles first daily app open: awards +10 XP and updates streak.
   Future<UserProgress> recordDailyOpen({DateTime? customTime}) async {
     var progress = await loadProgress();
@@ -284,7 +403,14 @@ class GamificationService {
       final lastLoginDay = DateTime.utc(
         lastLoginUtc.year, lastLoginUtc.month, lastLoginUtc.day,
       );
-      if (lastLoginDay == today) return progress;
+      if (lastLoginDay == today) {
+        final rotated = _ensureMission(progress);
+        if (rotated != progress) {
+          await saveProgress(rotated);
+          return rotated;
+        }
+        return progress;
+      }
 
       final diff = today.difference(lastLoginDay).inDays;
       final newStreak = diff == 1 ? progress.streakDays + 1 : 1;
@@ -301,9 +427,38 @@ class GamificationService {
       );
     }
 
+    progress = _ensureMission(progress);
     progress = progress.copyWith(level: UserProgress.calculateLevel(progress.xp));
     await saveProgress(progress);
     return progress;
+  }
+
+  /// Awards the daily mission's reward XP and marks it claimed. Idempotent —
+  /// calling twice for the same mission returns unchanged progress.
+  Future<UserProgress> claimDailyMissionReward() async {
+    var progress = await loadProgress();
+    final m = progress.dailyMission;
+    if (m == null) return progress;
+    if (m.dateKey != MissionCatalog.todayKey()) return progress;
+    if (!m.completed || m.claimed) return progress;
+
+    final newXP = progress.xp + m.rewardXp;
+    progress = progress.copyWith(
+      xp: newXP,
+      level: UserProgress.calculateLevel(newXP),
+      dailyMission: m.copyWith(claimed: true),
+    );
+    progress = await _checkAndUnlockBadges(progress);
+    await saveProgress(progress);
+    return progress;
+  }
+
+  /// Returns today's mission, ensuring rotation if stale. Pure read — no save.
+  DailyMission missionFor(UserProgress progress) {
+    final today = MissionCatalog.todayKey();
+    final m = progress.dailyMission;
+    if (m != null && m.dateKey == today) return m;
+    return MissionCatalog.missionFor(DateTime.now().toUtc());
   }
 
   // ── Badge logic ───────────────────────────────────────────────────────────────
@@ -344,6 +499,26 @@ class GamificationService {
     if (!newlyUnlocked.contains(badgeArchaeologist) &&
         progress.exploredPlaceIds.length >= 15) {
       newlyUnlocked.add(badgeArchaeologist);
+      changed = true;
+    }
+    if (!newlyUnlocked.contains(badgeChronicler) &&
+        progress.completedEventIds.length >= 5) {
+      newlyUnlocked.add(badgeChronicler);
+      changed = true;
+    }
+    if (!newlyUnlocked.contains(badgeEpochMaster) &&
+        progress.completedEventIds.length >= 15) {
+      newlyUnlocked.add(badgeEpochMaster);
+      changed = true;
+    }
+    if (!newlyUnlocked.contains(badgeQuizWhiz) &&
+        progress.answeredQuestionIds.length >= 10) {
+      newlyUnlocked.add(badgeQuizWhiz);
+      changed = true;
+    }
+    if (!newlyUnlocked.contains(badgeQuestKeeper) &&
+        (progress.dailyMission?.claimed ?? false)) {
+      newlyUnlocked.add(badgeQuestKeeper);
       changed = true;
     }
 

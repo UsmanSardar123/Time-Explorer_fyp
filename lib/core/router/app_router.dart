@@ -30,6 +30,8 @@ import 'package:timeexplorer/features/admin/presentation/pages/facts_management_
 import 'package:timeexplorer/features/admin/presentation/pages/fact_form_page.dart';
 import 'package:timeexplorer/features/admin/presentation/pages/characters_management_page.dart';
 import 'package:timeexplorer/features/admin/presentation/pages/character_form_page.dart';
+import 'package:timeexplorer/features/admin/presentation/pages/events_management_page.dart';
+import 'package:timeexplorer/features/admin/presentation/pages/event_form_page.dart';
 import 'package:timeexplorer/features/learn/data/models/fact_model.dart';
 import 'package:timeexplorer/features/places/domain/entities/era.dart';
 import 'package:timeexplorer/features/places/presentation/pages/era_details_page.dart';
@@ -37,6 +39,7 @@ import 'package:timeexplorer/features/quiz/presentation/pages/quiz_dashboard_pag
 import 'package:timeexplorer/features/quiz/presentation/pages/quiz_page.dart';
 import 'package:timeexplorer/features/quiz/domain/entities/quiz_topic.dart';
 import 'package:timeexplorer/features/gamification/presentation/pages/progress_page.dart';
+import 'package:timeexplorer/features/gamification/presentation/pages/leaderboard_page.dart';
 import 'package:timeexplorer/core/router/app_transitions.dart';
 import 'package:timeexplorer/features/onboarding/presentation/pages/splash_page.dart';
 import 'package:timeexplorer/features/personalities/presentation/pages/categories_page.dart';
@@ -46,6 +49,10 @@ import 'package:timeexplorer/features/personalities/domain/entities/character.da
 import 'package:timeexplorer/features/personalities/presentation/pages/personality_detail_page.dart';
 import 'package:timeexplorer/features/personalities/presentation/pages/personality_chat_page.dart';
 import 'package:timeexplorer/features/places/presentation/pages/local_guide_chat_page.dart';
+import 'package:timeexplorer/features/event_explorer/presentation/pages/event_explorer_page.dart';
+import 'package:timeexplorer/features/event_explorer/presentation/pages/event_detail_page.dart';
+import 'package:timeexplorer/features/event_explorer/domain/entities/historical_event.dart';
+import 'package:timeexplorer/features/notifications/presentation/pages/notification_history_page.dart';
 import 'package:flutter/material.dart';
 
 class AppRouter {
@@ -101,6 +108,24 @@ class AppRouter {
           path: '/admin',
           pageBuilder: (context, state) =>
               AppTransitions.fade(const AdminDashboardPage(), state),
+          routes: [
+            GoRoute(
+              path: 'places/add',
+              pageBuilder: (context, state) => AppTransitions.slide(const PlaceFormPage(), state),
+            ),
+            GoRoute(
+              path: 'characters/add',
+              pageBuilder: (context, state) => AppTransitions.slide(const CharacterFormPage(), state),
+            ),
+            GoRoute(
+              path: 'facts/add',
+              pageBuilder: (context, state) => AppTransitions.slide(const FactFormPage(), state),
+            ),
+            GoRoute(
+              path: 'events/add',
+              pageBuilder: (context, state) => AppTransitions.slide(const EventFormPage(), state),
+            ),
+          ],
         ),
 
         // ── Main Screens ───────────────────────────────────────────────────
@@ -156,7 +181,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/era-details',
-          pageBuilder: (context, state) => AppTransitions.portal(
+          pageBuilder: (context, state) => AppTransitions.eraReveal(
             EraDetailsPage(era: state.extra as Era),
             state,
           ),
@@ -231,11 +256,37 @@ class AppRouter {
               AppTransitions.slide(const HelpSupportPage(), state),
         ),
 
+        // ── Notifications ──────────────────────────────────────────────────
+        GoRoute(
+          path: '/notifications',
+          pageBuilder: (context, state) =>
+              AppTransitions.bottomUp(const NotificationHistoryPage(), state),
+        ),
+
+        // ── Event Explorer ────────────────────────────────────────────────
+        GoRoute(
+          path: '/event-explorer',
+          pageBuilder: (context, state) =>
+              AppTransitions.slide(const EventExplorerPage(), state),
+        ),
+        GoRoute(
+          path: '/event-detail',
+          pageBuilder: (context, state) => AppTransitions.portal(
+            EventDetailPage(event: state.extra as HistoricalEvent),
+            state,
+          ),
+        ),
+
         // ── Gamification ───────────────────────────────────────────────────
         GoRoute(
           path: '/progress',
           pageBuilder: (context, state) =>
               AppTransitions.bottomUp(const ProgressPage(), state),
+        ),
+        GoRoute(
+          path: '/leaderboard',
+          pageBuilder: (context, state) =>
+              AppTransitions.slide(const LeaderboardPage(), state),
         ),
 
         // ── Quiz ───────────────────────────────────────────────────────────
@@ -341,6 +392,18 @@ class AppRouter {
           path: '/admin/facts/form',
           pageBuilder: (context, state) => AppTransitions.slide(
             FactFormPage(fact: state.extra as FactModel?),
+            state,
+          ),
+        ),
+        GoRoute(
+          path: '/admin/events',
+          pageBuilder: (context, state) =>
+              AppTransitions.slide(const EventsManagementPage(), state),
+        ),
+        GoRoute(
+          path: '/admin/events/form',
+          pageBuilder: (context, state) => AppTransitions.slide(
+            EventFormPage(event: state.extra as HistoricalEvent?),
             state,
           ),
         ),

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:equatable/equatable.dart';
+import 'daily_mission.dart';
 
 class UserProgress extends Equatable {
   final int xp;
@@ -14,6 +15,9 @@ class UserProgress extends Equatable {
   final List<String> completedQuizIds;
   final DateTime? lastFactDate;
   final List<String> exploredPlaceIds;
+  final List<String> completedEventIds;
+  final List<String> answeredQuestionIds;
+  final DailyMission? dailyMission;
 
   const UserProgress({
     this.xp = 0,
@@ -28,6 +32,9 @@ class UserProgress extends Equatable {
     this.completedQuizIds = const [],
     this.lastFactDate,
     this.exploredPlaceIds = const [],
+    this.completedEventIds = const [],
+    this.answeredQuestionIds = const [],
+    this.dailyMission,
   });
 
   UserProgress copyWith({
@@ -43,6 +50,9 @@ class UserProgress extends Equatable {
     List<String>? completedQuizIds,
     DateTime? lastFactDate,
     List<String>? exploredPlaceIds,
+    List<String>? completedEventIds,
+    List<String>? answeredQuestionIds,
+    DailyMission? dailyMission,
   }) {
     return UserProgress(
       xp: xp ?? this.xp,
@@ -57,6 +67,9 @@ class UserProgress extends Equatable {
       completedQuizIds: completedQuizIds ?? this.completedQuizIds,
       lastFactDate: lastFactDate ?? this.lastFactDate,
       exploredPlaceIds: exploredPlaceIds ?? this.exploredPlaceIds,
+      completedEventIds: completedEventIds ?? this.completedEventIds,
+      answeredQuestionIds: answeredQuestionIds ?? this.answeredQuestionIds,
+      dailyMission: dailyMission ?? this.dailyMission,
     );
   }
 
@@ -97,6 +110,11 @@ class UserProgress extends Equatable {
   int get streak => streakDays;
   int get xpToNextLevel => xpForLevel(level + 1) - xp;
 
+  // ── Time Energy display aliases (UI rename, data model unchanged) ─────────
+  int get timeEnergy => xp;
+  String get epochLabel => 'Epoch $level';
+  String get chronoRankLabel => rankLabel;
+
   String get rankLabel {
     if (level >= 20) return 'Legendary Historian';
     if (level >= 15) return 'Master Scholar';
@@ -118,6 +136,9 @@ class UserProgress extends Equatable {
     'completedQuizIds': completedQuizIds,
     'lastFactDate': lastFactDate?.toIso8601String(),
     'exploredPlaceIds': exploredPlaceIds,
+    'completedEventIds': completedEventIds,
+    'answeredQuestionIds': answeredQuestionIds,
+    'dailyMission': dailyMission?.toJson(),
   };
 
   factory UserProgress.fromJson(Map<String, dynamic> json) => UserProgress(
@@ -133,6 +154,11 @@ class UserProgress extends Equatable {
     completedQuizIds: List<String>.from(json['completedQuizIds'] ?? []),
     lastFactDate: json['lastFactDate'] != null ? DateTime.tryParse(json['lastFactDate']) : null,
     exploredPlaceIds: List<String>.from(json['exploredPlaceIds'] ?? []),
+    completedEventIds: List<String>.from(json['completedEventIds'] ?? []),
+    answeredQuestionIds: List<String>.from(json['answeredQuestionIds'] ?? []),
+    dailyMission: json['dailyMission'] is Map
+        ? DailyMission.fromJson(Map<String, dynamic>.from(json['dailyMission']))
+        : null,
   );
 
   @override
@@ -149,5 +175,8 @@ class UserProgress extends Equatable {
     completedQuizIds,
     lastFactDate,
     exploredPlaceIds,
+    completedEventIds,
+    answeredQuestionIds,
+    dailyMission,
   ];
 }

@@ -1,4 +1,5 @@
 import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
+import 'package:timeexplorer/core/widgets/themed_loading.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -129,7 +130,7 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: _primary));
+      return const Center(child: ThemedLoading(context: 'categories'));
     }
 
     if (_query.isEmpty) {

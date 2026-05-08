@@ -7,6 +7,8 @@ import 'package:timeexplorer/features/admin/domain/repositories/admin_repository
 import 'package:timeexplorer/features/places/data/models/place_model.dart';
 import 'package:timeexplorer/features/places/domain/entities/place.dart';
 import 'package:timeexplorer/features/profile/domain/entities/profile_entity.dart';
+import 'package:timeexplorer/features/admin/data/models/event_model.dart';
+import 'package:timeexplorer/features/event_explorer/domain/entities/historical_event.dart';
 import 'package:timeexplorer/features/learn/data/models/fact_model.dart';
 
 class FirestoreAdminRepository implements AdminRepository {
@@ -22,12 +24,14 @@ class FirestoreAdminRepository implements AdminRepository {
         _firestore.collection('places').count().get(),
         _firestore.collection('facts').count().get(),
         _firestore.collection('characters').count().get(),
+        _firestore.collection('events').count().get(),
       ]);
       return AdminStatsEntity(
         totalUsers:           results[0].count ?? 0,
         totalPlaces:          results[1].count ?? 0,
         totalHistoricalFacts: results[2].count ?? 0,
         totalCharacters:      results[3].count ?? 0,
+        totalEvents:          results[4].count ?? 0,
         totalActiveSessions:  1,
       );
     } catch (_) {
@@ -72,7 +76,9 @@ class FirestoreAdminRepository implements AdminRepository {
   @override
   Future<void> createUser(ProfileEntity user) async {
     try {
-      final docRef = _firestore.collection('users').doc(user.id.isEmpty ? null : user.id);
+      final docRef = user.id.isEmpty 
+          ? _firestore.collection('users').doc() 
+          : _firestore.collection('users').doc(user.id);
       await docRef.set({
         'id': docRef.id,
         'email': user.email,
@@ -173,8 +179,10 @@ class FirestoreAdminRepository implements AdminRepository {
   @override
   Future<void> createPlace(PlaceModel place) async {
     try {
-      final docRef = _firestore.collection('places').doc(place.id.isEmpty ? null : place.id);
-      await docRef.set(place.toMap());
+      final docRef = place.id.isEmpty 
+          ? _firestore.collection('places').doc() 
+          : _firestore.collection('places').doc(place.id);
+      await docRef.set({...place.toMap(), 'id': docRef.id});
     } catch (e) {
       throw Exception('Failed to create place: $e');
     }
@@ -213,8 +221,10 @@ class FirestoreAdminRepository implements AdminRepository {
   @override
   Future<void> createFact(FactModel fact) async {
     try {
-      final docRef = _firestore.collection('facts').doc(fact.id.isEmpty ? null : fact.id);
-      await docRef.set(fact.toMap());
+      final docRef = fact.id.isEmpty 
+          ? _firestore.collection('facts').doc() 
+          : _firestore.collection('facts').doc(fact.id);
+      await docRef.set({...fact.toMap(), 'id': docRef.id});
     } catch (e) {
       throw Exception('Failed to create fact: $e');
     }
@@ -253,8 +263,9 @@ class FirestoreAdminRepository implements AdminRepository {
   @override
   Future<void> createCharacter(CharacterModel character) async {
     try {
-      final ref = _firestore.collection('characters')
-          .doc(character.id.isEmpty ? null : character.id);
+      final ref = character.id.isEmpty 
+          ? _firestore.collection('characters').doc() 
+          : _firestore.collection('characters').doc(character.id);
       await ref.set({...character.toMap(), 'id': ref.id});
     } catch (e) {
       throw Exception('Failed to create character: $e');
@@ -276,6 +287,48 @@ class FirestoreAdminRepository implements AdminRepository {
       await _firestore.collection('characters').doc(characterId).delete();
     } catch (e) {
       throw Exception('Failed to delete character: $e');
+    }
+  }
+
+  // ── Events Management ──────────────────────────────────────────────────────
+
+  @override
+  Future<List<HistoricalEvent>> getAllEvents() async {
+    try {
+      final snap = await _firestore.collection('events').orderBy('title').get();
+      return snap.docs.map((d) => EventModel.fromMap(d.data(), d.id)).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch events: $e');
+    }
+  }
+
+  @override
+  Future<void> createEvent(EventModel event) async {
+    try {
+      final ref = event.id.isEmpty 
+          ? _firestore.collection('events').doc() 
+          : _firestore.collection('events').doc(event.id);
+      await ref.set({...event.toMap(), 'id': ref.id});
+    } catch (e) {
+      throw Exception('Failed to create event: $e');
+    }
+  }
+
+  @override
+  Future<void> updateEvent(EventModel event) async {
+    try {
+      await _firestore.collection('events').doc(event.id).update(event.toMap());
+    } catch (e) {
+      throw Exception('Failed to update event: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteEvent(String eventId) async {
+    try {
+      await _firestore.collection('events').doc(eventId).delete();
+    } catch (e) {
+      throw Exception('Failed to delete event: $e');
     }
   }
 }

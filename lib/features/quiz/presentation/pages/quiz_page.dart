@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timeexplorer/core/services/gamification_service.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
+import 'package:timeexplorer/core/widgets/themed_loading.dart';
 import 'package:timeexplorer/features/quiz/presentation/cubit/quiz_cubit.dart';
 import '../../domain/usecases/get_daily_quiz.dart';
 import '../../domain/usecases/submit_answer.dart';
@@ -64,7 +65,7 @@ class _QuizViewState extends State<QuizView> with TickerProviderStateMixin {
         },
         builder: (context, state) {
           if (state is QuizLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.primaryContainer));
+            return const ThemedLoading(context: 'leaderboard');
           }
           if (state is QuizError) {
             return Center(child: Text(state.message));

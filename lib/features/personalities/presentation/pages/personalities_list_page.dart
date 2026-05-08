@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
+import 'package:timeexplorer/core/widgets/themed_loading.dart';
 import 'package:provider/provider.dart';
 import 'package:timeexplorer/features/explore/presentation/providers/personality_provider.dart';
 import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
@@ -67,7 +68,7 @@ class _PersonalitiesListPageState extends State<PersonalitiesListPage>
                 ),
                 Expanded(
                   child: provider.isLoading && characters.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const ThemedLoading(context: 'categories')
                     : characters.isEmpty
                         ? const Center(child: Text('No legends found in this category.'))
                         : ListView.builder(
@@ -300,22 +301,21 @@ class _CardAvatar extends StatelessWidget {
             backgroundColor: AppTheme.surfaceLow,
             child: ClipOval(
               child: character.imageUrl.isEmpty
-                  ? const _AvatarPlaceholder()
+                  ? _AvatarPlaceholder(category: character.category)
                   : CachedNetworkImage(
                       imageUrl: character.imageUrl,
                       httpHeaders: const {'User-Agent': 'TimeExplorer/1.0 (Flutter)'},
                       width: 64,
                       height: 64,
-                      // Constrain decode size: decode at 2× display pixels (retina).
-                      // Without this Flutter decodes full-res Wikimedia originals
-                      // (3–10 MB) for a 64 px avatar — the primary cause of stutter.
                       memCacheWidth: 128,
                       memCacheHeight: 128,
                       fit: BoxFit.cover,
                       fadeInDuration: const Duration(milliseconds: 250),
                       fadeInCurve: Curves.easeIn,
-                      placeholder: (ctx, url) => const _AvatarPlaceholder(),
-                      errorWidget: (ctx, url, err) => const _AvatarPlaceholder(),
+                      placeholder: (ctx, url) =>
+                          _AvatarPlaceholder(category: character.category),
+                      errorWidget: (ctx, url, err) =>
+                          _AvatarPlaceholder(category: character.category),
                     ),
             ),
           ),
@@ -351,13 +351,18 @@ class _RankBadge extends StatelessWidget {
 }
 
 class _AvatarPlaceholder extends StatelessWidget {
-  const _AvatarPlaceholder();
+  final CharacterCategory? category;
+  const _AvatarPlaceholder({this.category});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: AppTheme.surfaceLow,
-      child: const Icon(Icons.person_rounded, color: AppTheme.onSurfaceVariant, size: 32),
+      child: Icon(
+        category?.icon ?? Icons.person_rounded,
+        color: AppTheme.onSurfaceVariant,
+        size: 32,
+      ),
     );
   }
 }

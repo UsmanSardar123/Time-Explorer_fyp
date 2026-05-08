@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
+import 'package:timeexplorer/core/widgets/themed_loading.dart';
 import 'package:timeexplorer/features/places/domain/entities/place.dart';
 import 'package:timeexplorer/models/place_era.dart';
 import 'package:timeexplorer/features/places/presentation/cubit/places_list_cubit.dart';
@@ -73,7 +74,7 @@ class _PlacesListPageState extends State<PlacesListPage> {
         child: BlocBuilder<PlacesListCubit, PlacesListState>(
           builder: (context, state) {
             if (state is PlacesListLoading) {
-              return const Center(child: CircularProgressIndicator(color: AppTheme.primaryElectric));
+              return const ThemedLoading(context: 'events');
             }
             if (state is PlacesListError) {
               return Center(
@@ -87,7 +88,10 @@ class _PlacesListPageState extends State<PlacesListPage> {
               return CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(
-                    child: ProgressHeader(totalPlaces: allPlaces.length),
+                    child: ProgressHeader(
+                      totalPlaces: allPlaces.length,
+                      knownPlaceIds: allPlaces.map((p) => p.id).toSet(),
+                    ),
                   ),
                   // Search bar
                   SliverToBoxAdapter(

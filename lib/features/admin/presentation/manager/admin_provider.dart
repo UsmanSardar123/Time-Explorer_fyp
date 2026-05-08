@@ -10,6 +10,8 @@ import 'package:timeexplorer/features/learn/data/models/fact_model.dart';
 import 'package:timeexplorer/features/learn/data/facts_data.dart';
 import 'package:timeexplorer/features/personalities/data/datasources/character_local_data_source.dart';
 import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
+import 'package:timeexplorer/features/admin/data/models/event_model.dart';
+import 'package:timeexplorer/features/event_explorer/domain/entities/historical_event.dart';
 import 'package:timeexplorer/features/places/data/datasources/wikimedia_image_service.dart';
 
 class AdminProvider with ChangeNotifier {
@@ -68,6 +70,15 @@ class AdminProvider with ChangeNotifier {
   List<Character> get characters => _characters;
   bool get isCharactersLoading => _isCharactersLoading;
   String? get charactersError => _charactersError;
+
+  // Events State
+  List<HistoricalEvent> _events = [];
+  bool _isEventsLoading = false;
+  String? _eventsError;
+
+  List<HistoricalEvent> get events => _events;
+  bool get isEventsLoading => _isEventsLoading;
+  String? get eventsError => _eventsError;
 
   Future<void> loadStats() async {
     await _statsSubscription?.cancel();
@@ -522,6 +533,67 @@ class AdminProvider with ChangeNotifier {
       _charactersError = e.toString();
     } finally {
       _isCharactersLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ── Events Management ─────────────────────────────────────────────────────
+
+  Future<void> fetchEvents() async {
+    _isEventsLoading = true;
+    _eventsError = null;
+    notifyListeners();
+    try {
+      _events = await _repository.getAllEvents();
+    } catch (e) {
+      _eventsError = e.toString();
+    } finally {
+      _isEventsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> addEvent(EventModel event) async {
+    _isEventsLoading = true;
+    _eventsError = null;
+    notifyListeners();
+    try {
+      await _repository.createEvent(event);
+      await fetchEvents();
+    } catch (e) {
+      _eventsError = e.toString();
+    } finally {
+      _isEventsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> editEvent(EventModel event) async {
+    _isEventsLoading = true;
+    _eventsError = null;
+    notifyListeners();
+    try {
+      await _repository.updateEvent(event);
+      await fetchEvents();
+    } catch (e) {
+      _eventsError = e.toString();
+    } finally {
+      _isEventsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeEvent(String id) async {
+    _isEventsLoading = true;
+    _eventsError = null;
+    notifyListeners();
+    try {
+      await _repository.deleteEvent(id);
+      _events.removeWhere((e) => e.id == id);
+    } catch (e) {
+      _eventsError = e.toString();
+    } finally {
+      _isEventsLoading = false;
       notifyListeners();
     }
   }
