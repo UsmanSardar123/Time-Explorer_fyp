@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
+import 'package:timeexplorer/core/widgets/themed_loading.dart';
 import 'package:timeexplorer/core/widgets/tap_scale.dart';
 import 'package:timeexplorer/features/profile/presentation/providers/profile_provider.dart';
 import 'package:timeexplorer/features/learn/presentation/daily_fact_provider.dart';
@@ -550,7 +551,10 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
                 ),
                 const SizedBox(height: 16),
                 if (factProvider.isLoading)
-                  const Center(child: CircularProgressIndicator(color: AppTheme.amber))
+                  const SizedBox(
+                    height: 80,
+                    child: Center(child: ThemedLoading(context: 'categories')),
+                  )
                 else
                   Text(
                     factProvider.factText,

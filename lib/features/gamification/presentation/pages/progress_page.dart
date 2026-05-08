@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:timeexplorer/core/widgets/fade_slide_in.dart';
 import 'package:timeexplorer/core/widgets/xp_bar.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
+import 'package:timeexplorer/features/gamification/presentation/pages/badge_collection_page.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
 
 class ProgressPage extends StatefulWidget {
@@ -56,7 +58,7 @@ class _ProgressPageState extends State<ProgressPage>
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text('Your Journey',
+        title: Text('Chrono Journey',
             style: GoogleFonts.plusJakartaSans(
                 color: _textDark, fontWeight: FontWeight.w800)),
         leading: IconButton(
@@ -118,9 +120,9 @@ class _ProgressPageState extends State<ProgressPage>
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 32, fontWeight: FontWeight.w900, color: _primary,
                         )),
-                    Text('LVL',
+                    Text('EPOCH',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10, fontWeight: FontWeight.w700,
+                          fontSize: 9, fontWeight: FontWeight.w700,
                           color: _textMuted, letterSpacing: 1.5,
                         )),
                   ],
@@ -136,6 +138,20 @@ class _ProgressPageState extends State<ProgressPage>
           Text(p.rankLabel,
               style: GoogleFonts.beVietnamPro(
                   fontSize: 14, color: _textMuted, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => context.push('/leaderboard'),
+            icon: const Icon(Icons.leaderboard_rounded, size: 18),
+            label: const Text('View Leaderboard'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+          ),
         ],
       ),
     );
@@ -171,7 +187,7 @@ class _ProgressPageState extends State<ProgressPage>
       children: [
         Expanded(
           child: _buildStatCard(
-              'Total XP', '${p.totalXP}', Icons.history_edu_rounded),
+              'Time Energy', '${p.timeEnergy} TE', Icons.bolt_rounded),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -297,9 +313,21 @@ class _ProgressPageState extends State<ProgressPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Badges',
-            style: GoogleFonts.plusJakartaSans(
-                fontSize: 18, fontWeight: FontWeight.w700)),
+        Row(
+          children: [
+            Text('Badges',
+                style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18, fontWeight: FontWeight.w700)),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const BadgeCollectionPage(),
+              )),
+              icon: const Icon(Icons.collections_bookmark_rounded, size: 16),
+              label: const Text('View all'),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         SizedBox(
           height: 110,

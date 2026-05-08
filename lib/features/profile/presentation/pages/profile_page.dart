@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:timeexplorer/core/widgets/themed_loading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' as io;
 import 'package:timeexplorer/features/auth/presentation/providers/auth_provider.dart';
@@ -166,7 +167,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               'Only JPG / JPEG images are accepted',
               style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppTheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 20),f
             ListTile(
               leading: CircleAvatar(backgroundColor: AppTheme.surfaceLow, child: const Icon(Icons.camera_alt_rounded, color: AppTheme.primaryContainer)),
               title: Text('Take Photo', style: GoogleFonts.plusJakartaSans(color: AppTheme.onSurface, fontWeight: FontWeight.w600)),
@@ -289,7 +290,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                             : null,
                       ),
                       if (_isUploadingImage)
-                        const CircularProgressIndicator(color: AppTheme.primaryContainer, strokeWidth: 2.5),
+                        const ThemedLoading(context: 'categories'),
                     ],
                   ),
                 ),

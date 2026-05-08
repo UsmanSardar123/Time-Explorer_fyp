@@ -9,9 +9,16 @@ class EraModel extends Era {
     required super.detailedDescription,
     required super.outerImage,
     required super.innerImage,
+    super.keyEvents = const [],
+    super.interestingFacts = const [],
   });
 
   factory EraModel.fromMap(Map<String, dynamic> data, String id) {
+    List<String> toStringList(dynamic value) {
+      if (value is List) return value.map((e) => e.toString()).toList();
+      return const [];
+    }
+
     return EraModel(
       id: id,
       eraName: data['eraName'] ?? '',
@@ -20,6 +27,8 @@ class EraModel extends Era {
       detailedDescription: data['detailedDescription'] ?? '',
       outerImage: data['outerImage'] ?? data['image'] ?? '',
       innerImage: data['innerImage'] ?? data['image'] ?? '',
+      keyEvents: toStringList(data['keyEvents']),
+      interestingFacts: toStringList(data['interestingFacts']),
     );
   }
 
@@ -31,6 +40,8 @@ class EraModel extends Era {
       'detailedDescription': detailedDescription,
       'outerImage': outerImage,
       'innerImage': innerImage,
+      'keyEvents': keyEvents,
+      'interestingFacts': interestingFacts,
       'createdAt': DateTime.now().toIso8601String(),
     };
   }

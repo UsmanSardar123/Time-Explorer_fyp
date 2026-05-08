@@ -161,6 +161,18 @@ class AuthProvider extends ChangeNotifier {
     await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
   }
 
+  Future<void> refreshCurrentUser() async {
+    try {
+      final fetched = await _getCurrentUserUseCase();
+      if (fetched != null) {
+        _currentUser = fetched;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('[AuthProvider] refreshCurrentUser error: $e');
+    }
+  }
+
   Future<void> signOut() async {
     _isLoading = true;
     _error = null;

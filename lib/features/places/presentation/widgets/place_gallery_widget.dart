@@ -1,7 +1,3 @@
-// FILE: lib/features/places/presentation/widgets/place_gallery_widget.dart
-// PURPOSE: Auto-playing image gallery with Wikimedia fetch, thumbnail strip, and full-screen entry.
-// FEATURE: Photo Gallery
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -39,6 +35,9 @@ class _PlaceGalleryWidgetState extends State<PlaceGalleryWidget> {
   List<String> get _effectiveUrls =>
       widget.imageUrls.isNotEmpty ? widget.imageUrls : _fetchedUrls;
 
+  // Per-image hero tag so any page can animate into the viewer
+  String _heroTag(int index) => '${widget.heroTag}_$index';
+
   @override
   void initState() {
     super.initState();
@@ -71,7 +70,7 @@ class _PlaceGalleryWidgetState extends State<PlaceGalleryWidget> {
       final next = (_currentIndex + 1) % _effectiveUrls.length;
       _pageController.animateToPage(
         next,
-        duration: const Duration(milliseconds: 400),
+        duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
     });
@@ -83,6 +82,30 @@ class _PlaceGalleryWidgetState extends State<PlaceGalleryWidget> {
     _timer = Timer(const Duration(seconds: 4), _startAutoPlay);
   }
 
+  void _openViewer(BuildContext context, int index) {
+    _timer?.cancel();
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black,
+        transitionDuration: const Duration(milliseconds: 350),
+        pageBuilder: (_, _, _) => PlaceImageViewerScreen(
+          imageUrls: _effectiveUrls,
+          imageCaptions: widget.imageCaptions,
+          initialIndex: index,
+          heroTag: _heroTag(index),
+        ),
+        transitionsBuilder: (_, animation, _, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn),
+          child: child,
+        ),
+      ),
+    ).then((_) {
+      // Resume autoplay when returning from viewer
+      if (mounted && _effectiveUrls.length > 1) _startAutoPlay();
+    });
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -90,10 +113,13 @@ class _PlaceGalleryWidgetState extends State<PlaceGalleryWidget> {
     super.dispose();
   }
 
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    if (_isFetching) return _buildShimmerPlaceholder();
-    if (_effectiveUrls.isEmpty) return _buildEmptyPlaceholder();
+    if (_isFetching) return _buildShimmer();
+    if (_effectiveUrls.isEmpty) return _buildEmptyState();
+
     return Column(
       children: [
         _buildPageView(context),
@@ -105,7 +131,7 @@ class _PlaceGalleryWidgetState extends State<PlaceGalleryWidget> {
     );
   }
 
-  Widget _buildShimmerPlaceholder() {
+  Widget _buildShimmer() {
     return Shimmer.fromColors(
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
@@ -119,7 +145,7 @@ class _PlaceGalleryWidgetState extends State<PlaceGalleryWidget> {
     );
   }
 
-  Widget _buildEmptyPlaceholder() {
+  Widget _buildEmptyState() {
     return Container(
       height: 200,
       decoration: BoxDecoration(
@@ -130,11 +156,12 @@ class _PlaceGalleryWidgetState extends State<PlaceGalleryWidget> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.image_not_supported_outlined,
-                size: 48, color: Colors.grey),
+            Icon(Icons.photo_library_outlined, size: 48, color: Colors.grey),
             SizedBox(height: 8),
-            Text('No images available',
-                style: TextStyle(color: Colors.grey, fontSize: 13)),
+            Text(
+              'No photos available for this place',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
           ],
         ),
       ),
@@ -152,72 +179,67 @@ class _PlaceGalleryWidgetState extends State<PlaceGalleryWidget> {
               controller: _pageController,
               itemCount: _effectiveUrls.length,
               onPageChanged: _onPageChanged,
-              itemBuilder: (_, index) => _buildPage(index),
+              itemBuilder: (ctx, index) => _buildPage(ctx, index),
             ),
-            _buildBadge(),
-            _buildExpandButton(context),
+            // Counter badge — top right
+            _buildCountBadge(),
+            // Fullscreen hint — top left
+            const Positioned(
+              top: 10,
+              left: 10,
+              child: Icon(
+                Icons.zoom_out_map_rounded,
+                color: Colors.white70,
+                size: 18,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPage(int index) {
-    final image = CachedNetworkImage(
-      imageUrl: _effectiveUrls[index],
-      fit: BoxFit.cover,
-      width: double.infinity,
-      height: 280,
-      placeholder: (_, __) => Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
-        child: Container(color: Colors.white),
-      ),
-      errorWidget: (_, __, ___) => Container(
-        color: Colors.grey[300],
-        child: const Icon(Icons.image_not_supported,
-            color: Colors.grey, size: 40),
-      ),
-    );
-    return index == 0 ? Hero(tag: widget.heroTag, child: image) : image;
-  }
-
-  Widget _buildBadge() {
-    return Positioned(
-      top: 12,
-      right: 12,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.black54,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          '${_currentIndex + 1} / ${_effectiveUrls.length}',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+  Widget _buildPage(BuildContext context, int index) {
+    return GestureDetector(
+      onTap: () => _openViewer(context, index),
+      child: Hero(
+        tag: _heroTag(index),
+        child: CachedNetworkImage(
+          imageUrl: _effectiveUrls[index],
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: 280,
+          placeholder: (_, _) => Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Container(color: Colors.white),
+          ),
+          errorWidget: (_, _, _) => Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.broken_image_rounded,
+                color: Colors.grey, size: 40),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildExpandButton(BuildContext context) {
+  Widget _buildCountBadge() {
     return Positioned(
-      top: 4,
-      left: 4,
-      child: IconButton(
-        icon: const Icon(Icons.fullscreen, color: Colors.white, size: 28),
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => PlaceImageViewerScreen(
-              imageUrls: _effectiveUrls,
-              imageCaptions: widget.imageCaptions,
-              initialIndex: _currentIndex,
-              heroTag: widget.heroTag,
-            ),
+      top: 10,
+      right: 10,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black54,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          '${_currentIndex + 1} / ${_effectiveUrls.length}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
@@ -226,33 +248,36 @@ class _PlaceGalleryWidgetState extends State<PlaceGalleryWidget> {
 
   Widget _buildThumbnailStrip() {
     return SizedBox(
-      height: 72,
+      height: 68,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 4),
         itemCount: _effectiveUrls.length,
-        itemBuilder: (_, index) => _buildThumbnail(index),
+        itemBuilder: (ctx, index) => _buildThumbnail(ctx, index),
       ),
     );
   }
 
-  Widget _buildThumbnail(int index) {
+  Widget _buildThumbnail(BuildContext context, int index) {
     final isActive = index == _currentIndex;
     return GestureDetector(
-      onTap: () => _pageController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      ),
-      child: Container(
+      onTap: () {
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         width: 60,
         height: 60,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
+        margin: const EdgeInsets.symmetric(horizontal: 3),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isActive ? widget.accentColor : Colors.transparent,
-            width: 2,
+            width: 2.5,
           ),
         ),
         child: ClipRRect(
@@ -260,15 +285,15 @@ class _PlaceGalleryWidgetState extends State<PlaceGalleryWidget> {
           child: CachedNetworkImage(
             imageUrl: _effectiveUrls[index],
             fit: BoxFit.cover,
-            placeholder: (_, __) => Shimmer.fromColors(
+            placeholder: (_, _) => Shimmer.fromColors(
               baseColor: Colors.grey[300]!,
               highlightColor: Colors.grey[100]!,
               child: Container(color: Colors.white),
             ),
-            errorWidget: (_, __, ___) => Container(
-              color: Colors.grey[300],
-              child: const Icon(Icons.image_not_supported,
-                  size: 20, color: Colors.grey),
+            errorWidget: (_, _, _) => Container(
+              color: Colors.grey[200],
+              child: const Icon(Icons.broken_image_rounded,
+                  size: 18, color: Colors.grey),
             ),
           ),
         ),

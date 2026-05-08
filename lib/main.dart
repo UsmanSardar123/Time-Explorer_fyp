@@ -20,6 +20,13 @@ import 'package:timeexplorer/features/gamification/presentation/providers/gamifi
 import 'package:timeexplorer/core/config/app_config.dart';
 import 'package:timeexplorer/features/personalities/data/repositories/character_firestore_repository.dart';
 import 'package:timeexplorer/features/personalities/data/services/remote_config_service.dart';
+import 'package:timeexplorer/features/event_explorer/domain/entities/event_category.dart';
+import 'package:timeexplorer/features/event_explorer/domain/entities/historical_event.dart';
+import 'package:timeexplorer/features/gamification/presentation/providers/leaderboard_provider.dart';
+import 'package:timeexplorer/features/notifications/presentation/providers/notification_provider.dart';
+import 'package:timeexplorer/core/services/notification_service.dart';
+import 'package:timeexplorer/core/services/content_watch_service.dart';
+import 'package:timeexplorer/core/services/ambient_audio_service.dart';
 
 import 'firebase_options.dart';
 
@@ -45,6 +52,9 @@ void main() async {
   );
   debugPrint('[App] Firebase initialized.');
 
+  await NotificationService.init();
+  await AmbientAudioService.instance.init();
+
   runApp(const ProviderScope(child: MyApp()));
 
   // Defer platform-channel-heavy init to after first frame to prevent
@@ -54,11 +64,15 @@ void main() async {
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     debugPrint('[App] Post-frame: initializing Hive cache...');
     await Hive.initFlutter();
+    Hive.registerAdapter(EventCategoryAdapter());
+    Hive.registerAdapter(TimelinePointAdapter());
+    Hive.registerAdapter(HistoricalEventAdapter());
     await Hive.openBox<String>('wikipedia_cache');
     debugPrint('[App] Post-frame: Hive cache ready.');
     unawaited(
       RemoteConfigService.checkForUpdates(CharacterFirestoreRepository()),
     );
+    ContentWatchService.instance.startWatching();
   });
 }
 
@@ -85,6 +99,8 @@ class ProviderScope extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DailyFactProvider()),
         ChangeNotifierProvider(create: (_) => EraProvider()),
         ChangeNotifierProvider(create: (_) => GamificationProvider()),
+        ChangeNotifierProvider(create: (_) => LeaderboardProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: child,
     );

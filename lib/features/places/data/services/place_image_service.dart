@@ -6,13 +6,34 @@ import 'package:timeexplorer/core/config/app_config.dart';
 
 class PlaceImageService {
   static const int _thumbWidth = 800;
+  static const int _maxRaw = 20;   // collected before filtering
+  static const int _maxFinal = 10; // kept after filtering
   static const int _perQueryLimit = 6;
-  static const int _maxImages = 10;
   static const String _geminiModel = 'gemini-1.5-flash';
 
-  // Required by Wikimedia API etiquette — missing UA causes rate-limiting/rejection.
   static const String _userAgent =
       'TimeExplorer/1.0 (Flutter educational app; usmansardar037@gmail.com)';
+
+  // ── Junk filter ──────────────────────────────────────────────────────────
+  // Excludes logos, maps, icons, flags, text screenshots, and other non-scenic content.
+  static final RegExp _junkPattern = RegExp(
+    r'('
+    r'logo|'
+    r'coat[_\-]of[_\-]arms|'
+    r'locator|'
+    r'screenshot|'
+    r'emblem|'
+    r'diagram|'
+    r'floor[_\-]?plan|'
+    r'[_\-/]map[_\-/.]|map_of_|'
+    r'flag_of_|[_\-/]flag[_\-/.]|'
+    r'[_\-/]icon[_\-/.]|'
+    r'[_\-/]text[_\-/.]|'
+    r'[_\-/]seal[_\-/.]|seal_of_|'
+    r'wikipedia_|wikimedia_logo'
+    r')',
+    caseSensitive: false,
+  );
 
   static final Map<String, List<String>> _cache = {};
 
@@ -26,12 +47,12 @@ class PlaceImageService {
 
     debugPrint('[Gallery] ══ fetchImages START ══ "$placeName"');
 
-    final urls = <String>[];
-    final seen = <String>{};
+    final raw = <String>[];
+    final rawSeen = <String>{};
 
     void merge(List<String> batch) {
       for (final u in batch) {
-        if (seen.add(u) && urls.length < _maxImages) urls.add(u);
+        if (rawSeen.add(u) && raw.length < _maxRaw) raw.add(u);
       }
     }
 
@@ -40,33 +61,99 @@ class PlaceImageService {
     debugPrint('[Gallery] Gemini → ${geminiQueries.length} queries: $geminiQueries');
     if (geminiQueries.isNotEmpty) {
       merge(await _fetchMultiQuery(geminiQueries));
-      debugPrint('[Gallery] After Gemini+Commons: ${urls.length} URLs');
     }
 
-    // Step 2 — Direct Commons search with place name (always runs)
-    if (urls.length < _maxImages) {
+    // Step 2 — Direct Commons search (always runs)
+    if (raw.length < _maxRaw) {
       merge(await _commonsSearch(placeName));
-      debugPrint('[Gallery] After direct Commons: ${urls.length} URLs');
     }
 
-    // Step 3 — Wikipedia article images (most reliable for famous places)
-    if (urls.length < 3) {
+    // Step 3 — Wikipedia article images (curated, most reliable)
+    if (raw.length < 5) {
       merge(await _wikipediaArticleImages(placeName));
-      debugPrint('[Gallery] After Wikipedia article imgs: ${urls.length} URLs');
     }
 
-    // Step 4 — Shortened-name fallbacks
-    if (urls.length < 2) {
-      merge(await _shortenedFallback(placeName, seen));
-      debugPrint('[Gallery] After shortened fallback: ${urls.length} URLs');
+    // Step 4 — Shortened-name fallbacks (last resort)
+    if (raw.length < 3) {
+      merge(await _shortenedFallback(placeName, rawSeen));
     }
 
-    debugPrint('[Gallery] ══ fetchImages DONE ══ ${urls.length} URLs for "$placeName"');
-    _cache[placeName] = urls;
-    return urls;
+    debugPrint('[Gallery] Raw pool: ${raw.length} URLs — running filter+validate');
+
+    // ── Filtering pipeline ────────────────────────────────────────────────
+    final filtered = await _filterAndValidate(raw);
+
+    debugPrint('[Gallery] ══ FINAL: ${filtered.length} quality images for "$placeName" ══');
+    _cache[placeName] = filtered;
+    return filtered;
   }
 
   static void clearCache() => _cache.clear();
+
+  // ── Filtering pipeline ────────────────────────────────────────────────────
+
+  static Future<List<String>> _filterAndValidate(List<String> raw) async {
+    if (raw.isEmpty) return [];
+
+    // 1. Relevance filter — exclude junk by URL path pattern
+    final relevant = raw.where((url) {
+      final path = Uri.tryParse(url)?.path ?? url;
+      return !_junkPattern.hasMatch(path);
+    }).toList();
+    debugPrint('[Gallery] Relevance filter: ${raw.length} → ${relevant.length}');
+
+    if (relevant.isEmpty) return [];
+
+    // 2. Strict dedup — normalize to catch size-variant duplicates
+    final seen = <String>{};
+    final deduped =
+        relevant.where((url) => seen.add(_normalizeUrl(url))).toList();
+    debugPrint('[Gallery] Dedup: ${relevant.length} → ${deduped.length}');
+
+    // 3. Parallel HEAD validation — drop non-200 and non-image responses
+    final checks = await Future.wait(
+      deduped.map(_validateUrl),
+      eagerError: false,
+    );
+
+    final validated = <String>[
+      for (var i = 0; i < deduped.length; i++)
+        if (checks[i]) deduped[i],
+    ];
+    debugPrint('[Gallery] HEAD validation: ${deduped.length} → ${validated.length}');
+
+    return validated.take(_maxFinal).toList();
+  }
+
+  static Future<bool> _validateUrl(String url) async {
+    try {
+      final response = await http
+          .head(Uri.parse(url), headers: {'User-Agent': _userAgent})
+          .timeout(const Duration(seconds: 5));
+
+      // 405 = CDN doesn't support HEAD — assume valid
+      if (response.statusCode == 405) return true;
+      if (response.statusCode != 200) return false;
+
+      final ct = response.headers['content-type'] ?? '';
+      // Must be an image and not SVG (already filtered by _isValidMime,
+      // but double-check here since HEAD confirms actual server response)
+      return ct.startsWith('image/') && !ct.contains('svg');
+    } catch (_) {
+      // Timeout or network error — assume valid, let CachedNetworkImage handle it
+      return true;
+    }
+  }
+
+  static String _normalizeUrl(String url) {
+    // Strip query params, lowercase, and collapse Wikimedia size prefix
+    // e.g. ".../800px-Colosseum.jpg" → ".../colosseum.jpg"
+    return url
+        .split('?')
+        .first
+        .toLowerCase()
+        .replaceAll(RegExp(r'/\d+px-'), '/');
+  }
 
   // ── Step 1 helpers ────────────────────────────────────────────────────────
 
@@ -111,7 +198,7 @@ class PlaceImageService {
     final merged = <String>[];
     for (final batch in results) {
       for (final url in batch) {
-        if (seen.add(url) && merged.length < _maxImages) merged.add(url);
+        if (seen.add(url) && merged.length < _maxRaw) merged.add(url);
       }
     }
     return merged;
@@ -135,24 +222,20 @@ class PlaceImageService {
         'origin': '*',
       });
 
-      debugPrint('[Gallery] → $uri');
-
       final response = await http
           .get(uri, headers: {'User-Agent': _userAgent})
           .timeout(const Duration(seconds: 15));
 
       debugPrint('[Gallery] Commons HTTP ${response.statusCode} for "$query"');
-
       if (response.statusCode != 200) {
-        debugPrint('[Gallery] Commons error body: ${_snip(response.body)}');
+        debugPrint('[Gallery] Commons error: ${_snip(response.body)}');
         return [];
       }
 
       final data = json.decode(response.body) as Map<String, dynamic>;
       final pages = data['query']?['pages'] as Map<String, dynamic>?;
-
       if (pages == null) {
-        debugPrint('[Gallery] Commons: 0 results for "$query". Body: ${_snip(response.body)}');
+        debugPrint('[Gallery] Commons: 0 results for "$query"');
         return [];
       }
 
@@ -164,7 +247,7 @@ class PlaceImageService {
     }
   }
 
-  // ── Step 3 — Wikipedia article images (curated, always relevant) ──────────
+  // ── Step 3 — Wikipedia article images ────────────────────────────────────
 
   static Future<List<String>> _wikipediaArticleImages(String placeName) async {
     debugPrint('[Gallery] _wikipediaArticleImages("$placeName")');
@@ -186,19 +269,17 @@ class PlaceImageService {
           .timeout(const Duration(seconds: 15));
 
       debugPrint('[Gallery] Wikipedia HTTP ${response.statusCode} for "$placeName"');
-
       if (response.statusCode != 200) return [];
 
       final data = json.decode(response.body) as Map<String, dynamic>;
       final pages = data['query']?['pages'] as Map<String, dynamic>?;
-
       if (pages == null) {
         debugPrint('[Gallery] Wikipedia: no pages for "$placeName"');
         return [];
       }
 
       final urls = _extractUrls(pages);
-      debugPrint('[Gallery] Wikipedia: ${urls.length} images for "$placeName"');
+      debugPrint('[Gallery] Wikipedia: ${urls.length} imgs for "$placeName"');
       return urls;
     } catch (e) {
       debugPrint('[Gallery] _wikipediaArticleImages EXCEPTION: $e');
@@ -228,7 +309,7 @@ class PlaceImageService {
     for (final v in candidates) {
       final batch = await _commonsSearch(v);
       for (final u in batch) {
-        if (seen.add(u) && urls.length < _maxImages) urls.add(u);
+        if (seen.add(u) && urls.length < _maxRaw) urls.add(u);
       }
       if (urls.length >= 3) break;
     }
@@ -247,9 +328,7 @@ class PlaceImageService {
       final thumb = info['thumburl'] as String?;
       final full = info['url'] as String?;
       final url = (thumb?.isNotEmpty == true ? thumb : full) ?? '';
-      final valid = url.isNotEmpty && _isValidMime(mime, url);
-      debugPrint('[Gallery]  ↳ mime=$mime valid=$valid url=${_snip(url, 80)}');
-      if (valid) urls.add(url);
+      if (url.isNotEmpty && _isValidMime(mime, url)) urls.add(url);
     }
     return urls;
   }

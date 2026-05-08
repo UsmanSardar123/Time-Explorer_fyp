@@ -3,13 +3,14 @@
 // SPRINT: 4
 
 import 'dart:async';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
+import 'package:timeexplorer/core/widgets/app_image_loader.dart';
 import '../../data/services/analytics_service.dart';
 import '../../domain/entities/character.dart';
+import '../../domain/entities/character_category.dart';
 import '../../domain/entities/chat_message.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -48,23 +49,41 @@ class _UserBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.centerRight,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12, left: 60),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-        decoration: const BoxDecoration(
-          gradient: AppTheme.primaryGradient,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-            bottomLeft: Radius.circular(20),
-            bottomRight: Radius.circular(4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Flexible(
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12, left: 60),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+              decoration: const BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(4),
+                ),
+              ),
+              child: Text(
+                text,
+                style: GoogleFonts.beVietnamPro(
+                    fontSize: 14, color: Colors.white, height: 1.45),
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          text,
-          style: GoogleFonts.beVietnamPro(
-              fontSize: 14, color: Colors.white, height: 1.45),
-        ),
+          const SizedBox(width: 10),
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryContainer.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.person_rounded, size: 14, color: AppTheme.primaryContainer),
+          ),
+        ],
       ),
     );
   }
@@ -103,7 +122,10 @@ class _CharacterBubble extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          ChatMiniAvatar(imageUrl: character.imageUrl),
+          ChatMiniAvatar(
+            imageUrl: character.imageUrl,
+            category: character.category,
+          ),
           const SizedBox(width: 10),
           Flexible(
             child: Container(
@@ -126,7 +148,20 @@ class _CharacterBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _BubbleContent(text: text, isStreaming: isStreaming),
+                  Stack(
+                    children: [
+                      _BubbleContent(text: text, isStreaming: isStreaming),
+                      if (!isStreaming)
+                        const Positioned(
+                          top: 8,
+                          right: 12,
+                          child: Opacity(
+                            opacity: 0.1,
+                            child: Icon(Icons.history_edu_rounded, size: 24, color: Color(0xFF8B6914)),
+                          ),
+                        ),
+                    ],
+                  ),
                   if (match != null)
                     _ContextCard(
                       fact: match.$2,
@@ -315,25 +350,32 @@ class _ContextCardState extends State<_ContextCard> {
 
 class ChatMiniAvatar extends StatelessWidget {
   final String imageUrl;
-  const ChatMiniAvatar({super.key, required this.imageUrl});
+  final CharacterCategory? category;
+  const ChatMiniAvatar({
+    super.key,
+    required this.imageUrl,
+    this.category,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 16,
-      backgroundColor: AppTheme.surfaceLow,
-      child: ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          httpHeaders: const {'User-Agent': 'TimeExplorer/1.0 (Flutter)'},
-          width: 32,
-          height: 32,
-          fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => const Icon(
-            Icons.person_rounded,
-            color: AppTheme.onSurfaceVariant,
-            size: 16,
-          ),
+    return AppImageLoader(
+      imageUrl: imageUrl,
+      headers: const {'User-Agent': 'TimeExplorer/1.0 (Flutter)'},
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      errorWidget: Container(
+        width: 32,
+        height: 32,
+        decoration: const BoxDecoration(
+          color: AppTheme.surfaceLow,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          category?.icon ?? Icons.person_rounded,
+          color: AppTheme.onSurfaceVariant,
+          size: 16,
         ),
       ),
     );

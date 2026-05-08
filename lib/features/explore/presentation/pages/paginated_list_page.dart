@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
+import 'package:timeexplorer/core/widgets/themed_loading.dart';
 import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
 import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
 import 'package:timeexplorer/features/personalities/domain/entities/character_category.dart';
@@ -133,7 +134,7 @@ class _PaginatedListPageState extends State<PaginatedListPage> {
         children: [
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: _primary))
+                ? const ThemedLoading(context: 'categories')
                 : ListView.builder(
                     physics: const BouncingScrollPhysics(),
                     padding: const EdgeInsets.all(24),

@@ -10,7 +10,6 @@ import 'package:timeexplorer/features/places/domain/usecases/get_nearby_places.d
 import 'package:timeexplorer/features/places/domain/usecases/get_place_details.dart';
 import 'package:timeexplorer/features/places/presentation/cubit/place_details_cubit.dart';
 import 'package:timeexplorer/features/places/presentation/cubit/place_details_state.dart';
-import 'package:timeexplorer/core/widgets/app_cached_image.dart';
 import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
@@ -152,7 +151,7 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
                           const SizedBox(height: 16),
                           _buildAnimatedSection(child: _buildInfoGrid(place), delay: 800),
                           const SizedBox(height: 24),
-                          _buildAnimatedSection(child: _buildTimeTravelWeather(place), delay: 850),
+                          _buildAnimatedSection(child: _buildDailyLifeSnapshot(place), delay: 850),
                           const SizedBox(height: 32),
                           if (place.significance != null || place.historicalSignificance != null) ...[
                             _buildAnimatedSection(child: _buildSectionTitle('Historical Significance'), delay: 900),
@@ -751,45 +750,136 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
     );
   }
 
-  Widget _buildTimeTravelWeather(Place place) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2), width: 2),
+  Widget _buildDailyLifeSnapshot(Place place) {
+    final era = place.historicalPeriod ?? place.eraLabel ?? place.era ?? 'Ancient Times';
+    final civilization = place.civilization ?? place.builtBy ?? 'Ancient civilizations';
+    final purpose = place.purpose ?? place.description;
+    final material = place.primaryMaterial ?? place.architecturalStyle ?? 'stone and mortar';
+
+    final snapshots = [
+      _LifeCard(
+        icon: Icons.groups_rounded,
+        color: const Color(0xFF8B5CF6),
+        label: 'People',
+        value: '$civilization shaped this place during $era.',
       ),
-      child: Column(
+      _LifeCard(
+        icon: Icons.account_balance_rounded,
+        color: const Color(0xFFD97706),
+        label: 'Purpose',
+        value: purpose.length > 100 ? '${purpose.substring(0, 97)}…' : purpose,
+      ),
+      _LifeCard(
+        icon: Icons.architecture_rounded,
+        color: const Color(0xFF059669),
+        label: 'Craftsmanship',
+        value: 'Built using $material — a testament to the mastery of the era.',
+      ),
+      _LifeCard(
+        icon: Icons.auto_stories_rounded,
+        color: const Color(0xFFDC2626),
+        label: 'Legacy',
+        value:
+            'This site continues to tell the story of ${place.name} to the world.',
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.wb_sunny_rounded, color: Color(0xFFD97706), size: 22),
+            const SizedBox(width: 10),
+            Text(
+              'Daily Life Snapshot',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.deepNavy,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Step into the lives of those who walked here',
+          style: GoogleFonts.beVietnamPro(
+            fontSize: 12,
+            color: const Color(0xFF6B7280),
+          ),
+        ),
+        const SizedBox(height: 14),
+        ...snapshots.map((card) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _buildLifeCard(card),
+            )),
+      ],
+    );
+  }
+
+  Widget _buildLifeCard(_LifeCard card) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: card.color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: card.color.withValues(alpha: 0.18), width: 1),
+      ),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.cloud_sync_rounded, color: AppTheme.primaryColor, size: 24),
-              const SizedBox(width: 12),
-              Text(
-                'Time-Travel Climate',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.deepNavy,
-                ),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: card.color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(card.icon, color: card.color, size: 18),
           ),
-          const SizedBox(height: 12),
-          Text(
-            'During the ${place.historicalPeriod ?? place.eraLabel ?? "ancient times"}, the climate around ${place.name} was likely different from today. AI analysis suggests the environment was more suited for the civilization that built it.',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              height: 1.6,
-              color: const Color(0xFF4B5563),
-              fontStyle: FontStyle.italic,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  card.label,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: card.color,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  card.value,
+                  style: GoogleFonts.beVietnamPro(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: const Color(0xFF374151),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _LifeCard {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String value;
+  const _LifeCard({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+  });
 }
 
 

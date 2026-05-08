@@ -10,14 +10,21 @@ import 'package:timeexplorer/features/profile/presentation/providers/profile_pro
 import 'package:timeexplorer/features/learn/presentation/daily_fact_provider.dart';
 import 'package:timeexplorer/features/places/data/eras_data.dart';
 import 'package:timeexplorer/features/gamification/presentation/widgets/level_up_overlay.dart';
+import 'package:timeexplorer/features/gamification/presentation/widgets/daily_mission_card.dart';
+import 'package:timeexplorer/core/widgets/time_guide.dart';
 import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
 import 'package:timeexplorer/core/widgets/xp_bar.dart';
+import 'package:timeexplorer/core/widgets/chrono_loader.dart';
 
 import 'package:timeexplorer/features/explore/presentation/pages/explore_page.dart';
 import 'package:timeexplorer/features/personalities/presentation/pages/categories_page.dart';
 import 'package:timeexplorer/features/bookmarks/presentation/pages/bookmarks_page.dart';
 import 'package:timeexplorer/features/gamification/presentation/pages/progress_page.dart';
 import 'package:timeexplorer/features/profile/presentation/pages/profile_page.dart';
+import 'package:timeexplorer/features/home/presentation/widgets/time_portal_entry.dart';
+import 'package:timeexplorer/features/notifications/presentation/providers/notification_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,8 +35,10 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _currentIndex = 0;
+  bool _portalEntered = false;
 
   late AnimationController _navController;
+  late AnimationController _navRevealCtrl;
 
   @override
   void initState() {
@@ -38,11 +47,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
+    _navRevealCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
   }
 
   @override
   void dispose() {
     _navController.dispose();
+    _navRevealCtrl.dispose();
     super.dispose();
   }
 
@@ -52,13 +66,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _navController.forward(from: 0);
   }
 
+  void _onPortalEntered() {
+    setState(() => _portalEntered = true);
+    _navRevealCtrl.forward();
+  }
+
   @override
   Widget build(BuildContext context) {
     return LevelUpOverlay(
       child: Scaffold(
         backgroundColor: AppTheme.background,
         body: _buildBody(),
-        bottomNavigationBar: _buildBottomNavBar(),
+        bottomNavigationBar: _portalEntered
+            ? FadeTransition(
+                opacity: _navRevealCtrl,
+                child: _buildBottomNavBar(),
+              )
+            : null,
       ),
     );
   }
@@ -67,7 +91,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return IndexedStack(
       index: _currentIndex,
       children: [
-        const _TimeExplorerDashboard(),
+        _TimePortalHome(onEntered: _onPortalEntered),
         const ExplorePage(),
         const CategoriesPage(),
         const ProgressPage(),
@@ -77,28 +101,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildBottomNavBar() {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceLowest,
-        border: const Border(top: BorderSide(color: AppTheme.outlineVariant, width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primary.withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(0, Icons.home_rounded, 'Home'),
-          _buildNavItem(1, Icons.explore_rounded, 'Explore'),
-          _buildNavItem(2, Icons.forum_rounded, 'Chat'),
-          _buildNavItem(3, Icons.military_tech_rounded, 'Journey'),
-          _buildNavItem(4, Icons.person_rounded, 'Profile'),
-        ],
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: 88,
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceLowest,
+          border: const Border(top: BorderSide(color: AppTheme.outlineVariant, width: 1)),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primary.withValues(alpha: 0.06),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(0, Icons.home_rounded, 'Home'),
+            _buildNavItem(1, Icons.explore_rounded, 'Explore'),
+            _buildNavItem(2, Icons.forum_rounded, 'Chat'),
+            _buildNavItem(3, Icons.military_tech_rounded, 'Journey'),
+            _buildNavItem(4, Icons.person_rounded, 'Profile'),
+          ],
+        ),
       ),
     );
   }
@@ -111,10 +138,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        constraints: const BoxConstraints(minWidth: 64, minHeight: 64),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? AppTheme.primaryContainer.withValues(alpha: 0.10) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -122,14 +150,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Icon(
               icon,
               color: isSelected ? AppTheme.primaryContainer : AppTheme.onSurfaceVariant,
-              size: 24,
+              size: 28,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 color: isSelected ? AppTheme.primaryContainer : AppTheme.onSurfaceVariant,
               ),
             ),
@@ -140,8 +168,78 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 }
 
-class _TimeExplorerDashboard extends StatelessWidget {
-  const _TimeExplorerDashboard();
+// ── Portal → Dashboard gate ───────────────────────────────────────────────────
+
+class _TimePortalHome extends StatefulWidget {
+  final VoidCallback onEntered;
+  const _TimePortalHome({required this.onEntered});
+  @override
+  State<_TimePortalHome> createState() => _TimePortalHomeState();
+}
+
+class _TimePortalHomeState extends State<_TimePortalHome> {
+  bool _entered = false;
+
+  void _handleEnter() {
+    setState(() => _entered = true);
+    widget.onEntered();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 700),
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: CurvedAnimation(parent: anim, curve: Curves.easeIn),
+        child: child,
+      ),
+      child: _entered
+          ? const _TimeExplorerDashboard(key: ValueKey('dashboard'))
+          : TimePortalEntry(
+              key: const ValueKey('portal'),
+              onEnter: _handleEnter,
+            ),
+    );
+  }
+}
+
+// ── Main Dashboard ────────────────────────────────────────────────────────────
+
+class _TimeExplorerDashboard extends StatefulWidget {
+  const _TimeExplorerDashboard({super.key});
+
+  @override
+  State<_TimeExplorerDashboard> createState() => _TimeExplorerDashboardState();
+}
+
+class _TimeExplorerDashboardState extends State<_TimeExplorerDashboard> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<GamificationProvider>().recordFactViewed();
+        _precacheEraImages();
+        _initNotifications();
+      }
+    });
+  }
+
+  void _initNotifications() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) context.read<NotificationProvider>().init(uid);
+  }
+
+  void _precacheEraImages() {
+    for (final era in featuredEras) {
+      if (era.outerImage.isNotEmpty) {
+        precacheImage(CachedNetworkImageProvider(era.outerImage), context);
+      }
+      if (era.innerImage.isNotEmpty) {
+        precacheImage(CachedNetworkImageProvider(era.innerImage), context);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,9 +248,30 @@ class _TimeExplorerDashboard extends StatelessWidget {
     final progress = gamProvider.progress;
     final factProvider = context.watch<DailyFactProvider>();
 
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: _buildSlivers(context, profile, gamProvider, progress, factProvider),
+          ),
+        ),
+        const Align(
+          alignment: Alignment.bottomRight,
+          child: TimeGuide(message: "Let's explore! Tap a card to begin."),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildSlivers(
+    BuildContext context,
+    dynamic profile,
+    dynamic gamProvider,
+    dynamic progress,
+    dynamic factProvider,
+  ) {
+    return [
         SliverAppBar(
           backgroundColor: AppTheme.background,
           surfaceTintColor: Colors.transparent,
@@ -162,7 +281,7 @@ class _TimeExplorerDashboard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Good day, ${profile?.displayName?.split(' ').first ?? "Explorer"} 👋',
+                'Good day, ${profile?.displayName.split(' ').first ?? "Explorer"} 👋',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -172,19 +291,7 @@ class _TimeExplorerDashboard extends StatelessWidget {
             ],
           ),
           actions: [
-            AnimatedButton(
-              onTap: () {},
-              child: Container(
-                margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceLow,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.outlineVariant),
-                ),
-                child: const Icon(Icons.notifications_none_rounded, color: AppTheme.onSurface, size: 22),
-              ),
-            ),
+            _NotificationIconButton(),
           ],
         ),
 
@@ -200,6 +307,8 @@ class _TimeExplorerDashboard extends StatelessWidget {
                 _buildHeroCard(context),
                 const SizedBox(height: 28),
                 _buildXPSection(gamProvider, progress),
+                const SizedBox(height: 24),
+                const DailyMissionCard(),
                 const SizedBox(height: 28),
                 _buildSectionHeader('Featured Eras'),
                 const SizedBox(height: 14),
@@ -213,8 +322,7 @@ class _TimeExplorerDashboard extends StatelessWidget {
             ),
           ),
         ),
-      ],
-    );
+    ];
   }
 
   Widget _buildSearchBar(BuildContext context) {
@@ -244,7 +352,7 @@ class _TimeExplorerDashboard extends StatelessWidget {
 
   Widget _buildHeroCard(BuildContext context) {
     return AnimatedCard(
-      onTap: () => context.push('/explore'),
+      onTap: () => context.push('/era-details', extra: featuredEras.first),
       child: Container(
         height: 180,
         decoration: BoxDecoration(
@@ -349,14 +457,7 @@ class _TimeExplorerDashboard extends StatelessWidget {
           border: Border.all(color: AppTheme.outlineVariant, width: 1),
         ),
         child: const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppTheme.primaryContainer,
-            ),
-          ),
+          child: ChronoLoader(size: 32, label: 'Loading timeline...'),
         ),
       );
     }
@@ -385,7 +486,7 @@ class _TimeExplorerDashboard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Level ${progress.level}',
+                  progress.epochLabel,
                   style: GoogleFonts.plusJakartaSans(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -526,6 +627,15 @@ class _TimeExplorerDashboard extends StatelessWidget {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const BookmarksPage()));
           },
         ),
+        const SizedBox(height: 12),
+        _buildActionCard(
+          context: context,
+          title: 'Event Explorer',
+          subtitle: 'Browse historical events by era',
+          icon: Icons.event_note_rounded,
+          accentColor: AppTheme.amber,
+          onTap: () => context.push('/event-explorer'),
+        ),
       ],
     );
   }
@@ -629,6 +739,63 @@ class _TimeExplorerDashboard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Notification Icon with Badge ──────────────────────────────────────────────
+
+class _NotificationIconButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final count = context.watch<NotificationProvider>().unreadCount;
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: AnimatedButton(
+        onTap: () => context.push('/notifications'),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceLow,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.outlineVariant),
+              ),
+              child: Icon(
+                count > 0
+                    ? Icons.notifications_rounded
+                    : Icons.notifications_none_rounded,
+                color: AppTheme.onSurface,
+                size: 22,
+              ),
+            ),
+            if (count > 0)
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.error,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    count > 9 ? '9+' : '$count',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

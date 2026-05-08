@@ -65,6 +65,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         const SizedBox(width: 12),
                         _buildQuickAction('Place', Icons.add_location_alt_rounded, () => context.push('/admin/places/add')),
                         const SizedBox(width: 12),
+                        _buildQuickAction('Event', Icons.event_available_rounded, () => context.push('/admin/events/add')),
+                        const SizedBox(width: 12),
                         _buildQuickAction('Fact', Icons.add_comment_rounded, () => context.push('/admin/facts/add')),
                       ],
                     ),
@@ -76,6 +78,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     _buildAdminAction('Manage Users', Icons.person_search_rounded, () => context.push('/admin/users')),
                     _buildAdminAction('Manage Places', Icons.landscape_rounded, () => context.push('/admin/places')),
                     _buildAdminAction('Manage Characters', Icons.history_edu_rounded, () => context.push('/admin/characters')),
+                    _buildAdminAction('Manage Events', Icons.event_note_rounded, () => context.push('/admin/events')),
 
                     const SizedBox(height: 24),
                     _buildSectionTitle('Content'),
@@ -211,6 +214,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     final tiles = [
       ('Users',      '${stats?.totalUsers ?? 0}',           Icons.people_rounded),
       ('Places',     '${stats?.totalPlaces ?? 0}',          Icons.map_rounded),
+      ('Events',     '${stats?.totalEvents ?? 0}',          Icons.event_note_rounded),
       ('Characters', '${stats?.totalCharacters ?? 0}',      Icons.history_edu_rounded),
       ('Facts',      '${stats?.totalHistoricalFacts ?? 0}', Icons.auto_stories_rounded),
     ];
@@ -220,7 +224,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       crossAxisCount: 2,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.4,
+      childAspectRatio: 1.5,
       children: List.generate(tiles.length, (i) {
         final (label, value, icon) = tiles[i];
         return TweenAnimationBuilder<double>(

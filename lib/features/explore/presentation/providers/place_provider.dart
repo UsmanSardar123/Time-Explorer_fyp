@@ -35,6 +35,9 @@ class PlaceProvider extends ChangeNotifier {
   String get selectedCategory => _selectedCategory;
   String get searchQuery => _searchQuery;
 
+  int get totalPlaces => _allPlaces.length;
+  Set<String> get allPlaceIds => _allPlaces.map((p) => p.id).toSet();
+
   final List<String> categories = [
     'All',
     'Ancient',

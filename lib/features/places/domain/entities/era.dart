@@ -8,6 +8,8 @@ class Era extends Equatable {
   final String detailedDescription;
   final String outerImage;
   final String innerImage;
+  final List<String> keyEvents;
+  final List<String> interestingFacts;
 
   const Era({
     required this.id,
@@ -17,6 +19,8 @@ class Era extends Equatable {
     required this.detailedDescription,
     required this.outerImage,
     required this.innerImage,
+    this.keyEvents = const [],
+    this.interestingFacts = const [],
   });
 
   @override
@@ -28,5 +32,7 @@ class Era extends Equatable {
         detailedDescription,
         outerImage,
         innerImage,
+        keyEvents,
+        interestingFacts,
       ];
 }

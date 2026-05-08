@@ -1,19 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeexplorer/core/services/wikimedia_service.dart';
 import 'package:timeexplorer/core/services/wikipedia_service.dart';
 import 'package:timeexplorer/features/explore/data/datasources/place_scraper_service.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:timeexplorer/features/gamification/domain/entities/game_progress.dart';
-import 'package:timeexplorer/features/gamification/presentation/widgets/streak_flame.dart';
 import 'package:timeexplorer/features/gamification/presentation/widgets/level_up_overlay.dart';
-import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_provider.dart';
 import 'package:timeexplorer/core/theme/app_theme.dart';
+import 'package:timeexplorer/core/widgets/themed_loading.dart';
 import 'package:timeexplorer/features/explore/domain/entities/place_entity.dart';
 import 'package:timeexplorer/features/explore/presentation/providers/place_provider.dart';
 import 'package:timeexplorer/features/explore/presentation/widgets/place_image_gallery.dart';
@@ -36,7 +32,6 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
   static const _surfaceCard = AppTheme.surface;
   static const _textDark = AppTheme.textPrimary;
   static const _textMuted = AppTheme.textDimmed;
-  static const _textHint = AppTheme.outlineVariant;
   static const _accentAmber = AppTheme.amber;
 
   // ── Preserved State & Services ─────────────────────────────────────────────
@@ -45,15 +40,12 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
   String? _fullDescription;
   bool _isLoadingDescription = false;
   final WikimediaService _wikimediaService = WikimediaService();
-  final WikipediaService _wikipediaService = WikipediaService();
   int _currentFactIndex = 0;
-  bool _isInVisitList = false;
   int _userRating = 0;
   bool _isPlaying = false;
   bool _xpRewarded = false;
   Timer? _xpTimer;
   final Map<String, String?> _metadataCache = {};
-  bool _metadataFetched = false;
 
   @override
   void initState() {
@@ -109,7 +101,6 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
       for (final entry in scraped.entries) {
         _metadataCache[entry.key] ??= entry.value;
       }
-      _metadataFetched = true;
     });
   }
 
@@ -148,7 +139,7 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
   Widget build(BuildContext context) {
     final place = _getPlace();
     if (place == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: ThemedLoading(context: 'events'));
     }
 
     return LevelUpOverlay(
@@ -367,7 +358,7 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
             overflow: TextOverflow.ellipsis,
           ),
           secondChild: _isLoadingDescription 
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: ThemedLoading(context: 'chat'))
               : Text(
                   _fullDescription ?? place.description,
                   style: GoogleFonts.beVietnamPro(fontSize: 15, color: _textDark, height: 1.6),
