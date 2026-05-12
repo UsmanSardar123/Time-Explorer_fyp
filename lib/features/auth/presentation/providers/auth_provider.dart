@@ -16,6 +16,7 @@ class AuthProvider extends ChangeNotifier {
   late final GoogleSignInUseCase _googleSignInUseCase;
   late final SignOutUseCase _signOutUseCase;
   late final GetCurrentUserUseCase _getCurrentUserUseCase;
+  late final DeleteAccountUseCase _deleteAccountUseCase;
 
   UserEntity? _currentUser;
   bool _isLoading = true; // Start as true during initial check
@@ -41,6 +42,7 @@ class AuthProvider extends ChangeNotifier {
     _googleSignInUseCase = GoogleSignInUseCase(_repository);
     _signOutUseCase = SignOutUseCase(_repository);
     _getCurrentUserUseCase = GetCurrentUserUseCase(_repository);
+    _deleteAccountUseCase = DeleteAccountUseCase(_repository);
     
     _initAuthListener();
   }
@@ -181,6 +183,22 @@ class AuthProvider extends ChangeNotifier {
       await _signOutUseCase();
       _currentUser = null;
     } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteAccount(String password) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _deleteAccountUseCase(password);
+      _currentUser = null;
+    } catch (e) {
+      debugPrint('[AuthProvider] deleteAccount error: $e');
       _error = e.toString();
     } finally {
       _isLoading = false;

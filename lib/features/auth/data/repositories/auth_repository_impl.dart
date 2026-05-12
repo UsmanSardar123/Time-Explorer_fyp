@@ -33,4 +33,9 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserEntity?> getCurrentUser() {
     return _remoteDataSource.getCurrentUser();
   }
+
+  @override
+  Future<void> deleteAccount(String password) {
+    return _remoteDataSource.deleteAccount(password);
+  }
 }
