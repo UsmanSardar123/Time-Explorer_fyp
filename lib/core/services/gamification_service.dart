@@ -391,8 +391,9 @@ class GamificationService {
   }
 
   /// Handles first daily app open: awards +10 XP and updates streak.
-  Future<UserProgress> recordDailyOpen({DateTime? customTime}) async {
-    var progress = await loadProgress();
+  /// [baseProgress] skips the SharedPreferences read and uses the provided value directly.
+  Future<UserProgress> recordDailyOpen({DateTime? customTime, UserProgress? baseProgress}) async {
+    var progress = baseProgress ?? await loadProgress();
     final now = (customTime ?? DateTime.now()).toUtc();
     final today = DateTime.utc(now.year, now.month, now.day);
 

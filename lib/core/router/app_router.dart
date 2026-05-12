@@ -53,6 +53,8 @@ import 'package:timeexplorer/features/event_explorer/presentation/pages/event_ex
 import 'package:timeexplorer/features/event_explorer/presentation/pages/event_detail_page.dart';
 import 'package:timeexplorer/features/event_explorer/domain/entities/historical_event.dart';
 import 'package:timeexplorer/features/notifications/presentation/pages/notification_history_page.dart';
+import 'package:timeexplorer/core/models/quick_fact_item.dart';
+import 'package:timeexplorer/core/widgets/quick_fact_detail_page.dart';
 import 'package:flutter/material.dart';
 
 class AppRouter {
@@ -165,6 +167,13 @@ class AppRouter {
             }
             return AppTransitions.portal(new_ui.PlaceDetailsPage(placeId: id), state);
           },
+        ),
+        GoRoute(
+          path: '/quick-fact-detail',
+          pageBuilder: (context, state) => AppTransitions.portal(
+            QuickFactDetailPage(fact: state.extra as QuickFactItem),
+            state,
+          ),
         ),
         GoRoute(
           path: '/paginated-list',
