@@ -1,0 +1,172 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function hasOnlyFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /users/{uid}  — profile & gamification data
+    // ─────────────────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      // Authenticated users may read their own profile; admins may read all.
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Users may create their own document on first sign-in.
+      allow create: if isOwner(uid)
+                    && request.resource.data.keys().hasAny(['email', 'displayName']);
+
+      // Users may update their own profile but cannot escalate their role.
+      allow update: if isOwner(uid)
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                       .hasAny(['role', 'uid']);
+
+      // Only admins may delete user records.
+      allow delete: if isAdmin();
+
+      // Sub-collections under /users/{uid}
+      match /{subcollection}/{docId} {
+        allow read:   if isOwner(uid) || isAdmin();
+        allow write:  if isOwner(uid) || isAdmin();
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /places/{placeId}  — read-only for all signed-in users; admin writes
+    // ─────────────────────────────────────────────────────────────────────────
+    match /places/{placeId} {
+      allow read:   if isSignedIn();
+      allow write:  if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /characters/{characterId}  — read-only for signed-in; admin writes
+    // ─────────────────────────────────────────────────────────────────────────
+    match /characters/{characterId} {
+      allow read:   if isSignedIn();
+      allow write:  if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /events/{eventId}  — read-only for signed-in; admin writes
+    // ─────────────────────────────────────────────────────────────────────────
+    match /events/{eventId} {
+      allow read:   if isSignedIn();
+      allow write:  if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /facts/{factId}  — read-only for signed-in; admin writes
+    // ─────────────────────────────────────────────────────────────────────────
+    match /facts/{factId} {
+      allow read:   if isSignedIn();
+      allow write:  if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /notifications/{notifId}  — targeted per user
+    // ─────────────────────────────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      // User may only read notifications addressed to themselves.
+      allow read:   if isSignedIn()
+                    && (resource == null
+                        || resource.data.targetUid == request.auth.uid
+                        || isAdmin());
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /conversations/{conversationId}  — user chat history
+    // ─────────────────────────────────────────────────────────────────────────
+    match /conversations/{conversationId} {
+      allow read, write: if isSignedIn()
+                         && (resource == null
+                             || resource.data.userId == request.auth.uid
+                             || isAdmin());
+
+      match /messages/{messageId} {
+        allow read, write: if isSignedIn()
+                           && get(/databases/$(database)/documents/conversations/$(conversationId))
+                              .data.userId == request.auth.uid;
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /usage/{uid}  — rate limiting counters (write-own, read-own)
+    // ─────────────────────────────────────────────────────────────────────────
+    match /usage/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /logs/{logId}  — append-only diagnostic logs (write-own, admin reads)
+    // ─────────────────────────────────────────────────────────────────────────
+    match /logs/{logId} {
+      allow create: if isSignedIn();
+      allow read:   if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /progress/{uid}  — per-user quiz / exploration progress
+    // ─────────────────────────────────────────────────────────────────────────
+    match /progress/{uid} {
+      allow read, write: if isOwner(uid) || isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /aiInsightsCache/{key}  — Gemini-generated insights (server-cached)
+    // Read: any signed-in user. Write: signed-in users (server-side flow).
+    // ─────────────────────────────────────────────────────────────────────────
+    match /aiInsightsCache/{key} {
+      allow read:   if isSignedIn();
+      allow write:  if isSignedIn();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /responseCache/{key}  — Gemini response deduplication cache
+    // ─────────────────────────────────────────────────────────────────────────
+    match /responseCache/{key} {
+      allow read:   if isSignedIn();
+      allow write:  if isSignedIn();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // /entries/{entryId}, /timeline/{id}  — historical content (admin managed)
+    // ─────────────────────────────────────────────────────────────────────────
+    match /entries/{entryId} {
+      allow read:   if isSignedIn();
+      allow write:  if isAdmin();
+    }
+
+    match /timeline/{id} {
+      allow read:   if isSignedIn();
+      allow write:  if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Deny everything else by default (fail-safe closed rule).
+    // ─────────────────────────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
