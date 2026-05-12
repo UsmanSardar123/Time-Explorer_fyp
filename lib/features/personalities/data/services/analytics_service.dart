@@ -54,6 +54,20 @@ class AnalyticsService {
       _safeLog('rate_limit_hit',
           {'user_id': userId, 'character_id': characterId});
 
+  static Future<void> logGeminiFallback({
+    required String characterId,
+    required String errorType,
+  }) =>
+      _safeLog('gemini_fallback_used',
+          {'character_id': characterId, 'error_type': errorType});
+
+  static Future<void> logGeminiRetry({
+    required String characterId,
+    required int attempt,
+  }) =>
+      _safeLog('gemini_retry',
+          {'character_id': characterId, 'attempt': attempt});
+
   static Future<void> _safeLog(
       String name, Map<String, Object> parameters) async {
     try {

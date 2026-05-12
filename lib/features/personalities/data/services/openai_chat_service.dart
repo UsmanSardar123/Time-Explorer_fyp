@@ -24,7 +24,7 @@ class OpenAIChatService {
     required List<Map<String, String>> history,
   }) async {
     final cleanedKey = _apiKey;
-    if (cleanedKey.isEmpty) {
+    if (cleanedKey.isEmpty || !AppConfig.isAiEnabled) {
       throw const GeminiChatException(
           GeminiError.unknownError, 'GEMINI_API_KEY is missing.');
     }
@@ -58,7 +58,7 @@ class OpenAIChatService {
     required List<Map<String, String>> history,
   }) async* {
     final cleanedKey = _apiKey;
-    if (cleanedKey.isEmpty) {
+    if (cleanedKey.isEmpty || !AppConfig.isAiEnabled) {
       throw const GeminiChatException(
           GeminiError.unknownError, 'GEMINI_API_KEY is missing.');
     }

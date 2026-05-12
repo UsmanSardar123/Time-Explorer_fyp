@@ -244,6 +244,10 @@ class ChatCubit extends Cubit<ChatState> {
 
       if (e is GeminiChatException &&
           _character.fallbackResponses.isNotEmpty) {
+        unawaited(AnalyticsService.logGeminiFallback(
+          characterId: _character.id,
+          errorType: e.error.name,
+        ));
         final fallbackText =
             _pickFallback(_character.fallbackResponses, e.error);
         final fallbackMsg = MessageModel.create(

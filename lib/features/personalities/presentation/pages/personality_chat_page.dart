@@ -191,11 +191,21 @@ class _ChatHeader extends StatelessWidget {
                         color: AppTheme.onSurface)),
                 Row(
                   children: [
-                    const _LiveDot(),
-                    const SizedBox(width: 5),
-                    Text('Live',
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFF7C3AED).withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        'AI Simulation',
                         style: GoogleFonts.beVietnamPro(
-                            fontSize: 11, color: AppTheme.onSurfaceVariant)),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF7C3AED)),
+                      ),
+                    ),
                     const SizedBox(width: 6),
                     Icon(character.category.icon,
                         size: 11, color: AppTheme.onSurfaceVariant),
@@ -273,51 +283,6 @@ class _EraBadge extends StatelessWidget {
             color: const Color(0xFF8B6914)),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-}
-
-class _LiveDot extends StatefulWidget {
-  const _LiveDot();
-
-  @override
-  State<_LiveDot> createState() => _LiveDotState();
-}
-
-class _LiveDotState extends State<_LiveDot>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _opacity;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 800))
-      ..repeat(reverse: true);
-    _opacity = Tween<double>(begin: 0.35, end: 1.0)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _opacity,
-      builder: (_, _) => Opacity(
-        opacity: _opacity.value,
-        child: Container(
-          width: 7,
-          height: 7,
-          decoration: const BoxDecoration(
-              shape: BoxShape.circle, color: Color(0xFF059669)),
-        ),
       ),
     );
   }
@@ -431,6 +396,7 @@ class _ChatBody extends StatelessWidget {
             ],
           ),
         ),
+        const _AiDisclaimerBar(),
         SuggestionChips(
           suggestions: state.suggestions,
           onChipTapped: (text) {
@@ -614,6 +580,35 @@ class _InputRow extends StatelessWidget {
   }
 }
 
+// ── AI disclaimer bar ─────────────────────────────────────────────────────────
+
+class _AiDisclaimerBar extends StatelessWidget {
+  const _AiDisclaimerBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 14),
+      color: const Color(0xFF7C3AED).withValues(alpha: 0.06),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.auto_awesome_rounded, size: 11, color: Color(0xFF7C3AED)),
+          const SizedBox(width: 5),
+          Text(
+            'AI-generated · May contain inaccuracies',
+            style: GoogleFonts.beVietnamPro(
+                fontSize: 10,
+                color: const Color(0xFF7C3AED),
+                fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ── Rate limit dialog ─────────────────────────────────────────────────────────
 
 class _RateLimitDialog extends StatelessWidget {
@@ -629,11 +624,17 @@ class _RateLimitDialog extends StatelessWidget {
         children: [
           ChatMiniAvatar(imageUrl: character.imageUrl),
           const SizedBox(width: 10),
-          Text(character.name,
+          Expanded(
+            child: Text(
+              character.name,
               style: GoogleFonts.plusJakartaSans(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF3D2C0E))),
+                  color: const Color(0xFF3D2C0E)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       content: Text(
