@@ -45,3 +45,12 @@ class GetCurrentUserUseCase {
     return repository.getCurrentUser();
   }
 }
+
+class DeleteAccountUseCase {
+  final AuthRepository repository;
+  DeleteAccountUseCase(this.repository);
+
+  Future<void> call(String password) {
+    return repository.deleteAccount(password);
+  }
+}

@@ -10,6 +10,7 @@ abstract class AuthRemoteDataSource {
   Future<UserEntity> signInWithGoogle();
   Future<void> signOut();
   Future<UserEntity?> getCurrentUser();
+  Future<void> deleteAccount(String password);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -162,6 +163,43 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     debugPrint('[AUTH] Signing out');
     await _googleSignIn.signOut();
     await _firebaseAuth.signOut();
+  }
+
+  @override
+  Future<void> deleteAccount(String password) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) throw Exception('No authenticated user');
+
+    final uid = user.uid;
+    debugPrint('[AUTH] Deleting account for $uid');
+
+    // Re-authenticate before deletion
+    if (user.email != null && password.isNotEmpty) {
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+    }
+
+    // Delete Firestore user document and subcollections
+    final batch = _firestore.batch();
+    final userRef = _firestore.collection('users').doc(uid);
+
+    // Delete known subcollections
+    for (final sub in ['notifications', 'progress', 'bookmarks', 'chats']) {
+      final docs = await userRef.collection(sub).get();
+      for (final doc in docs.docs) {
+        batch.delete(doc.reference);
+      }
+    }
+    batch.delete(userRef);
+    await batch.commit();
+
+    // Delete Firebase Auth account
+    await _googleSignIn.signOut();
+    await user.delete();
+    debugPrint('[AUTH] Account deleted for $uid');
   }
 
   @override
