@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class WikimediaImageService {
@@ -35,7 +36,7 @@ class WikimediaImageService {
       // but for simplicity and to avoid irrelevant images, we return null.
       return null;
     } catch (e) {
-      print('Error fetching image from Wikimedia for $placeName: $e');
+      debugPrint('[WikimediaImageService] Error fetching image for $placeName: $e');
       return null;
     }
   }

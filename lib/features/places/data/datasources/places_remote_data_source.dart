@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:timeexplorer/features/places/data/models/place_model.dart';
 import 'package:timeexplorer/features/places/domain/entities/timeline_event.dart';
 
@@ -92,7 +93,7 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
           .map((doc) => PlaceModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
-      print('Error fetching all places: $e');
+      debugPrint('[PlacesDataSource] Error fetching all places: $e');
       return [];
     }
   }
@@ -104,7 +105,7 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
       if (!doc.exists) return null;
       return PlaceModel.fromMap(doc.data()!, doc.id);
     } catch (e) {
-      print('Error fetching place by id: $e');
+      debugPrint('[PlacesDataSource] Error fetching place by id: $e');
       return null;
     }
   }
@@ -122,7 +123,7 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
           .map((doc) => TimelineEvent.fromMap(doc.data()))
           .toList();
     } catch (e) {
-      print('Error fetching timeline: $e');
+      debugPrint('[PlacesDataSource] Error fetching timeline: $e');
       return [];
     }
   }
@@ -141,7 +142,7 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
           .map((doc) => PlaceModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
-      print('Error fetching nearby places by ids: $e');
+      debugPrint('[PlacesDataSource] Error fetching nearby places by ids: $e');
       return [];
     }
   }

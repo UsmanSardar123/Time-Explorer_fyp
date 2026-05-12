@@ -30,6 +30,7 @@ import 'package:timeexplorer/features/places/data/services/user_progress_service
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:timeexplorer/features/quiz/domain/entities/quiz_topic.dart';
 import 'package:timeexplorer/features/quiz/presentation/widgets/difficulty_selection_section.dart';
+import 'package:timeexplorer/core/models/quick_fact_item.dart';
 
 class PlaceDetailsPage extends StatefulWidget {
   final String placeId;
@@ -346,17 +347,23 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
                       color: Colors.white,
                       height: 1.2,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 10),
                   Row(
                     children: [
                       const Icon(Icons.location_on_rounded, color: Colors.white70, size: 14),
                       const SizedBox(width: 4),
-                      Text(
-                        place.location,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.8),
+                      Expanded(
+                        child: Text(
+                          place.location,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.8),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -443,6 +450,63 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
   }
 
   Widget _buildInfoGrid(Place place) {
+    final relatedFacts = [
+      ...?place.funFacts,
+      if (place.historicalSignificance != null) place.historicalSignificance!,
+    ].where((f) => f.trim().isNotEmpty).take(5).toList();
+
+    QuickFactItem _fact(IconData icon, String label, String value, String desc) =>
+        QuickFactItem(
+          title: label,
+          value: value,
+          icon: icon,
+          description: desc.trim().isNotEmpty ? desc : 'No additional details available.',
+          accentColor: AppTheme.primaryColor,
+          relatedFacts: relatedFacts,
+        );
+
+    final civilizationDesc = [
+      if ((place.civilization ?? '').isNotEmpty) place.civilization!,
+      if ((place.historicalSignificance ?? '').isNotEmpty) place.historicalSignificance!,
+      if ((place.history ?? '').isNotEmpty) place.history!,
+    ].join('\n\n');
+
+    final styleDesc = [
+      if ((place.architecturalStyle ?? '').isNotEmpty)
+        'Architectural Style: ${place.architecturalStyle}',
+      if ((place.primaryMaterial ?? '').isNotEmpty)
+        'Primary Material: ${place.primaryMaterial}',
+      if ((place.dimensions ?? '').isNotEmpty) 'Dimensions: ${place.dimensions}',
+      if ((place.description).isNotEmpty) place.description,
+    ].join('\n\n');
+
+    final builtByDesc = [
+      if ((place.builtBy ?? '').isNotEmpty) 'Commissioned by: ${place.builtBy}',
+      if ((place.purpose ?? '').isNotEmpty) 'Purpose: ${place.purpose}',
+      if ((place.history ?? '').isNotEmpty) place.history!,
+    ].join('\n\n');
+
+    final dateDesc = [
+      if ((place.constructionDate ?? '').isNotEmpty)
+        'Construction Date: ${place.constructionDate}',
+      if ((place.historicalPeriod ?? '').isNotEmpty)
+        'Historical Period: ${place.historicalPeriod}',
+      if ((place.history ?? '').isNotEmpty) place.history!,
+    ].join('\n\n');
+
+    final countryDesc = [
+      if ((place.country ?? '').isNotEmpty) 'Country: ${place.country}',
+      if (place.location.isNotEmpty) 'Location: ${place.location}',
+      if ((place.description).isNotEmpty) place.description,
+    ].join('\n\n');
+
+    final unescoDesc = [
+      if ((place.unescoStatus ?? '').isNotEmpty)
+        'UNESCO Status: ${place.unescoStatus}',
+      'UNESCO World Heritage Sites are places of outstanding universal value recognized for their cultural, historical, scientific or natural significance.',
+      if ((place.historicalSignificance ?? '').isNotEmpty) place.historicalSignificance!,
+    ].join('\n\n');
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -460,8 +524,10 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
         children: [
           Row(
             children: [
-              _buildInfoTile(Icons.account_balance_rounded, 'CIVILIZATION', place.civilization ?? 'Unknown'),
-              _buildInfoTile(Icons.architecture_rounded, 'STYLE', place.architecturalStyle ?? 'Classical'),
+              _buildInfoTile(_fact(Icons.account_balance_rounded, 'CIVILIZATION',
+                  place.civilization ?? 'Unknown', civilizationDesc)),
+              _buildInfoTile(_fact(Icons.architecture_rounded, 'STYLE',
+                  place.architecturalStyle ?? 'Classical', styleDesc)),
             ],
           ),
           Padding(
@@ -470,8 +536,10 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
           ),
           Row(
             children: [
-              _buildInfoTile(Icons.person_rounded, 'BUILT BY', place.builtBy ?? 'Unknown'),
-              _buildInfoTile(Icons.calendar_today_rounded, 'DATE', place.constructionDate ?? 'TBA'),
+              _buildInfoTile(_fact(Icons.person_rounded, 'BUILT BY',
+                  place.builtBy ?? 'Unknown', builtByDesc)),
+              _buildInfoTile(_fact(Icons.calendar_today_rounded, 'DATE',
+                  place.constructionDate ?? 'TBA', dateDesc)),
             ],
           ),
           Padding(
@@ -480,8 +548,10 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
           ),
           Row(
             children: [
-              _buildInfoTile(Icons.public_rounded, 'COUNTRY', place.country ?? 'Unknown'),
-              _buildInfoTile(Icons.verified_rounded, 'UNESCO', place.unescoStatus ?? 'Not Listed'),
+              _buildInfoTile(_fact(Icons.public_rounded, 'COUNTRY',
+                  place.country ?? 'Unknown', countryDesc)),
+              _buildInfoTile(_fact(Icons.verified_rounded, 'UNESCO',
+                  place.unescoStatus ?? 'Not Listed', unescoDesc)),
             ],
           ),
         ],
@@ -489,46 +559,71 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
     );
   }
 
-  Widget _buildInfoTile(IconData icon, String label, String value) {
+  Widget _buildInfoTile(QuickFactItem fact) {
     return Expanded(
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: AppTheme.primaryColor),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[500],
-                    letterSpacing: 0.5,
+      child: Semantics(
+        label: '${fact.title}: ${fact.value}. Tap for more details.',
+        button: true,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => context.push('/quick-fact-detail', extra: fact),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(fact.icon, size: 18, color: AppTheme.primaryColor),
                   ),
-                ),
-                Text(
-                  value,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF374151),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fact.title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[500],
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                fact.value,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF374151),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 14,
+                              color: Colors.grey[400],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

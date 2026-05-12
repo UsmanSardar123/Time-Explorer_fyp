@@ -58,6 +58,8 @@ class _FactsCarouselState extends State<FactsCarousel> {
                             height: 1.5,
                             color: const Color(0xFF374151),
                           ),
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

@@ -212,6 +212,46 @@ class _ExplorePageState extends State<ExplorePage> with TickerProviderStateMixin
         itemBuilder: (_, index) => const _PlaceCardShimmer(),
       );
     }
+
+    if (provider.places.isEmpty && provider.error != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        child: Column(
+          children: [
+            const Icon(Icons.wifi_off_rounded, size: 48, color: AppTheme.outlineVariant),
+            const SizedBox(height: 16),
+            Text(
+              'Could not load places.\nShowing cached content if available.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.beVietnamPro(color: AppTheme.onSurfaceVariant, fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+            TextButton.icon(
+              onPressed: () => context.read<PlaceProvider>().refresh(),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (provider.places.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        child: Column(
+          children: [
+            const Icon(Icons.explore_off_rounded, size: 48, color: AppTheme.outlineVariant),
+            const SizedBox(height: 16),
+            Text(
+              'No places found.',
+              style: GoogleFonts.beVietnamPro(color: AppTheme.onSurfaceVariant, fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),

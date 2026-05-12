@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timeexplorer/core/services/wikimedia_service.dart';
-import 'package:timeexplorer/core/services/wikipedia_service.dart';
 import 'package:timeexplorer/features/explore/data/datasources/place_scraper_service.dart';
 import 'package:timeexplorer/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:timeexplorer/features/gamification/domain/entities/game_progress.dart';
