@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:timeexplorer/core/theme/app_theme.dart';
 
 class NarratorSheet extends StatefulWidget {
   final String text;

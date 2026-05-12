@@ -163,7 +163,7 @@ class _MainDashboardPageState extends State<MainDashboardPage> {
                             child: CircleAvatar(
                               radius: 28,
                               backgroundImage: profile?.photoUrl != null
-                                  ? NetworkImage(profile!.photoUrl!)
+                                  ? CachedNetworkImageProvider(profile!.photoUrl!)
                                   : null,
                               backgroundColor: AppTheme.deepNavy,
                               child: profile?.photoUrl == null

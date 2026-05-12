@@ -351,14 +351,6 @@ class _PlaceTile extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() {
-    return Container(
-      width: 90,
-      height: 90,
-      color: AppTheme.surfaceLow,
-      child: const Icon(Icons.place_rounded, color: AppTheme.primaryContainer, size: 32),
-    );
-  }
 
   Widget _tag(String label, Color color) {
     return Container(
