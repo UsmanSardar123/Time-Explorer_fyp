@@ -16,7 +16,8 @@ class NotificationProvider extends ChangeNotifier {
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
   Future<void> init(String userId) async {
-    if (_userId == userId) return;
+    // Re-subscribe if same user but subscription was cancelled (e.g. after reset)
+    if (_userId == userId && _sub != null) return;
     _userId = userId;
     _isLoading = true;
     notifyListeners();
@@ -29,6 +30,15 @@ class NotificationProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     });
+  }
+
+  void reset() {
+    _sub?.cancel();
+    _sub = null;
+    _userId = null;
+    _notifications = [];
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> markAsRead(String notificationId) async {

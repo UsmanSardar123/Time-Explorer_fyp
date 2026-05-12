@@ -40,6 +40,7 @@ class GamificationProvider extends ChangeNotifier {
       debugPrint('[GAMIFICATION] Init: syncing Firestore for $uid');
       _progress = await _service.loadFromFirestore(uid);
       _lastSyncedUid = uid;
+      notifyListeners(); // show Firestore value immediately before recordDailyOpen
     }
 
     await _doOpenAndNotify();
@@ -53,6 +54,7 @@ class GamificationProvider extends ChangeNotifier {
       _lastSyncedUid = user.uid;
       debugPrint('[GAMIFICATION] Auth change: syncing Firestore for ${user.uid}');
       _progress = await _service.loadFromFirestore(user.uid);
+      notifyListeners(); // show Firestore value immediately before recordDailyOpen
       await _doOpenAndNotify();
     });
   }
@@ -65,7 +67,7 @@ class GamificationProvider extends ChangeNotifier {
         ? DateTime.now().difference(_progress.lastLoginDate!).inDays
         : 0;
 
-    _progress = await _service.recordDailyOpen();
+    _progress = await _service.recordDailyOpen(baseProgress: _progress);
     _isInitializing = false;
     notifyListeners();
 
