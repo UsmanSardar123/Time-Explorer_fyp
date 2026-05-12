@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timeexplorer/core/services/wikipedia_service.dart';
 import 'package:timeexplorer/features/places/domain/usecases/get_nearby_places.dart';
@@ -68,7 +69,7 @@ class PlaceDetailsCubit extends Cubit<PlaceDetailsState> {
             aiInsightsCacheKey: place.aiInsightsCacheKey,
           );
         } catch (e) {
-          print('[PlaceDetailsCubit] Wikipedia fetch failed: $e');
+          debugPrint('[PlaceDetailsCubit] Wikipedia fetch failed: $e');
         }
       }
 

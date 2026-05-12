@@ -44,8 +44,8 @@ class PlaceInsightsService {
   }
 
   Future<List<String>> _fetchFromGemini(Place place, String cacheKey) async {
+    if (!AppConfig.isAiEnabled) return [];
     final apiKey = AppConfig.geminiApiKey;
-    if (apiKey.isEmpty) return [];
 
     final model = GenerativeModel(model: _modelName, apiKey: apiKey);
     final prompt =
