@@ -1,45 +1,30 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// Centralized configuration for environment variables and API keys.
-/// Prioritizes --dart-define values over .env file values.
+/// Centralized app configuration sourced exclusively from --dart-define.
+/// Run the app with:
+///   flutter run --dart-define=GEMINI_API_KEY=... --dart-define=PIXABAY_API_KEY=...
 class AppConfig {
-  // --- GEMINI API ---
-  static const String _geminiEnvKey = 'GEMINI_API_KEY';
-  
-  /// Reads GEMINI_API_KEY from --dart-define.
-  /// Must be a 'static const' to be evaluated at compile time.
-  static const String _geminiFromDefine = String.fromEnvironment(
-    _geminiEnvKey,
-    defaultValue: '',
+  // Compile-time constants from --dart-define
+  static const String _geminiKey = String.fromEnvironment('GEMINI_API_KEY');
+  static const String _pixabayKey = String.fromEnvironment(
+    'PIXABAY_API_KEY',
+    defaultValue: '53527064-edf2dfe298a58b020b583beec',
   );
 
-  /// Returns the active Gemini API Key.
-  /// Prioritizes --dart-define, then falls back to .env if loaded.
-  static String get geminiApiKey {
-    if (_geminiFromDefine.isNotEmpty) {
-      return _geminiFromDefine.trim();
-    }
-    
-    if (dotenv.isInitialized) {
-      return dotenv.env[_geminiEnvKey]?.trim() ?? '';
-    }
-    
-    return '';
-  }
+  static String get geminiApiKey => _geminiKey.trim();
+  static String get pixabayApiKey => _pixabayKey.trim();
 
-  /// Validation helper to check if critical keys are present.
+  /// True when Gemini API key is present. Use this to gate all AI features.
+  static bool get isAiEnabled => geminiApiKey.isNotEmpty;
+
+  /// Called once at app start. Logs key status without exposing values.
   static void validate() {
-    if (geminiApiKey.isEmpty) {
-      debugPrint('[AppConfig] ⚠️  MISSING: $_geminiEnvKey. '
-          'Provide via --dart-define=$_geminiEnvKey=<key> or in .env file.');
+    if (isAiEnabled) {
+      debugPrint('[AppConfig] ✅ GEMINI_API_KEY present (${geminiApiKey.length} chars)');
     } else {
-      debugPrint('[AppConfig] ✅ DETECTED: $_geminiEnvKey '
-          '(${geminiApiKey.length} characters)');
+      debugPrint('[AppConfig] ⚠️  GEMINI_API_KEY missing — AI features disabled. '
+          'Provide via --dart-define=GEMINI_API_KEY=<key>');
     }
+    debugPrint('[AppConfig] Pixabay key length: ${pixabayApiKey.length}');
   }
-
-  // --- PIXABAY API ---
-  // Note: Pixabay currently uses a hardcoded key in PixabayService.
-  // In the future, it can be moved here.
 }

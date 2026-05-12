@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:timeexplorer/core/config/app_config.dart';
 
 class PixabayService {
   static const String _baseUrl = 'https://pixabay.com/api/';
-  static const String _apiKey = '53527064-edf2dfe298a58b020b583beec';
+  static String get _apiKey => AppConfig.pixabayApiKey;
 
   // In-memory cache to prevent redundant API calls
   static final Map<String, String> _urlCache = {};

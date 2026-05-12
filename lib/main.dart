@@ -27,24 +27,17 @@ import 'package:timeexplorer/features/notifications/presentation/providers/notif
 import 'package:timeexplorer/core/services/notification_service.dart';
 import 'package:timeexplorer/core/services/content_watch_service.dart';
 import 'package:timeexplorer/core/services/ambient_audio_service.dart';
+import 'package:timeexplorer/core/cache/hive_cache_manager.dart';
+import 'package:timeexplorer/core/providers/connectivity_provider.dart';
+import 'package:timeexplorer/core/widgets/offline_banner.dart';
+import 'package:timeexplorer/core/utils/app_logger.dart';
 
 import 'firebase_options.dart';
-
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await dotenv.load(fileName: '.env');
-  } catch (e) {
-    debugPrint('[App] No .env file found. Relying on --dart-define.');
-  }
-
-
-  // Centralized key validation.
   AppConfig.validate();
-
 
   debugPrint('[App] Initializing Firebase...');
   await Firebase.initializeApp(
@@ -52,10 +45,23 @@ void main() async {
   );
   debugPrint('[App] Firebase initialized.');
 
+  await AppLogger.init();
+
+  // Capture Flutter framework errors → Crashlytics.
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    AppLogger.fatal(details.exception, details.stack ?? StackTrace.current,
+        reason: details.exceptionAsString());
+  };
+
   await NotificationService.init();
   await AmbientAudioService.instance.init();
 
-  runApp(const ProviderScope(child: MyApp()));
+  // Capture async zone errors → Crashlytics.
+  runZonedGuarded(
+    () => runApp(const ProviderScope(child: MyApp())),
+    (error, stack) => AppLogger.fatal(error, stack, reason: 'Uncaught async error'),
+  );
 
   // Defer platform-channel-heavy init to after first frame to prevent
   // the "Width is zero" viewport freeze on Android. Hive.initFlutter()
@@ -68,6 +74,7 @@ void main() async {
     Hive.registerAdapter(TimelinePointAdapter());
     Hive.registerAdapter(HistoricalEventAdapter());
     await Hive.openBox<String>('wikipedia_cache');
+    await HiveCacheManager.init();
     debugPrint('[App] Post-frame: Hive cache ready.');
     unawaited(
       RemoteConfigService.checkForUpdates(CharacterFirestoreRepository()),
@@ -101,6 +108,7 @@ class ProviderScope extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GamificationProvider()),
         ChangeNotifierProvider(create: (_) => LeaderboardProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
       ],
       child: child,
     );
@@ -141,6 +149,7 @@ class _MyAppState extends State<MyApp> {
           themeMode: settings.themeMode,
           routerConfig: _router,
           debugShowCheckedModeBanner: false,
+          builder: (context, child) => OfflineBanner(child: child ?? const SizedBox()),
         );
       },
     );

@@ -9,6 +9,10 @@ import 'package:timeexplorer/core/config/app_config.dart';
 
 enum GeminiError { networkError, rateLimitError, contentFilterError, unknownError, timeoutError }
 
+/// Friendly message shown in UI when AI is unavailable (no key configured).
+const kAiUnavailableMessage =
+    'AI features are currently unavailable. Please check back later.';
+
 class GeminiChatException implements Exception {
   final GeminiError error;
   final String message;
@@ -62,26 +66,23 @@ class GeminiService {
   }
 
   Future<String> generateResponse(String prompt) async {
+    if (!AppConfig.isAiEnabled) return kAiUnavailableMessage;
     try {
       final model = _buildModel();
       final response = await model.generateContent([Content.text(prompt)]);
       final text = _extractText(response);
       if (text.isNotEmpty) return text;
-      return 'Error: Empty response from Gemini';
+      return kAiUnavailableMessage;
     } on InvalidApiKey catch (_) {
-      return 'Error: Invalid API Key — check your --dart-define value';
+      return kAiUnavailableMessage;
     } on ServerException catch (e) {
       debugPrint('[GeminiService] ServerException: $e');
-      return 'Error: Server Issue — Gemini is unavailable';
+      return kAiUnavailableMessage;
     } on SocketException catch (_) {
-      return 'Error: Network Issue — check your internet connection';
+      return kAiUnavailableMessage;
     } catch (e) {
-      final msg = e.toString();
-      if (msg.contains('GEMINI_API_KEY is missing')) {
-        return 'Error: GEMINI_API_KEY is missing. Run with --dart-define';
-      }
       debugPrint('[GeminiService] Unexpected error: $e');
-      return 'Error: $msg';
+      return kAiUnavailableMessage;
     }
   }
 
