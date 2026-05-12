@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -165,60 +166,67 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   @override
   Future<String> uploadProfileImage(String userId, dynamic imageData) async {
-    try {
-      final ref = _firebaseStorage
-          .ref()
-          .child('profile_images')
-          .child('$userId.jpg');
+    if (userId.isEmpty) {
+      throw Exception('Couldn\'t update your profile photo right now.');
+    }
 
-      UploadTask uploadTask;
+    // Derive safe extension from filename
+    String ext = 'jpg';
+    if (imageData is ProfileImageResult) {
+      final raw = imageData.fileName.split('.').last.toLowerCase();
+      if (['jpg', 'jpeg', 'png', 'webp'].contains(raw)) ext = raw == 'jpeg' ? 'jpg' : raw;
+    }
 
-      // ── Resolve image data to bytes or file ──────────────────────────────
-      if (imageData is ProfileImageResult) {
-        if (kIsWeb || imageData.bytes != null) {
-          // Web path: upload raw bytes
-          final bytes = imageData.bytes!;
-          uploadTask = ref.putData(
-            bytes,
-            SettableMetadata(contentType: 'image/jpeg'),
-          );
-        } else {
-          // Mobile path: upload File
-          uploadTask = ref.putFile(
-            imageData.file! as io.File,
-            SettableMetadata(contentType: 'image/jpeg'),
-          );
-        }
-      } else if (imageData is Uint8List) {
-        // Legacy web path
-        uploadTask = ref.putData(
-          imageData,
-          SettableMetadata(contentType: 'image/jpeg'),
-        );
-      } else if (!kIsWeb && imageData is io.File) {
-        // Legacy mobile path
-        uploadTask = ref.putFile(
-          imageData,
-          SettableMetadata(contentType: 'image/jpeg'),
-        );
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final storagePath = 'users/$userId/profile/avatar_$timestamp.$ext';
+
+    debugPrint('[PROFILE] 📁 path: $storagePath | uid: $userId');
+
+    final ref = _firebaseStorage.ref().child(storagePath);
+
+    // Resolve upload task — all failures here are real upload failures
+    UploadTask uploadTask;
+    if (imageData is ProfileImageResult) {
+      final mime = _mimeFromFileName(imageData.fileName);
+      if (kIsWeb || imageData.bytes != null) {
+        uploadTask = ref.putData(imageData.bytes!, SettableMetadata(contentType: mime));
       } else {
-        throw ArgumentError(
-          'Unsupported imageData type: ${imageData.runtimeType}',
-        );
+        uploadTask = ref.putFile(imageData.file! as io.File, SettableMetadata(contentType: mime));
       }
+    } else if (imageData is Uint8List) {
+      uploadTask = ref.putData(imageData, SettableMetadata(contentType: 'image/jpeg'));
+    } else if (!kIsWeb && imageData is io.File) {
+      uploadTask = ref.putFile(imageData, SettableMetadata(contentType: 'image/jpeg'));
+    } else {
+      throw Exception('Couldn\'t update your profile photo right now.');
+    }
 
-      debugPrint('[PROFILE] ⬆️ Uploading profile image for user $userId...');
+    try {
+      // ── Step 1: upload ────────────────────────────────────────────────────
+      debugPrint('[PROFILE] ⬆️ Upload started');
       final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-      debugPrint('[PROFILE] ✅ Upload complete. URL: $downloadUrl');
 
-      // Persist to Firestore
+      // ── Step 2: fetch URL ─────────────────────────────────────────────────
+      debugPrint('[PROFILE] ✅ Upload complete, fetching URL...');
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      debugPrint('[PROFILE] 🔗 URL fetched successfully');
+
+      // ── Step 3: capture old URL before Firestore overwrite ────────────────
+      String? oldPhotoUrl;
+      try {
+        final doc = await _firestore.collection('users').doc(userId).get();
+        oldPhotoUrl = doc.data()?['photoUrl'] as String?;
+      } catch (_) {}
+
+      // ── Step 4: persist to Firestore ──────────────────────────────────────
+      debugPrint('[PROFILE] 💾 Updating Firestore...');
       await _firestore.collection('users').doc(userId).set(
         {'photoUrl': downloadUrl},
         SetOptions(merge: true),
       );
+      debugPrint('[PROFILE] ✅ Firestore updated — UI refresh triggered');
 
-      // Sync to Firebase Auth user record (best-effort; Firestore is source of truth)
+      // ── Step 5: sync to Firebase Auth (best-effort, isolated) ────────────
       final user = _firebaseAuth.currentUser;
       if (user != null && user.uid == userId) {
         try {
@@ -228,28 +236,73 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         }
       }
 
+      // ── Step 6: fire-and-forget old avatar cleanup ────────────────────────
+      // NOT awaited — cleanup can never affect the upload result or trigger
+      // error UI. Any exception is fully isolated inside _deleteOldAvatar.
+      _deleteOldAvatar(oldPhotoUrl);
+
       return downloadUrl;
     } on FirebaseException catch (e) {
-      debugPrint('[PROFILE] 🔥 Firebase upload error [${e.code}]: ${e.message}');
+      debugPrint('[PROFILE] 🔥 Firebase error [${e.code}]: ${e.message}');
       throw Exception(_mapStorageError(e.code));
+    } on io.SocketException {
+      debugPrint('[PROFILE] 🌐 Socket error during upload');
+      throw Exception('You\'re offline. Try again when connected.');
+    } on TimeoutException {
+      debugPrint('[PROFILE] ⏱ Upload timed out');
+      throw Exception('Photo upload took too long. Please retry.');
     } catch (e) {
       debugPrint('[PROFILE] ❌ uploadProfileImage error: $e');
-      throw Exception('Failed to upload profile image. Please try again.');
+      throw Exception('Couldn\'t update your profile photo right now.');
+    }
+  }
+
+  // Fire-and-forget — void return ensures this can never propagate exceptions
+  // to the caller or affect upload success/failure state.
+  void _deleteOldAvatar(String? oldUrl) {
+    if (oldUrl == null || oldUrl.isEmpty) return;
+    _firebaseStorage
+        .refFromURL(oldUrl)
+        .delete()
+        .then((_) => debugPrint('[PROFILE] 🗑️ Old avatar cleaned up'))
+        .catchError((Object e) {
+          debugPrint('[PROFILE] ⚠️ Old avatar delete skipped (non-fatal): $e');
+        });
+  }
+
+  static String _mimeFromFileName(String fileName) {
+    final ext = fileName.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'image/jpeg';
     }
   }
 
   String _mapStorageError(String code) {
     switch (code) {
       case 'storage/unauthorized':
-        return 'You do not have permission to upload images.';
+      case 'storage/unauthenticated':
+        return 'Please sign in again to update your photo.';
       case 'storage/canceled':
         return 'Upload was cancelled.';
       case 'storage/quota-exceeded':
-        return 'Storage quota exceeded. Contact support.';
+        return 'Storage limit reached. Please contact support.';
       case 'storage/invalid-format':
-        return 'Invalid file format. Only JPEG images are accepted.';
+        return 'That image format isn\'t supported yet.';
+      case 'storage/object-not-found':
+      case 'storage/bucket-not-found':
+      case 'storage/project-not-found':
+        return 'Couldn\'t update your profile photo right now.';
+      case 'storage/network-request-failed':
+        return 'You\'re offline. Try again when connected.';
+      case 'storage/retry-limit-exceeded':
+        return 'Photo upload took too long. Please retry.';
       default:
-        return 'Upload failed ($code). Please try again.';
+        return 'Couldn\'t update your profile photo right now.';
     }
   }
 
