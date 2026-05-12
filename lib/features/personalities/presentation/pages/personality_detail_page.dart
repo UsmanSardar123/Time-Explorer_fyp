@@ -216,6 +216,8 @@ class _HeroBanner extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                   height: 1.1,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

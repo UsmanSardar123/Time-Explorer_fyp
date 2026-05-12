@@ -129,13 +129,17 @@ class _ListHeader extends StatelessWidget {
                   children: [
                     Icon(category.icon, color: AppTheme.primaryContainer, size: 20),
                     const SizedBox(width: 8),
-                    Text(
-                      category.displayName,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.onSurface,
-                        height: 1.1,
+                    Expanded(
+                      child: Text(
+                        category.displayName,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.onSurface,
+                          height: 1.1,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -145,9 +149,13 @@ class _ListHeader extends StatelessWidget {
                   children: [
                     _CountChip(count: count),
                     const SizedBox(width: 10),
-                    Text(
-                      category.subtitle,
-                      style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppTheme.onSurfaceVariant),
+                    Expanded(
+                      child: Text(
+                        category.subtitle,
+                        style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppTheme.onSurfaceVariant),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
