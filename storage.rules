@@ -1,0 +1,76 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Helpers ─────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Admin check via custom claim set by Cloud Functions on role promotion.
+    // Falls back to email check for initial bootstrap.
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.get('role', '') == 'admin' ||
+        request.auth.token.email == 'usmansardar037@gmail.com'
+      );
+    }
+
+    // Allow only image MIME types — no executables, no scripts.
+    function isImageMimeType() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|gif)');
+    }
+
+    function isUnder5MB() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Prevents disguised executables regardless of MIME type.
+    function isNotExecutable() {
+      return !request.resource.contentType.matches(
+        '.*(x-msdownload|x-executable|x-sh|x-shellscript|octet-stream).*'
+      );
+    }
+
+    function isValidUpload() {
+      return isImageMimeType() && isUnder5MB() && isNotExecutable();
+    }
+
+    // ── User profile images ─────────────────────────────────────────────
+    // Public read (leaderboard avatars visible to all signed-in users).
+    // Only the owner can write; size + MIME enforced.
+    match /users/{uid}/profile/{fileName} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(uid) && isValidUpload();
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+
+    // ── Other user-scoped files ─────────────────────────────────────────
+    // Catch-all for any future per-user uploads (e.g. exported content).
+    // Only owner + admin can read; owner writes with same validation.
+    match /users/{uid}/{allPaths=**} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, update: if isOwner(uid) && isValidUpload();
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+
+    // ── Admin-managed assets ────────────────────────────────────────────
+    // Place images, character art, event banners — readable by all signed-in
+    // users; only admins may write or delete.
+    match /assets/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Fail-safe deny ──────────────────────────────────────────────────
+    // Any path not explicitly matched above is denied.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
