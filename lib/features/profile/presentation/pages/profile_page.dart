@@ -13,6 +13,7 @@ import 'package:timeexplorer/features/gamification/presentation/providers/gamifi
 import 'package:timeexplorer/core/theme/app_theme.dart';
 import 'package:timeexplorer/core/widgets/gamified_components.dart';
 import 'package:timeexplorer/features/gamification/presentation/widgets/level_badge.dart';
+import 'package:timeexplorer/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:timeexplorer/features/profile/data/services/profile_image_service.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -59,33 +60,57 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     }
   }
 
-  /// Picks an image via [ProfileImageService], validates JPG/JPEG, compresses,
-  /// and uploads to Firebase Storage.
+  void _showUploadFeedback(
+    ScaffoldMessengerState messenger,
+    String message, {
+    bool isSuccess = false,
+  }) {
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isSuccess ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+              color: isSuccess ? Colors.white : AppTheme.amber,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isSuccess ? AppTheme.primaryContainer : AppTheme.onSurface,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      ),
+    );
+  }
+
   Future<void> _pickImage({required bool fromCamera}) async {
+    if (_isUploadingImage) return;
+
+    final provider = context.read<ProfileProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
     try {
       final result = fromCamera
           ? await _imageService.pickFromCamera()
           : await _imageService.pickFromGallery();
 
-      // Handle errors from the service
       if (result is ProfileImageError) {
-        if (result.message == 'cancelled') return; // user cancelled
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(result.message)),
-                ],
-              ),
-              backgroundColor: AppTheme.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          );
-        }
+        if (result.message == 'cancelled') return;
+        _showUploadFeedback(messenger, result.message);
         return;
       }
 
@@ -93,7 +118,6 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
 
       setState(() => _isUploadingImage = true);
 
-      // Immediately show preview
       if (kIsWeb && result.bytes != null) {
         setState(() => _webImageBytes = result.bytes);
       } else if (!kIsWeb && result.file != null) {
@@ -103,47 +127,23 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         setState(() => _localImagePath = path);
       }
 
-      // Upload to backend
-      final provider = context.read<ProfileProvider>();
+      final oldPhotoUrl = provider.profile?.photoUrl;
       final downloadUrl = await provider.uploadProfileImage(result);
 
-      if (downloadUrl != null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                SizedBox(width: 10),
-                Text('Profile photo updated!'),
-              ],
-            ),
-            backgroundColor: AppTheme.primaryContainer,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Upload failed: ${provider.error ?? "Unknown error"}'),
-            backgroundColor: AppTheme.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
+      if (downloadUrl != null) {
+        if (oldPhotoUrl != null) {
+          imageCache.evict(NetworkImage(oldPhotoUrl));
+        }
+        _showUploadFeedback(messenger, 'Profile photo updated', isSuccess: true);
+      } else {
+        _showUploadFeedback(
+          messenger,
+          provider.error ?? 'Couldn\'t update your profile photo right now.',
         );
       }
     } catch (e) {
       debugPrint('[ProfilePage] _pickImage error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Something went wrong. Please try again.'),
-            backgroundColor: AppTheme.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
+      _showUploadFeedback(messenger, 'Couldn\'t update your profile photo right now.');
     } finally {
       if (mounted) setState(() => _isUploadingImage = false);
     }
@@ -164,10 +164,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             Text('Update Profile Photo', style: GoogleFonts.plusJakartaSans(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.onSurface)),
             const SizedBox(height: 6),
             Text(
-              'Only JPG / JPEG images are accepted',
+              'JPG, PNG, and WebP images supported · Max 5 MB',
               style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppTheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 20),f
+            const SizedBox(height: 20),
             ListTile(
               leading: CircleAvatar(backgroundColor: AppTheme.surfaceLow, child: const Icon(Icons.camera_alt_rounded, color: AppTheme.primaryContainer)),
               title: Text('Take Photo', style: GoogleFonts.plusJakartaSans(color: AppTheme.onSurface, fontWeight: FontWeight.w600)),
@@ -175,9 +175,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               onTap: () { Navigator.pop(context); _pickImage(fromCamera: true); },
             ),
             ListTile(
+
+              
               leading: CircleAvatar(backgroundColor: AppTheme.surfaceLow, child: const Icon(Icons.photo_library_rounded, color: AppTheme.primaryContainer)),
               title: Text('Choose from Gallery', style: GoogleFonts.plusJakartaSans(color: AppTheme.onSurface, fontWeight: FontWeight.w600)),
-              subtitle: Text('JPG or JPEG only', style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppTheme.onSurfaceVariant)),
+              subtitle: Text('JPG, PNG, or WebP · up to 5 MB', style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppTheme.onSurfaceVariant)),
               onTap: () { Navigator.pop(context); _pickImage(fromCamera: false); },
             ),
             const SizedBox(height: 8),
@@ -263,7 +265,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               ),
               // Tap target & avatar
               GestureDetector(
-                onTap: _showImageSourceDialog,
+                onTap: _isUploadingImage ? null : _showImageSourceDialog,
                 child: Container(
                   width: 122,
                   height: 122,
@@ -300,7 +302,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 bottom: 2,
                 right: 2,
                 child: GestureDetector(
-                  onTap: _showImageSourceDialog,
+                  onTap: _isUploadingImage ? null : _showImageSourceDialog,
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -322,6 +324,35 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   size: 32,
                 ),
               ),
+              // Streak badge
+              if (gam.streakDays > 0)
+                Positioned(
+                  bottom: 2,
+                  left: 2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppTheme.amber,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.surfaceLowest, width: 2),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('🔥', style: TextStyle(fontSize: 10)),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${gam.streakDays}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 16),
@@ -455,7 +486,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () => context.read<AuthProvider>().signOut(),
+        onPressed: () {
+          context.read<NotificationProvider>().reset();
+          context.read<AuthProvider>().signOut();
+        },
         icon: const Icon(Icons.logout_rounded, size: 18),
         label: const Text('Sign Out'),
         style: OutlinedButton.styleFrom(

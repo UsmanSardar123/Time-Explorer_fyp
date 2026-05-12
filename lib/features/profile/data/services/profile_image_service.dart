@@ -31,8 +31,8 @@ class ProfileImageError {
 /// Web: returns raw bytes. Mobile: returns dart:io.File.
 /// image_picker's imageQuality parameter handles compression on both platforms.
 class ProfileImageService {
-  static const _maxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
-  static const _allowedExtensions = ['jpg', 'jpeg'];
+  static const _maxFileSizeBytes = 5 * 1024 * 1024;
+  static const _allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
 
   final ImagePicker _picker;
 
@@ -61,7 +61,7 @@ class ProfileImageService {
       final ext = picked.name.split('.').last.toLowerCase();
       if (!_allowedExtensions.contains(ext)) {
         return ProfileImageError(
-          'Only JPG / JPEG files are allowed.\nYou selected a .$ext file.',
+          'Please choose a JPG, PNG, or WebP image.',
         );
       }
 
@@ -72,7 +72,7 @@ class ProfileImageService {
       }
     } catch (e, st) {
       debugPrint('[ProfileImageService] ❌ pick error: $e\n$st');
-      return ProfileImageError('Could not access image: ${_friendlyError(e)}');
+      return ProfileImageError(_friendlyPickError(e));
     }
   }
 
@@ -112,10 +112,13 @@ class ProfileImageService {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  String _friendlyError(Object e) {
+  String _friendlyPickError(Object e) {
     final msg = e.toString().toLowerCase();
-    if (msg.contains('permission')) return 'Camera / storage permission denied.';
+    if (msg.contains('permission')) return 'Camera or storage permission was denied.';
+    if (msg.contains('socket') || msg.contains('failed host') || msg.contains('network')) {
+      return 'No internet connection. Please try again.';
+    }
     if (msg.contains('not found')) return 'Image file not found.';
-    return 'Unexpected error.';
+    return 'Could not access the image. Please try again.';
   }
 }

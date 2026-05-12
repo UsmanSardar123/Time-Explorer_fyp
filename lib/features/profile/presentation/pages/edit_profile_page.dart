@@ -59,6 +59,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   /// Picks, validates (JPG/JPEG only), compresses, and uploads using [ProfileImageService].
   Future<void> _pickImage({required bool fromCamera}) async {
+    // Capture provider and messenger before any await to avoid async BuildContext usage
+    final provider = context.read<ProfileProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
     try {
       final result = fromCamera
           ? await _imageService.pickFromCamera()
@@ -66,22 +70,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (result is ProfileImageError) {
         if (result.message == 'cancelled') return;
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(result.message)),
-                ],
-              ),
-              backgroundColor: AppTheme.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        messenger.showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(child: Text(result.message)),
+              ],
             ),
-          );
-        }
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
         return;
       }
 
@@ -99,11 +101,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
 
       // Upload
-      final provider = context.read<ProfileProvider>();
       final downloadUrl = await provider.uploadProfileImage(result);
 
-      if (downloadUrl != null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (downloadUrl != null) {
+        messenger.showSnackBar(
           SnackBar(
             content: const Text('Profile photo uploaded!'),
             backgroundColor: _primary,
@@ -111,8 +112,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      } else {
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Upload failed: ${provider.error ?? "Unknown error"}'),
             backgroundColor: AppTheme.error,
@@ -123,16 +124,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
     } catch (e) {
       debugPrint('[EditProfilePage] _pickImage error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Something went wrong. Please try again.'),
-            backgroundColor: AppTheme.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isUploadingImage = false);
     }
