@@ -130,6 +130,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       final oldPhotoUrl = provider.profile?.photoUrl;
       final downloadUrl = await provider.uploadProfileImage(result);
 
+      if (!mounted) return; // widget disposed during upload — do not touch UI
+
       if (downloadUrl != null) {
         if (oldPhotoUrl != null) {
           imageCache.evict(NetworkImage(oldPhotoUrl));

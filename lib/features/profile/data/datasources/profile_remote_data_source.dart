@@ -211,14 +211,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       final downloadUrl = await snapshot.ref.getDownloadURL();
       debugPrint('[PROFILE] 🔗 URL fetched successfully');
 
-      // ── Step 3: capture old URL before Firestore overwrite ────────────────
-      String? oldPhotoUrl;
-      try {
-        final doc = await _firestore.collection('users').doc(userId).get();
-        oldPhotoUrl = doc.data()?['photoUrl'] as String?;
-      } catch (_) {}
-
-      // ── Step 4: persist to Firestore ──────────────────────────────────────
+      // ── Step 3: persist to Firestore ─────────────────────────────────────
       debugPrint('[PROFILE] 💾 Updating Firestore...');
       await _firestore.collection('users').doc(userId).set(
         {'photoUrl': downloadUrl},
@@ -226,7 +219,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       );
       debugPrint('[PROFILE] ✅ Firestore updated — UI refresh triggered');
 
-      // ── Step 5: sync to Firebase Auth (best-effort, isolated) ────────────
+      // ── Step 4: sync to Firebase Auth (best-effort, fully isolated) ───────
       final user = _firebaseAuth.currentUser;
       if (user != null && user.uid == userId) {
         try {
@@ -235,11 +228,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
           debugPrint('[PROFILE] ⚠️ Auth photoURL sync failed (non-fatal): $e');
         }
       }
-
-      // ── Step 6: fire-and-forget old avatar cleanup ────────────────────────
-      // NOT awaited — cleanup can never affect the upload result or trigger
-      // error UI. Any exception is fully isolated inside _deleteOldAvatar.
-      _deleteOldAvatar(oldPhotoUrl);
 
       return downloadUrl;
     } on FirebaseException catch (e) {
@@ -255,19 +243,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       debugPrint('[PROFILE] ❌ uploadProfileImage error: $e');
       throw Exception('Couldn\'t update your profile photo right now.');
     }
-  }
-
-  // Fire-and-forget — void return ensures this can never propagate exceptions
-  // to the caller or affect upload success/failure state.
-  void _deleteOldAvatar(String? oldUrl) {
-    if (oldUrl == null || oldUrl.isEmpty) return;
-    _firebaseStorage
-        .refFromURL(oldUrl)
-        .delete()
-        .then((_) => debugPrint('[PROFILE] 🗑️ Old avatar cleaned up'))
-        .catchError((Object e) {
-          debugPrint('[PROFILE] ⚠️ Old avatar delete skipped (non-fatal): $e');
-        });
   }
 
   static String _mimeFromFileName(String fileName) {

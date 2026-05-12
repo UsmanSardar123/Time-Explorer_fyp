@@ -113,8 +113,8 @@ class ProfileProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final downloadUrl = await _uploadProfileImageUseCase(_profile!.id, file);
-      // Automatically update the profile with the new photo Url locally to reflect UI
       _profile = _profile!.copyWith(photoUrl: downloadUrl);
+      _error = null; // confirm clean state — guards against stale error on rebuild
       return downloadUrl;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
