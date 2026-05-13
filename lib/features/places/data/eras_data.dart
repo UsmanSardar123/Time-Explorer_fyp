@@ -1,5 +1,6 @@
 import 'package:timeexplorer/features/places/data/models/era_model.dart';
 import 'package:timeexplorer/features/places/data/models/place_model.dart';
+import 'abbasid_era_data.dart';
 
 const List<EraModel> featuredEras = [
   EraModel(
@@ -111,6 +112,7 @@ const List<EraModel> featuredEras = [
       'The Internet now connects over 5 billion people, fundamentally changing how humanity communicates and learns.',
     ],
   ),
+  abbasidEra,
 ];
 
 final List<PlaceModel> eraPlaces = [
@@ -164,4 +166,5 @@ final List<PlaceModel> eraPlaces = [
     rating: 4.9,
     era: 'Modern Era',
   ),
+  ...abbasidPlaces,
 ];

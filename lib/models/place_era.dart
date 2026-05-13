@@ -8,6 +8,7 @@ enum PlaceEra {
   renaissance,
   earlyModern,
   modern,
+  islamicGoldenAge,
 }
 
 extension PlaceEraExtension on PlaceEra {
@@ -23,6 +24,8 @@ extension PlaceEraExtension on PlaceEra {
         return 'earlyModern';
       case PlaceEra.modern:
         return 'modern';
+      case PlaceEra.islamicGoldenAge:
+        return 'islamicGoldenAge';
     }
   }
 
@@ -40,6 +43,10 @@ extension PlaceEraExtension on PlaceEra {
         return PlaceEra.earlyModern;
       case 'modern':
         return PlaceEra.modern;
+      case 'islamicgoldenage':
+      case 'islamic_golden_age':
+      case 'muslim_golden_age':
+        return PlaceEra.islamicGoldenAge;
       default:
         return null;
     }
