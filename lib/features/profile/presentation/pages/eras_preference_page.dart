@@ -12,6 +12,7 @@ class _ErasPreferencePageState extends State<ErasPreferencePage> {
     'All Eras',
     'Ancient Civilizations',
     'Middle Ages',
+    'Muslim Golden Age',
     'Renaissance',
     'Victorian Era',
     'World Wars',

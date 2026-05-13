@@ -701,6 +701,43 @@ final Map<String, List<QuizQuestion>> quizPool = {
       difficulty: DifficultyLevel.hard,
     ),
   ],
+  'Muslim Golden Age': [
+    QuizQuestion(
+      id: 'mga_1',
+      question: 'Which 9th-century scholar wrote the treatise that introduced algebra to the world?',
+      options: ['Al-Kindi', 'Al-Khwarizmi', 'Ibn Sina', 'Al-Biruni'],
+      correctAnswerIndex: 1,
+      explanation:
+          'Al-Khwarizmi\'s "Al-Kitab al-mukhtasar fi hisab al-jabr wal-muqabala" gave us the word "algebra" and founded the discipline.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
+    ),
+    QuizQuestion(
+      id: 'mga_2',
+      question: 'The word "algorithm" is derived from the Latinised name of which Islamic scholar?',
+      options: ['Al-Ma\'mun', 'Al-Farabi', 'Al-Khwarizmi', 'Ibn al-Haytham'],
+      correctAnswerIndex: 2,
+      explanation:
+          '"Algoritmi" was the Latin rendering of Al-Khwarizmi\'s name, making him the direct namesake of the algorithm.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.medium,
+    ),
+    QuizQuestion(
+      id: 'mga_3',
+      question: 'The House of Wisdom (Bayt al-Hikma) in Baghdad was primarily a centre for what?',
+      options: [
+        'Military training and weapons manufacture',
+        'Translation of texts and original scholarly research',
+        'Astronomical observation only',
+        'Spice trade and commerce',
+      ],
+      correctAnswerIndex: 1,
+      explanation:
+          'The House of Wisdom was a major intellectual hub where scholars translated Greek, Persian, and Indian texts and conducted groundbreaking original research.',
+      type: QuestionType.mcq,
+      difficulty: DifficultyLevel.easy,
+    ),
+  ],
   'Place_giza_pyramid': [
     // Beginner
     QuizQuestion(
