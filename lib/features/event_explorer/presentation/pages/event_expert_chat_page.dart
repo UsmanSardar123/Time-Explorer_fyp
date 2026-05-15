@@ -32,7 +32,7 @@ class EventExpertChatPage extends StatelessWidget {
             'A distinguished historian specialising in ${event.title} '
             'and the broader context of ${event.category.displayName}.',
         category: _mapCategory(),
-        imageUrl: event.imageUrl,
+        imageUrl: event.heroImageUrl,
         bio: 'Expert on ${event.title} (${event.period}, ${event.location}).',
         chatPrompt: _buildSystemPrompt(),
         speechStyle: 'scholarly, concise, educational',
