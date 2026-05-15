@@ -18,6 +18,7 @@ class MockAdminRepository implements AdminRepository {
       totalHistoricalFacts: 1890,
       totalCharacters: 58,
       totalEvents: 0,
+      totalCivilizations: 0,
       totalActiveSessions: 420,
     ));
   }
@@ -98,4 +99,11 @@ class MockAdminRepository implements AdminRepository {
 
   @override
   Future<void> deleteEvent(String eventId) async {}
+
+  // Civilizations stubs
+  @override
+  Future<List<Map<String, dynamic>>> getAllCivilizations() async => [];
+
+  @override
+  Future<void> deleteCivilization(String id) async {}
 }

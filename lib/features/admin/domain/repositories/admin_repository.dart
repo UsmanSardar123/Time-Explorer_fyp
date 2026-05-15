@@ -43,4 +43,8 @@ abstract class AdminRepository {
   Future<void> createEvent(EventModel event);
   Future<void> updateEvent(EventModel event);
   Future<void> deleteEvent(String eventId);
+
+  // Civilizations Management
+  Future<List<Map<String, dynamic>>> getAllCivilizations();
+  Future<void> deleteCivilization(String id);
 }

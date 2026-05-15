@@ -22,12 +22,15 @@ class _CharactersManagementPageState extends State<CharactersManagementPage> {
 
   final _searchCtrl = TextEditingController();
   String _query = '';
+  String? _civFilter;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AdminProvider>().fetchCharacters();
+      final p = context.read<AdminProvider>();
+      p.fetchCharacters();
+      if (p.civilizations.isEmpty) p.fetchCivilizations();
     });
   }
 
@@ -38,9 +41,13 @@ class _CharactersManagementPageState extends State<CharactersManagementPage> {
   }
 
   List<Character> _filtered(List<Character> all) {
-    if (_query.isEmpty) return all;
+    var list = all;
+    if (_civFilter != null) {
+      list = list.where((c) => c.civilizationId == _civFilter).toList();
+    }
+    if (_query.isEmpty) return list;
     final q = _query.toLowerCase();
-    return all.where((c) =>
+    return list.where((c) =>
         c.name.toLowerCase().contains(q) ||
         c.era.toLowerCase().contains(q) ||
         c.category.name.toLowerCase().contains(q)).toList();
@@ -71,6 +78,9 @@ class _CharactersManagementPageState extends State<CharactersManagementPage> {
       body: Column(
         children: [
           _buildSearchBar(),
+          Consumer<AdminProvider>(
+            builder: (_, provider, __) => _buildCivFilters(provider.civilizations),
+          ),
           Expanded(
             child: Consumer<AdminProvider>(
               builder: (context, provider, _) {
@@ -96,6 +106,35 @@ class _CharactersManagementPageState extends State<CharactersManagementPage> {
               },
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCivFilters(List<Map<String, dynamic>> civs) {
+    if (civs.isEmpty) return const SizedBox.shrink();
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Row(
+        children: [
+          FilterChip(
+            label: const Text('All'),
+            selected: _civFilter == null,
+            onSelected: (_) => setState(() => _civFilter = null),
+            selectedColor: _primary.withValues(alpha: 0.15),
+          ),
+          const SizedBox(width: 8),
+          ...civs.map((civ) => Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(civ['name'] as String? ?? ''),
+              selected: _civFilter == civ['id'],
+              onSelected: (_) => setState(() =>
+                  _civFilter = _civFilter == civ['id'] ? null : civ['id'] as String?),
+              selectedColor: _primary.withValues(alpha: 0.15),
+            ),
+          )),
         ],
       ),
     );
@@ -272,6 +311,10 @@ class _CharacterTile extends StatelessWidget {
                       children: [
                         _tag(character.category),
                         const SizedBox(width: 6),
+                        if (character.civilizationId != null) ...[
+                          _civBadge(character.civilizationId!),
+                          const SizedBox(width: 6),
+                        ],
                         Expanded(
                           child: Text(
                             character.era,
@@ -316,14 +359,26 @@ class _CharacterTile extends StatelessWidget {
   }
 
   Widget _tag(CharacterCategory cat) {
-    final label = cat.name;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: _primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label, style: TextStyle(fontSize: 10, color: _primary, fontWeight: FontWeight.w700)),
+      child: Text(cat.name, style: TextStyle(fontSize: 10, color: _primary, fontWeight: FontWeight.w700)),
+    );
+  }
+
+  Widget _civBadge(String civId) {
+    final label = civId.replaceAll('_', ' ').split(' ').map((w) =>
+        w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1)).join(' ');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFF5B7FA6).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF5B7FA6), fontWeight: FontWeight.w700)),
     );
   }
 }

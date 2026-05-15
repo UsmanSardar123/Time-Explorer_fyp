@@ -25,6 +25,7 @@ class FirestoreAdminRepository implements AdminRepository {
         _firestore.collection('facts').count().get(),
         _firestore.collection('characters').count().get(),
         _firestore.collection('events').count().get(),
+        _firestore.collection('civilizations').count().get(),
       ]);
       return AdminStatsEntity(
         totalUsers:           results[0].count ?? 0,
@@ -32,6 +33,7 @@ class FirestoreAdminRepository implements AdminRepository {
         totalHistoricalFacts: results[2].count ?? 0,
         totalCharacters:      results[3].count ?? 0,
         totalEvents:          results[4].count ?? 0,
+        totalCivilizations:   results[5].count ?? 0,
         totalActiveSessions:  1,
       );
     } catch (_) {
@@ -329,6 +331,27 @@ class FirestoreAdminRepository implements AdminRepository {
       await _firestore.collection('events').doc(eventId).delete();
     } catch (e) {
       throw Exception('Failed to delete event: $e');
+    }
+  }
+
+  // ── Civilizations Management ───────────────────────────────────────────────
+
+  @override
+  Future<List<Map<String, dynamic>>> getAllCivilizations() async {
+    try {
+      final snap = await _firestore.collection('civilizations').orderBy('name').get();
+      return snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch civilizations: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteCivilization(String id) async {
+    try {
+      await _firestore.collection('civilizations').doc(id).delete();
+    } catch (e) {
+      throw Exception('Failed to delete civilization: $e');
     }
   }
 }

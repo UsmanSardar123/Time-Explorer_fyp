@@ -13,6 +13,8 @@ import 'package:timeexplorer/features/personalities/domain/entities/character.da
 import 'package:timeexplorer/features/admin/data/models/event_model.dart';
 import 'package:timeexplorer/features/event_explorer/domain/entities/historical_event.dart';
 import 'package:timeexplorer/features/places/data/datasources/wikimedia_image_service.dart';
+import 'package:timeexplorer/features/personalities/data/civilizations/classical_greece_civilization.dart';
+import 'package:timeexplorer/features/personalities/data/services/civilization_seeder.dart';
 
 class AdminProvider with ChangeNotifier {
   final AdminRepository _repository;
@@ -472,6 +474,79 @@ class AdminProvider with ChangeNotifier {
       _error = e.toString();
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ── Civilization Seeding ──────────────────────────────────────────────────
+
+  bool _isSeedingCivilizations = false;
+  String? _civilizationSeedError;
+  bool _civilizationSeedDone = false;
+
+  bool get isSeedingCivilizations => _isSeedingCivilizations;
+  String? get civilizationSeedError => _civilizationSeedError;
+  bool get civilizationSeedDone => _civilizationSeedDone;
+
+  Future<void> seedCivilizations() async {
+    _isSeedingCivilizations = true;
+    _civilizationSeedError = null;
+    _civilizationSeedDone = false;
+    notifyListeners();
+    try {
+      CivilizationRegistry.register(CivilizationEntry(
+        metadata: ClassicalGreeceCivilization.metadata,
+        personalities: ClassicalGreeceCivilization.personalities,
+      ));
+      await CivilizationRegistry.seedAll();
+      _civilizationSeedDone = true;
+      await loadStats();
+      await fetchCharacters();
+    } catch (e) {
+      _civilizationSeedError = e.toString();
+      debugPrint('[AdminProvider] Civilization seed failed: $e');
+    } finally {
+      _isSeedingCivilizations = false;
+      notifyListeners();
+    }
+  }
+
+  // ── Civilizations Management ──────────────────────────────────────────────
+
+  List<Map<String, dynamic>> _civilizations = [];
+  bool _isCivilizationsLoading = false;
+  String? _civilizationsError;
+
+  List<Map<String, dynamic>> get civilizations => _civilizations;
+  bool get isCivilizationsLoading => _isCivilizationsLoading;
+  String? get civilizationsError => _civilizationsError;
+
+  Future<void> fetchCivilizations() async {
+    _isCivilizationsLoading = true;
+    _civilizationsError = null;
+    notifyListeners();
+    try {
+      _civilizations = await _repository.getAllCivilizations();
+    } catch (e) {
+      _civilizationsError = e.toString();
+    } finally {
+      _isCivilizationsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeCivilization(String id) async {
+    _isCivilizationsLoading = true;
+    _civilizationsError = null;
+    notifyListeners();
+    try {
+      await _repository.deleteCivilization(id);
+      _civilizations.removeWhere((c) => c['id'] == id);
+      await loadStats();
+    } catch (e) {
+      _civilizationsError = e.toString();
+    } finally {
+      _isCivilizationsLoading = false;
       notifyListeners();
     }
   }

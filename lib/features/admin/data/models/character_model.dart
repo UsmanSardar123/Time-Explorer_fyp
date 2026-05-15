@@ -31,6 +31,8 @@ class CharacterModel extends Character {
     super.emotionalTriggers = const [],
     super.fallbackResponses = const [],
     super.rateLimitWarning = '',
+    super.civilizationId,
+    super.chronologicalOrder,
   });
 
   factory CharacterModel.fromMap(Map<String, dynamic> map, String id) {
@@ -74,6 +76,8 @@ class CharacterModel extends Character {
       emotionalTriggers: (map['emotionalTriggers'] as List?)?.map((e) => e.toString()).toList() ?? [],
       fallbackResponses: (map['fallbackResponses'] as List?)?.map((e) => e.toString()).toList() ?? [],
       rateLimitWarning: map['rateLimitWarning'] ?? '',
+      civilizationId: map['civilizationId'] as String?,
+      chronologicalOrder: map['chronologicalOrder'] as int?,
     );
   }
 
@@ -110,5 +114,7 @@ class CharacterModel extends Character {
     'emotionalTriggers': emotionalTriggers,
     'fallbackResponses': fallbackResponses,
     'rateLimitWarning': rateLimitWarning,
+    'civilizationId': civilizationId,
+    'chronologicalOrder': chronologicalOrder,
   };
 }
