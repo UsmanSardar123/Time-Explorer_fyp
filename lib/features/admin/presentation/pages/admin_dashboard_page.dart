@@ -79,11 +79,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     _buildAdminAction('Manage Places', Icons.landscape_rounded, () => context.push('/admin/places')),
                     _buildAdminAction('Manage Characters', Icons.history_edu_rounded, () => context.push('/admin/characters')),
                     _buildAdminAction('Manage Events', Icons.event_note_rounded, () => context.push('/admin/events')),
+                    _buildAdminAction('Manage Civilizations', Icons.account_balance_rounded, () => context.push('/admin/civilizations')),
 
                     const SizedBox(height: 24),
                     _buildSectionTitle('Content'),
                     _buildAdminAction('Historical Facts', Icons.menu_book_rounded, () => context.push('/admin/facts')),
                     
+                    const SizedBox(height: 24),
+                    _buildSectionTitle('Civilization Engine'),
+                    _buildCivilizationSeedCard(provider),
                     const SizedBox(height: 40),
                     _buildCacheButton(provider),
                     const SizedBox(height: 60),
@@ -212,11 +216,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   Widget _buildStatsGrid(dynamic stats) {
     final tiles = [
-      ('Users',      '${stats?.totalUsers ?? 0}',           Icons.people_rounded),
-      ('Places',     '${stats?.totalPlaces ?? 0}',          Icons.map_rounded),
-      ('Events',     '${stats?.totalEvents ?? 0}',          Icons.event_note_rounded),
-      ('Characters', '${stats?.totalCharacters ?? 0}',      Icons.history_edu_rounded),
-      ('Facts',      '${stats?.totalHistoricalFacts ?? 0}', Icons.auto_stories_rounded),
+      ('Users',           '${stats?.totalUsers ?? 0}',           Icons.people_rounded),
+      ('Places',          '${stats?.totalPlaces ?? 0}',          Icons.map_rounded),
+      ('Events',          '${stats?.totalEvents ?? 0}',          Icons.event_note_rounded),
+      ('Characters',      '${stats?.totalCharacters ?? 0}',      Icons.history_edu_rounded),
+      ('Facts',           '${stats?.totalHistoricalFacts ?? 0}', Icons.auto_stories_rounded),
+      ('Civilizations',   '${stats?.totalCivilizations ?? 0}',   Icons.account_balance_rounded),
     ];
     return GridView.count(
       shrinkWrap: true,
@@ -324,6 +329,81 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w700),
         ),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 16),
+      ),
+    );
+  }
+
+  Widget _buildCivilizationSeedCard(AdminProvider provider) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF5B7FA6).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF5B7FA6).withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.account_balance_rounded, color: Color(0xFF5B7FA6), size: 20),
+              const SizedBox(width: 10),
+              Text(
+                'Classical Greece — 14 Personalities',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Socrates · Plato · Aristotle · Alexander · Pericles + 9 more',
+            style: GoogleFonts.beVietnamPro(fontSize: 12, color: Colors.black54),
+          ),
+          if (provider.civilizationSeedError != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              provider.civilizationSeedError!,
+              style: GoogleFonts.beVietnamPro(fontSize: 11, color: Colors.redAccent),
+            ),
+          ],
+          if (provider.civilizationSeedDone) ...[
+            const SizedBox(height: 8),
+            Text(
+              '✓ Seeded successfully — visible in Characters',
+              style: GoogleFonts.beVietnamPro(fontSize: 11, color: Colors.green),
+            ),
+          ],
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: provider.isSeedingCivilizations
+                  ? null
+                  : () => provider.seedCivilizations(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF5B7FA6),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              icon: provider.isSeedingCivilizations
+                  ? const SizedBox(
+                      width: 16, height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.cloud_upload_rounded, size: 18),
+              label: Text(
+                provider.isSeedingCivilizations ? 'Seeding…' : 'Seed to Firestore',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

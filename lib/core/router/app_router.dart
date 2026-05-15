@@ -32,6 +32,7 @@ import 'package:timeexplorer/features/admin/presentation/pages/characters_manage
 import 'package:timeexplorer/features/admin/presentation/pages/character_form_page.dart';
 import 'package:timeexplorer/features/admin/presentation/pages/events_management_page.dart';
 import 'package:timeexplorer/features/admin/presentation/pages/event_form_page.dart';
+import 'package:timeexplorer/features/admin/presentation/pages/civilizations_management_page.dart';
 import 'package:timeexplorer/features/learn/data/models/fact_model.dart';
 import 'package:timeexplorer/features/places/domain/entities/era.dart';
 import 'package:timeexplorer/features/places/presentation/pages/era_details_page.dart';
@@ -415,6 +416,11 @@ class AppRouter {
             EventFormPage(event: state.extra as HistoricalEvent?),
             state,
           ),
+        ),
+        GoRoute(
+          path: '/admin/civilizations',
+          pageBuilder: (context, state) =>
+              AppTransitions.slide(const CivilizationsManagementPage(), state),
         ),
       ],
     );
