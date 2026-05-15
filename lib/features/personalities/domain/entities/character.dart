@@ -56,6 +56,10 @@ class Character extends Equatable {
   final List<String> fallbackResponses;
   final String rateLimitWarning;
 
+  // Civilization engine fields (Sprint 2)
+  final String? civilizationId;
+  final int? chronologicalOrder;
+
   const Character({
     required this.id,
     required this.name,
@@ -85,6 +89,8 @@ class Character extends Equatable {
     this.emotionalTriggers = const [],
     this.fallbackResponses = const [],
     this.rateLimitWarning = '',
+    this.civilizationId,
+    this.chronologicalOrder,
   });
 
   @override
@@ -109,5 +115,7 @@ class Character extends Equatable {
         emotionalTriggers,
         fallbackResponses,
         rateLimitWarning,
+        civilizationId,
+        chronologicalOrder,
       ];
 }
