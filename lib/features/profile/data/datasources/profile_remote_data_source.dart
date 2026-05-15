@@ -220,13 +220,13 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       debugPrint('[PROFILE] ✅ Firestore updated — UI refresh triggered');
 
       // ── Step 4: sync to Firebase Auth (best-effort, fully isolated) ───────
-      final user = _firebaseAuth.currentUser;
-      if (user != null && user.uid == userId) {
-        try {
+      try {
+        final user = _firebaseAuth.currentUser;
+        if (user != null && user.uid == userId) {
           await user.updatePhotoURL(downloadUrl);
-        } catch (e) {
-          debugPrint('[PROFILE] ⚠️ Auth photoURL sync failed (non-fatal): $e');
         }
+      } catch (e) {
+        debugPrint('[PROFILE] ⚠️ Auth photoURL sync failed (non-fatal): $e');
       }
 
       return downloadUrl;
