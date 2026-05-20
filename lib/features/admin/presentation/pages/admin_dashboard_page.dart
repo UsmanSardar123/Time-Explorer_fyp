@@ -340,25 +340,35 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       decoration: BoxDecoration(
         color: const Color(0xFF5B7FA6).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF5B7FA6).withValues(alpha: 0.25)),
+        border: Border.all(color: const Color(0xFF5Ba7FA6).withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: [
-              const Icon(Icons.account_balance_rounded, color: Color(0xFF5B7FA6), size: 20),
-              const SizedBox(width: 10),
-              Text(
-                'Classical Greece — 14 Personalities',
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: const Color(0xFF0F172A),
-                ),
-              ),
-            ],
-          ),
+  children: [
+    const Icon(
+      Icons.account_balance_rounded,
+      color: Color(0xFF5B7FA6),
+      size: 20,
+    ),
+    const SizedBox(width: 10),
+
+    Expanded(
+      child: Text(
+        'Classical Greece — 14 Personalities',
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.plusJakartaSans(
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+          color: const Color(0xFF0F172A),
+        ),
+      ),
+    ),
+  ],
+),
           const SizedBox(height: 6),
           Text(
             'Socrates · Plato · Aristotle · Alexander · Pericles + 9 more',
@@ -366,6 +376,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           ),
           if (provider.civilizationSeedError != null) ...[
             const SizedBox(height: 8),
+            const SizedBox(width: 8),
+
             Text(
               provider.civilizationSeedError!,
               style: GoogleFonts.beVietnamPro(fontSize: 11, color: Colors.redAccent),
