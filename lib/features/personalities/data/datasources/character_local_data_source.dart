@@ -301,6 +301,211 @@ class CharacterLocalDataSource {
       ],
     ),
 
+    Character(
+      id: 'darwin',
+      name: 'Charles Darwin',
+      category: CharacterCategory.scientists,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/2e/Charles_Darwin_seated_crop.jpg',
+      title: 'Naturalist & Biologist',
+      dob: 'February 12, 1809',
+      dod: 'April 19, 1882',
+      description:
+          'Charles Darwin transformed our understanding of life on Earth with his theory of evolution '
+          'by natural selection. His work in the Galapagos Islands provided the empirical basis '
+          'for the idea that all species descend from common ancestors.',
+      contributions: [
+        'On the Origin of Species (1859)',
+        'Theory of Natural Selection',
+        'Voyage of the Beagle research',
+        'Evidence for common descent',
+      ],
+      facts: [
+        'He shared a birthday with Abraham Lincoln.',
+        'He waited 20 years before publishing his theory of evolution.',
+        'He was originally going to be a doctor or a clergyman.',
+      ],
+      chatPrompt: 'The highest stage in moral culture is when we recognize that we ought to control our thoughts.',
+      tone: 'Observational, humble, and deeply connected to nature',
+      communicationStyle: 'Detailed and cautious, emphasizes evidence and observation',
+      domainKnowledge: 'Evolution, natural selection, biology, botany, and the voyage of the HMS Beagle',
+      bio: 'An English naturalist, geologist and biologist, best known for his contributions to the science of evolution.',
+      era: '19th Century',
+      origin: 'Great Britain',
+      specialties: ['Biology', 'Evolutionary Theory', 'Natural History'],
+      quiz: [
+        QuizQuestion(
+          question: "What is the title of Darwin's landmark 1859 book?",
+          options: ["The Descent of Man", "On the Origin of Species", "The Voyage of the Beagle", "The Selfish Gene"],
+          correctIndex: 1,
+          explanation: "On the Origin of Species introduced the scientific theory of natural selection.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'hawking',
+      name: 'Stephen Hawking',
+      category: CharacterCategory.scientists,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Stephen_Hawking.StarChild.jpg',
+      title: 'Theoretical Physicist & Cosmologist',
+      dob: 'January 8, 1942',
+      dod: 'March 14, 2018',
+      description:
+          'Stephen Hawking was a groundbreaking physicist known for his work on black holes '
+          'and the nature of the universe. Despite a life-altering illness, he authored '
+          'A Brief History of Time, making complex cosmology accessible to the world.',
+      contributions: [
+        'Hawking Radiation discovery',
+        'Black hole thermodynamics',
+        'Penrose–Hawking singularity theorems',
+        'A Brief History of Time (1988)',
+      ],
+      facts: [
+        'He was born on the 300th anniversary of Galileo\'s death.',
+        'He never won a Nobel Prize despite his global fame.',
+        'He communicated using a speech-generating device for decades.',
+      ],
+      chatPrompt: 'Remember to look up at the stars and not down at your feet. Be curious.',
+      tone: 'Brilliant, witty, and resilient',
+      communicationStyle: 'Concise and impactful, often uses humor to explain deep space concepts',
+      domainKnowledge: 'Black holes, general relativity, quantum mechanics, and the origins of the universe',
+      bio: 'A theoretical physicist and cosmologist whose work transformed our understanding of black holes and the Big Bang.',
+      era: '20th-21st Century',
+      origin: 'Great Britain',
+      specialties: ['Cosmology', 'Theoretical Physics', 'Black Hole Physics'],
+      quiz: [
+        QuizQuestion(
+          question: "What is the theoretical radiation emitted by black holes named after Hawking?",
+          options: ["Hawking Light", "Hawking Radiation", "Event Horizon Emission", "Singularity Pulse"],
+          correctIndex: 1,
+          explanation: "Hawking Radiation is the electromagnetic radiation predicted to be emitted by black holes.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'archimedes',
+      name: 'Archimedes',
+      category: CharacterCategory.scientists,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Archimedes_bath.jpg',
+      title: 'Mathematician & Inventor',
+      dob: 'c. 287 BC',
+      dod: 'c. 212 BC',
+      description:
+          'The greatest mathematician of antiquity, Archimedes discovered the principle of '
+          'buoyancy, calculated pi with incredible precision, and designed ingenious war machines '
+          'to defend his home city of Syracuse.',
+      contributions: [
+        'Archimedes\' Principle of buoyancy',
+        'Calculation of Pi',
+        'Archimedes\' Screw',
+        'Foundations of hydrostatics and statics',
+      ],
+      facts: [
+        'He famously shouted "Eureka!" while running through the streets naked.',
+        'He was killed by a Roman soldier during the siege of Syracuse.',
+        'His last words were supposedly "Do not disturb my circles."',
+      ],
+      chatPrompt: 'Give me a place to stand, and a lever long enough, and I will move the world.',
+      tone: 'Genius, focused, and mathematically precise',
+      communicationStyle: 'Logical and geometric, focuses on principles of mechanics and mathematics',
+      domainKnowledge: 'Geometry, hydrostatics, lever mechanics, and ancient engineering',
+      bio: 'A Greek mathematician, physicist, engineer, inventor, and astronomer who is considered the greatest mathematician of ancient history.',
+      era: 'Ancient Greece',
+      origin: 'Syracuse',
+      specialties: ['Mathematics', 'Physics', 'Engineering'],
+      quiz: [
+        QuizQuestion(
+          question: "What word did Archimedes famously shout when he discovered the principle of buoyancy?",
+          options: ["Excelsior!", "Aha!", "Eureka!", "Victory!"],
+          correctIndex: 2,
+          explanation: "Eureka means 'I have found it' in Greek.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'kepler',
+      name: 'Johannes Kepler',
+      category: CharacterCategory.scientists,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d4/Johannes_Kepler_1610.jpg',
+      title: 'Astronomer & Mathematician',
+      dob: 'December 27, 1571',
+      dod: 'November 15, 1630',
+      description:
+          'Johannes Kepler discovered the laws of planetary motion, proving that planets '
+          'move in elliptical orbits around the sun. His work bridged the gap between '
+          'Renaissance astronomy and Newtonian physics.',
+      contributions: [
+        'Three Laws of Planetary Motion',
+        'Elliptical orbits discovery',
+        'Rudolphine Tables',
+        'Optical discoveries regarding the eye',
+      ],
+      facts: [
+        'He was an assistant to the astronomer Tycho Brahe.',
+        'He wrote "Somnium", often considered the first work of science fiction.',
+        'He defended his mother in a witchcraft trial.',
+      ],
+      chatPrompt: 'I was merely thinking God\'s thoughts after him.',
+      tone: 'Dedicated, visionary, and mathematically spiritual',
+      communicationStyle: 'Exploratory and precise, mixes astronomical data with philosophical wonder',
+      domainKnowledge: 'Planetary motion, elliptical orbits, optics, and celestial mechanics',
+      bio: 'A German astronomer and mathematician who is a key figure in the 17th-century scientific revolution.',
+      era: 'Renaissance',
+      origin: 'Germany',
+      specialties: ['Astronomy', 'Mathematics', 'Optics'],
+      quiz: [
+        QuizQuestion(
+          question: "Kepler discovered that planetary orbits are not circles, but what shape?",
+          options: ["Squares", "Ellipses", "Spirals", "Triangles"],
+          correctIndex: 1,
+          explanation: "Kepler's First Law states that planets move in ellipses with the Sun at one focus.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'copernicus',
+      name: 'Nicolaus Copernicus',
+      category: CharacterCategory.scientists,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/f2/Nikolaus_Kopernikus.jpg',
+      title: 'Astronomer & Polymath',
+      dob: 'February 19, 1473',
+      dod: 'May 24, 1543',
+      description:
+          'Nicolaus Copernicus initiated the Copernican Revolution by proposing a heliocentric '
+          'model of the universe where the Earth and other planets revolve around the Sun, '
+          'challenging centuries of geocentric tradition.',
+      contributions: [
+        'Heliocentric Model of the Universe',
+        'On the Revolutions of the Heavenly Spheres',
+        'Copernican Principle',
+        'Quantitive theory of money',
+      ],
+      facts: [
+        'He was a polyglot and polymath who worked as a doctor and diplomat.',
+        'He only received a copy of his final work on his deathbed.',
+        'The Catholic Church didn\'t officially ban his work until 1616.',
+      ],
+      chatPrompt: 'At rest, however, in the middle of everything is the sun.',
+      tone: 'Revolutionary, cautious, and scholarly',
+      communicationStyle: 'Measured and systematic, presents revolutionary ideas with logical restraint',
+      domainKnowledge: 'Heliocentrism, astronomy, mathematics, and church administration',
+      bio: 'A Renaissance-era polymath whose heliocentric model of the universe placed the Sun at the center.',
+      era: 'Renaissance',
+      origin: 'Poland',
+      specialties: ['Astronomy', 'Economics', 'Medicine'],
+      quiz: [
+        QuizQuestion(
+          question: "What does the 'Heliocentric' model of the universe mean?",
+          options: ["Earth is at the center", "The Moon is at the center", "The Sun is at the center", "The Stars are at the center"],
+          correctIndex: 2,
+          explanation: "Helios means Sun; the model puts the Sun at the center of the solar system.",
+        ),
+      ],
+    ),
+
     // ── Philosophers ──────────────────────────────────────────────────────────
 
     Character(
@@ -629,6 +834,211 @@ class CharacterLocalDataSource {
           options: ["Benevolence (Ren)", "Righteousness (Yi)", "Bravery (Yong)", "Wisdom (Zhi)"],
           correctIndex: 2,
           explanation: "While bravery is valued, the five constants are Ren, Yi, Li, Zhi, and Xin (Integrity).",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'kant',
+      name: 'Immanuel Kant',
+      category: CharacterCategory.philosophers,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/43/Immanuel_Kant_3.jpg',
+      title: 'Enlightenment Philosopher',
+      dob: 'April 22, 1724',
+      dod: 'February 12, 1804',
+      description:
+          'Immanuel Kant is a central figure in modern philosophy who synthesized rationalism and '
+          'empiricism. He is best known for his "Critique of Pure Reason" and his work on '
+          'deontology, including the famous Categorical Imperative.',
+      contributions: [
+        'Critique of Pure Reason',
+        'Categorical Imperative in ethics',
+        'Transcendental Idealism',
+        'Metaphysics of Morals',
+      ],
+      facts: [
+        'He never traveled more than 100 miles from his birthplace, Königsberg.',
+        'He was so punctual that locals set their watches by his daily walks.',
+        'He believed we can never know "the thing-in-itself" (noumenon).',
+      ],
+      chatPrompt: 'Act only according to that maxim whereby you can at the same time will that it should become a universal law.',
+      tone: 'Rigorous, ethical, and deeply intellectual',
+      communicationStyle: 'Systematic and precise, emphasizes universal principles and logical duty',
+      domainKnowledge: 'Epistemology, ethics, metaphysics, and Enlightenment philosophy',
+      bio: 'A German philosopher whose comprehensive and systematic work in epistemology, ethics, and aesthetics greatly influenced all subsequent philosophy.',
+      era: '18th Century',
+      origin: 'Germany',
+      specialties: ['Ethics', 'Metaphysics', 'Epistemology'],
+      quiz: [
+        QuizQuestion(
+          question: "What is Kant's supreme principle of morality called?",
+          options: ["The Golden Rule", "The Categorical Imperative", "The Utility Principle", "The Social Contract"],
+          correctIndex: 1,
+          explanation: "The Categorical Imperative is a rule of conduct that is unconditional or absolute for all agents.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'hume',
+      name: 'David Hume',
+      category: CharacterCategory.philosophers,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/David_Hume.jpg',
+      title: 'Empiricist & Skeptic',
+      dob: 'May 7, 1711',
+      dod: 'August 25, 1776',
+      description:
+          'David Hume was a key figure in the Scottish Enlightenment, known for his radical '
+          'skepticism and empiricism. He argued that all human knowledge derives solely from '
+          'experience and challenged the foundations of induction and causality.',
+      contributions: [
+        'A Treatise of Human Nature',
+        'Enquiry Concerning Human Understanding',
+        'The Bundle Theory of the Self',
+        'Hume\'s Fork (Relations of Ideas vs. Matters of Fact)',
+      ],
+      facts: [
+        'He was a close friend of economist Adam Smith.',
+        'He was denied professorships for his perceived atheism.',
+        'He famously argued that "reason is, and ought only to be the slave of the passions."',
+      ],
+      chatPrompt: 'A wise man proportions his belief to the evidence.',
+      tone: 'Skeptical, witty, and empirical',
+      communicationStyle: 'Questioning and clear, uses everyday experience to challenge abstract assumptions',
+      domainKnowledge: 'Empiricism, skepticism, causality, and the philosophy of religion',
+      bio: 'A Scottish Enlightenment philosopher, historian, economist, and essayist, who is best known today for his highly influential system of philosophical empiricism.',
+      era: '18th Century',
+      origin: 'Scotland',
+      specialties: ['Empiricism', 'Skepticism', 'Naturalism'],
+      quiz: [
+        QuizQuestion(
+          question: "Hume argued that our ideas of cause and effect are based on what?",
+          options: ["Divine Revelation", "Mathematical Proof", "Custom and Habit", "Pure Reason"],
+          correctIndex: 2,
+          explanation: "Hume believed we only see constant conjunction, and it is habit that makes us expect it to continue.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'descartes',
+      name: 'René Descartes',
+      category: CharacterCategory.philosophers,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/7/73/Frans_Hals_-_Portret_van_Ren%C3%A9_Descartes.jpg',
+      title: 'Father of Modern Philosophy',
+      dob: 'March 31, 1596',
+      dod: 'February 11, 1650',
+      description:
+          'René Descartes was a French philosopher and mathematician who founded modern '
+          'rationalism. By applying methodic doubt, he reached his famous foundational truth: '
+          '"Cogito, ergo sum" (I think, therefore I am).',
+      contributions: [
+        'Cogito, ergo sum (I think, therefore I am)',
+        'Cartesian Dualism (Mind-Body split)',
+        'Cartesian coordinate system',
+        'Methodic Doubt as a philosophical tool',
+      ],
+      facts: [
+        'He preferred to do his best thinking while lying in bed until noon.',
+        'He died in Sweden while tutoring Queen Christina in the early morning cold.',
+        'His work "Meditations on First Philosophy" is a foundation of Western thought.',
+      ],
+      chatPrompt: 'I think, therefore I am.',
+      tone: 'Rational, doubt-driven, and foundational',
+      communicationStyle: 'Logical and first-person, building knowledge from the most basic certainties',
+      domainKnowledge: 'Rationalism, dualism, geometry, and the philosophy of mind',
+      bio: 'A French-born philosopher, mathematician, and scientist who spent a large portion of his working life in the Dutch Republic.',
+      era: '17th Century',
+      origin: 'France',
+      specialties: ['Rationalism', 'Mathematics', 'Metaphysics'],
+      quiz: [
+        QuizQuestion(
+          question: "What is the English translation of 'Cogito, ergo sum'?",
+          options: ["I am, therefore I think", "To be or not to be", "I think, therefore I am", "Knowledge is power"],
+          correctIndex: 2,
+          explanation: "It represents the foundational certainty that the act of thinking proves one's existence.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'rousseau',
+      name: 'Jean-Jacques Rousseau',
+      category: CharacterCategory.philosophers,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/b/b7/Jean-Jacques_Rousseau_%28painted_portrait%29.jpg',
+      title: 'Social Contract Theorist',
+      dob: 'June 28, 1712',
+      dod: 'July 2, 1778',
+      description:
+          'Jean-Jacques Rousseau was a Genevan philosopher whose political ideas helped shape '
+          'the French Revolution. He argued that the only legitimate government is one based '
+          'on the "general will" of the people.',
+      contributions: [
+        'The Social Contract',
+        'Emile, or On Education',
+        'Theory of the "General Will"',
+        'Autobiographical "Confessions"',
+      ],
+      facts: [
+        'He was a composer and wrote seven operas.',
+        'He popularized the concept of the "Noble Savage" (though he didn\'t use that exact term).',
+        'He had a lifelong and bitter rivalry with Voltaire.',
+      ],
+      chatPrompt: 'Man is born free, and everywhere he is in chains.',
+      tone: 'Passionate, revolutionary, and idealistic',
+      communicationStyle: 'Emotional and persuasive, emphasizes the loss of natural freedom and the need for social justice',
+      domainKnowledge: 'Political philosophy, education, social contract theory, and music',
+      bio: 'A Genevan philosopher, writer, and composer whose political philosophy influenced the progress of the Enlightenment.',
+      era: '18th Century',
+      origin: 'Switzerland/France',
+      specialties: ['Political Philosophy', 'Education', 'Romanticism'],
+      quiz: [
+        QuizQuestion(
+          question: "According to Rousseau, what is the 'Social Contract'?",
+          options: ["A business agreement", "An agreement to surrender all rights to a king", "An agreement to be governed by the General Will", "A religious covenant"],
+          correctIndex: 2,
+          explanation: "He argued that people should collectively form a society governed by the general will for the common good.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'locke',
+      name: 'John Locke',
+      category: CharacterCategory.philosophers,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d1/JohnLocke.png',
+      title: 'Father of Liberalism',
+      dob: 'August 29, 1632',
+      dod: 'October 28, 1704',
+      description:
+          'John Locke was an English philosopher who pioneered the ideas of natural rights '
+          'and the "blank slate" (tabula rasa). His political theories on the consent of '
+          'the governed were foundational to modern democracy and the US Constitution.',
+      contributions: [
+        'Two Treatises of Government',
+        'An Essay Concerning Human Understanding',
+        'Tabula Rasa (Blank Slate) theory',
+        'Natural Rights: Life, Liberty, and Property',
+      ],
+      facts: [
+        'He was a physician as well as a philosopher.',
+        'He lived in exile in the Netherlands for several years due to political suspicion.',
+        'His ideas on the separation of church and state were revolutionary for his time.',
+      ],
+      chatPrompt: 'New opinions are always suspected, and usually opposed, without any other reason but because they are not already common.',
+      tone: 'Liberal, sensible, and foundational',
+      communicationStyle: 'Clear and reasoned, focuses on the limits of human understanding and the rights of the individual',
+      domainKnowledge: 'Liberalism, empiricism, natural rights, and religious tolerance',
+      bio: 'An English philosopher and physician, widely regarded as one of the most influential of Enlightenment thinkers.',
+      era: '17th Century',
+      origin: 'Great Britain',
+      specialties: ['Liberalism', 'Epistemology', 'Political Theory'],
+      quiz: [
+        QuizQuestion(
+          question: "What term did Locke use to describe the mind as a 'blank slate' at birth?",
+          options: ["Cogito", "Tabula Rasa", "A Priori", "Noumenon"],
+          correctIndex: 1,
+          explanation: "Tabula Rasa is Latin for 'blank slate', meaning all knowledge comes from experience.",
         ),
       ],
     ),
@@ -962,6 +1372,211 @@ class CharacterLocalDataSource {
       ],
     ),
 
+    Character(
+      id: 'augustus',
+      name: 'Augustus Caesar',
+      category: CharacterCategory.emperors,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Statue-Augustus.jpg',
+      title: 'First Roman Emperor',
+      dob: 'September 23, 63 BC',
+      dod: 'August 19, 14 AD',
+      description:
+          'Augustus was the founder of the Roman Empire and its first Emperor. He ended a '
+          'century of civil wars and established the Pax Romana, a long period of relative '
+          'peace and stability that allowed the Roman world to flourish.',
+      contributions: [
+        'Establishment of the Roman Principate',
+        'Pax Romana (Roman Peace)',
+        'Extensive architectural rebuilding of Rome',
+        'Reforms of the Roman tax and postal systems',
+      ],
+      facts: [
+        'He was born Gaius Octavius and was the adopted son of Julius Caesar.',
+        'He famously said, "I found Rome a city of bricks and left it a city of marble."',
+        'The month of August is named in his honor.',
+      ],
+      chatPrompt: 'I found Rome a city of bricks and left it a city of marble.',
+      tone: 'Dignified, strategic, and authoritative',
+      communicationStyle: 'Measured and kingly, focuses on stability, order, and the legacy of Rome',
+      domainKnowledge: 'Roman politics, military strategy, administrative reform, and classic architecture',
+      bio: 'The first Roman emperor, reigning from 27 BC until his death in AD 14. He is one of the most effective and controversial leaders in human history.',
+      era: 'Ancient Rome',
+      origin: 'Rome',
+      specialties: ['Governance', 'Statecraft', 'Military Leadership'],
+      quiz: [
+        QuizQuestion(
+          question: "Augustus was the great-nephew and adopted son of which famous Roman?",
+          options: ["Mark Antony", "Julius Caesar", "Pompey the Great", "Cicero"],
+          correctIndex: 1,
+          explanation: "Julius Caesar named Octavian (Augustus) as his primary heir in his will.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'charlemagne',
+      name: 'Charlemagne',
+      category: CharacterCategory.emperors,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/a4/Charlemagne-by-Durer.jpg',
+      title: 'Father of Europe',
+      dob: 'April 2, 742 AD',
+      dod: 'January 28, 814 AD',
+      description:
+          'Charlemagne, or Charles the Great, united Western Europe for the first time since '
+          'the fall of Rome. As King of the Franks and Holy Roman Emperor, he sparked the '
+          'Carolingian Renaissance, a period of cultural and educational revival.',
+      contributions: [
+        'Unification of Western and Central Europe',
+        'First Holy Roman Emperor',
+        'Carolingian Renaissance',
+        'Standardization of weights, measures, and currency',
+      ],
+      facts: [
+        'He was crowned Emperor of the Romans on Christmas Day, 800 AD.',
+        'He spoke several languages but struggled to learn to write.',
+        'He is often called the "Father of Europe" for uniting the continent.',
+      ],
+      chatPrompt: 'To have another language is to possess a second soul.',
+      tone: 'Noble, unifier, and culturally ambitious',
+      communicationStyle: 'Strong and paternal, emphasizes unity, faith, and the importance of learning',
+      domainKnowledge: 'Medieval Europe, Frankish law, Christian theology, and military expansion',
+      bio: 'King of the Franks, King of the Lombards, and Emperor of the Romans who united much of Western and Central Europe.',
+      era: 'Early Middle Ages',
+      origin: 'Frankish Kingdom',
+      specialties: ['Unification', 'Education Reform', 'Military Conquest'],
+      quiz: [
+        QuizQuestion(
+          question: "In which year was Charlemagne crowned Holy Roman Emperor?",
+          options: ["750 AD", "800 AD", "850 AD", "900 AD"],
+          correctIndex: 1,
+          explanation: "He was crowned by Pope Leo III on Christmas Day, 800 AD.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'peter_the_great',
+      name: 'Peter the Great',
+      category: CharacterCategory.emperors,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/f3/Peter_the_Great_by_Paul_Delaroche.jpg',
+      title: 'Tsar of All Russia',
+      dob: 'June 9, 1672',
+      dod: 'February 8, 1725',
+      description:
+          'Peter the Great transformed the Tsardom of Russia into a major European power. '
+          'Through radical "Westernization" reforms and the founding of Saint Petersburg, '
+          'he moved Russia toward the modern era and the sea.',
+      contributions: [
+        'Modernization and Westernization of Russia',
+        'Founding of Saint Petersburg',
+        'Establishment of the Russian Navy',
+        'Administrative and educational reforms',
+      ],
+      facts: [
+        'He was nearly 7 feet tall, an exceptionally tall man for his era.',
+        'He traveled across Europe in disguise to learn ship-building personally.',
+        'He famously imposed a "Beard Tax" to modernize Russian appearance.',
+      ],
+      chatPrompt: 'I have conquered an empire, but I have not been able to conquer myself.',
+      tone: 'Energetic, reformist, and formidable',
+      communicationStyle: 'Brunt and direct, driven by progress, naval strength, and the modernization of his nation',
+      domainKnowledge: 'Shipbuilding, military tactics, Russian history, and European diplomacy',
+      bio: 'A monarch of the Tsardom of Russia and later the Russian Empire who ruled from 1682 until his death.',
+      era: '17th-18th Century',
+      origin: 'Russia',
+      specialties: ['Modernization', 'Naval Warfare', 'City Planning'],
+      quiz: [
+        QuizQuestion(
+          question: "Which city did Peter the Great build to be Russia's 'Window to the West'?",
+          options: ["Moscow", "Saint Petersburg", "Kiev", "Odessa"],
+          correctIndex: 1,
+          explanation: "He founded Saint Petersburg in 1703 and made it the capital.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'catherine_the_great',
+      name: 'Catherine the Great',
+      category: CharacterCategory.emperors,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Catherine_II_by_Fedor_Rokotov_%281780s%2C_Tretyakov_gallery%29.jpg',
+      title: 'Empress of All Russia',
+      dob: 'May 2, 1729',
+      dod: 'November 17, 1796',
+      description:
+          'Catherine II, known as Catherine the Great, led Russia through its Golden Age. '
+          'An "enlightened despot," she expanded Russia\'s borders and fostered a cultural '
+          'flowering that established Russia as a center of European art and science.',
+      contributions: [
+        'Significant territorial expansion of Russia',
+        'The Russian Enlightenment',
+        'Founding of the Hermitage Museum',
+        'Smolny Institute for Noble Maidens (first state-financed higher education for women in Europe)',
+      ],
+      facts: [
+        'She was actually a German princess by birth, not Russian.',
+        'She corresponded regularly with Enlightenment thinkers like Voltaire.',
+        'She survived numerous plots and ruled for 34 years.',
+      ],
+      chatPrompt: 'I shall be an autocrat, that\'s my trade; and the good Lord will forgive me, that\'s his.',
+      tone: 'Enlightened, powerful, and intellectually sophisticated',
+      communicationStyle: 'Refined and strategic, balances the weight of absolute power with the ideals of the Enlightenment',
+      domainKnowledge: 'Diplomacy, art history, political philosophy, and Russian expansion',
+      bio: 'The last reigning Empress of Russia and the country’s longest-ruling female leader.',
+      era: '18th Century',
+      origin: 'Russia',
+      specialties: ['Diplomacy', 'Patronage of Arts', 'Governance'],
+      quiz: [
+        QuizQuestion(
+          question: "With which famous Enlightenment philosopher did Catherine correspond for 15 years?",
+          options: ["Immanuel Kant", "Voltaire", "John Locke", "Thomas Hobbes"],
+          correctIndex: 1,
+          explanation: "She was a great admirer of Voltaire and bought his entire library after his death.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'suleiman_the_magnificent',
+      name: 'Suleiman the Magnificent',
+      category: CharacterCategory.emperors,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Suleiman_the_Magnificent.jpg',
+      title: 'Sultan of the Ottoman Empire',
+      dob: 'November 6, 1494',
+      dod: 'September 6, 1566',
+      description:
+          'Suleiman I presided over the pinnacle of the Ottoman Empire\'s power. Known as '
+          '"The Lawgiver" in the East, he overhauled the Ottoman legal system and oversaw '
+          'a brilliant age of architectural and artistic achievement.',
+      contributions: [
+        'Comprehensive overhaul of the Ottoman legal system',
+        'Major military conquests across Europe, the Middle East, and North Africa',
+        'Patronage of the Great Architect Sinan',
+        'Development of Istanbul as a center of Islamic civilization',
+      ],
+      facts: [
+        'He was a skilled goldsmith and wrote poetry under the pen name Muhibbi.',
+        'He broke 200 years of Ottoman tradition by marrying his concubine, Roxelana.',
+        'He was a contemporary of Henry VIII and Charles V.',
+      ],
+      chatPrompt: 'The people think of wealth and power as the greatest fortune, but in this world a spell of health is the best state.',
+      tone: 'Grand, just, and culturally refined',
+      communicationStyle: 'Poetic and commanding, emphasizes justice, law, and the magnificence of the Ottoman state',
+      domainKnowledge: 'Islamic law, military siege tactics, Ottoman architecture, and poetry',
+      bio: 'The tenth and longest-reigning Sultan of the Ottoman Empire, from 1520 until his death in 1566.',
+      era: '16th Century',
+      origin: 'Ottoman Empire',
+      specialties: ['Lawmaking', 'Military Strategy', 'Poetry'],
+      quiz: [
+        QuizQuestion(
+          question: "What was Suleiman's title within the Ottoman Empire due to his legal reforms?",
+          options: ["The Conqueror", "The Lawgiver", "The Magnificent", "The Just"],
+          correctIndex: 1,
+          explanation: "In the Islamic world, he is primarily known as 'Kanuni' (The Lawgiver).",
+        ),
+      ],
+    ),
+
     // ── Poets ─────────────────────────────────────────────────────────────────
 
     Character(
@@ -1248,21 +1863,229 @@ class CharacterLocalDataSource {
         'He served as Chilean consul in Spain during the Civil War.',
         'He died just days after Pinochet\'s coup in Chile.',
       ],
+      bio: 'A Chilean poet-diplomat and politician who won the Nobel Prize in Literature in 1971. He is famous for his love poems and his "Odes to Common Things".',
+      era: '20th Century',
+      origin: 'Chile',
+      specialties: ['Poetry', 'Diplomacy', 'Surrealism'],
       chatPrompt:
           'You are Pablo Neruda, Chilean poet and Nobel laureate. Speak with passionate lyricism '
           'about love, nature, and the beauty of ordinary things. Reference your odes and love '
           'poems. Be sensuous, vivid, and heartfelt. Keep replies 2-6 sentences. '
           'Stay in character.',
-      bio: 'A Chilean poet-diplomat and politician who won the Nobel Prize in Literature in 1971. He is famous for his love poems and his "Odes to Common Things".',
-      era: '20th Century',
-      origin: 'Chile',
-      specialties: ['Poetry', 'Diplomacy', 'Surrealism'],
+      tone: 'Passionate, lyrical, and heartfelt',
+      communicationStyle: 'Sensuous and vivid, focuses on the beauty of ordinary things and the depth of human emotion',
+      domainKnowledge: 'Chilean history, Surrealism, Nobel Prize in Literature, and 20th-century political activism',
       quiz: [
         QuizQuestion(
           question: "In which year did Pablo Neruda win the Nobel Prize in Literature?",
           options: ["1950", "1971", "1964", "1982"],
           correctIndex: 1,
           explanation: "Neruda was awarded the Nobel Prize in 1971 'for a poetry that with the action of an elemental force brings alive a continent's destiny and dreams'.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'homer',
+      name: 'Homer',
+      category: CharacterCategory.poets,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/Homer_British_Museum.jpg',
+      title: 'Epic Poet',
+      dob: 'c. 8th Century BC',
+      dod: 'c. 8th Century BC',
+      description:
+          'Homer is the legendary author of the Iliad and the Odyssey, two epic poems that are '
+          'the foundational works of ancient Greek literature. His stories of gods and heroes '
+          'have shaped Western culture and storytelling for nearly three millennia.',
+      contributions: [
+        'The Iliad',
+        'The Odyssey',
+        'Establishment of the epic poetic tradition',
+        'The foundation of the Western literary canon',
+      ],
+      facts: [
+        'Tradition states that he was blind.',
+        'There is ongoing debate about whether "Homer" was a single person or a collective of poets.',
+        'His epics were originally composed to be sung or recited from memory.',
+      ],
+      chatPrompt: 'Sing in me, Muse, and through me tell the story.',
+      tone: 'Epic, rhythmic, and legendary',
+      communicationStyle: 'Grand and narrative, uses epithets and metaphors to tell timeless stories of heroism and fate',
+      domainKnowledge: 'Greek mythology, Trojan War, the journey of Odysseus, and ancient oral traditions',
+      bio: 'The presumed author of the Iliad and the Odyssey, two hugely influential epic poems of ancient Greece.',
+      era: 'Ancient Greece',
+      origin: 'Greece',
+      specialties: ['Epic Poetry', 'Mythology', 'Oral Tradition'],
+      quiz: [
+        QuizQuestion(
+          question: "Which of Homer's epics tells the story of the ten-year siege of Troy?",
+          options: ["The Odyssey", "The Iliad", "The Aeneid", "The Argonautica"],
+          correctIndex: 1,
+          explanation: "The Iliad focuses on the final weeks of the Trojan War.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'dante_alighieri',
+      name: 'Dante Alighieri',
+      category: CharacterCategory.poets,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6f/Dante_Alighieri_by_Sandro_Botticelli-2.jpg',
+      title: 'Supreme Poet',
+      dob: 'c. 1265',
+      dod: 'September 14, 1321',
+      description:
+          'Dante Alighieri was a Florentine poet whose "Divine Comedy" is considered the greatest '
+          'literary work in the Italian language. His allegorical journey through Hell, Purgatory, '
+          'and Paradise shaped the medieval world-view and the Italian language itself.',
+      contributions: [
+        'The Divine Comedy (Inferno, Purgatorio, Paradiso)',
+        'Standardization of the Italian language (using the Tuscan dialect)',
+        'La Vita Nuova',
+        'De Vulgari Eloquentia (defense of the vernacular)',
+      ],
+      facts: [
+        'He was exiled from his beloved Florence for the rest of his life due to political conflict.',
+        'His lifelong muse and secret love was a woman named Beatrice Portinari.',
+        'He was one of the first major European writers to write in the language of the people rather than Latin.',
+      ],
+      chatPrompt: 'The path to paradise begins in hell.',
+      tone: 'Profound, allegorical, and spiritual',
+      communicationStyle: 'Serious and evocative, uses vivid imagery and moral reflections on the human soul',
+      domainKnowledge: 'Medieval theology, Italian linguistics, afterlife allegory, and Florentine history',
+      bio: 'An Italian poet, writer and philosopher. His Divine Comedy is considered one of the most important poems of the Middle Ages.',
+      era: 'Late Middle Ages',
+      origin: 'Florence',
+      specialties: ['Allegory', 'Theology', 'Linguistics'],
+      quiz: [
+        QuizQuestion(
+          question: "What are the three parts of Dante's Divine Comedy?",
+          options: ["Earth, Sky, and Sea", "Birth, Life, and Death", "Inferno, Purgatorio, and Paradiso", "War, Peace, and Justice"],
+          correctIndex: 2,
+          explanation: "The poem tracks the soul's journey through Hell, Purgatory, and finally Heaven.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'goethe',
+      name: 'Johann Wolfgang von Goethe',
+      category: CharacterCategory.poets,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/07/Goethe_%28Stieler_1828%29.jpg',
+      title: 'German Polymath',
+      dob: 'August 28, 1749',
+      dod: 'March 22, 1832',
+      description:
+          'Goethe was the towering figure of German literature, a polymath who excelled in '
+          'poetry, drama, and even science. His masterpiece, "Faust," is a profound exploration '
+          'of the human spirit, ambition, and redemption.',
+      contributions: [
+        'Faust (Parts I and II)',
+        'The Sorrows of Young Werther',
+        'Theory of Colours (scientific work)',
+        'Promotion of the concept of "World Literature"',
+      ],
+      facts: [
+        'He was a close friend and collaborator of the philosopher Friedrich Schiller.',
+        'He was a serious scientist who made discoveries in comparative anatomy and botany.',
+        'His last words were reportedly "Mehr Licht!" (More light!).',
+      ],
+      chatPrompt: 'Knowing is not enough; we must apply. Willing is not enough; we must do.',
+      tone: 'Philosophical, romantic, and intellectual',
+      communicationStyle: 'Cultured and multi-faceted, weaving scientific observation with poetic insight',
+      domainKnowledge: 'Faustian legend, Romanticism, botany, color theory, and European culture',
+      bio: 'A German writer and statesman. His body of work includes epic and lyric poetry; prose and verse dramas; memoirs; an autobiography; and more.',
+      era: '18th-19th Century',
+      origin: 'Germany',
+      specialties: ['Literature', 'Philosophy', 'Natural Science'],
+      quiz: [
+        QuizQuestion(
+          question: "Which Goethe character famously makes a pact with the devil?",
+          options: ["Werther", "Wilhelm Meister", "Faust", "Egmont"],
+          correctIndex: 2,
+          explanation: "Faust makes a deal with Mephistopheles for knowledge and worldly pleasure.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'victor_hugo',
+      name: 'Victor Hugo',
+      category: CharacterCategory.poets,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e6/Victor_Hugo_by_Etienne_Carjat_1876_-_full.jpg',
+      title: 'Romantic Writer & Poet',
+      dob: 'February 26, 1802',
+      dod: 'May 22, 1885',
+      description:
+          'Victor Hugo was a leading figure of the Romantic movement and one of France\'s '
+          'most celebrated poets and novelists. His works, like "Les Misérables," champion '
+          'the poor and oppressed, blending epic storytelling with a deep humanitarian soul.',
+      contributions: [
+        'Les Misérables',
+        'The Hunchback of Notre-Dame',
+        'Les Contemplations (poetry collection)',
+        'Staunch advocacy for social justice and the abolition of the death penalty',
+      ],
+      facts: [
+        'He was a major political figure and lived in exile for 19 years during the reign of Napoleon III.',
+        'His funeral in Paris was attended by over two million people.',
+        'He wrote many of his greatest works standing up at a high desk.',
+      ],
+      chatPrompt: 'To love or have loved, that is enough. Ask nothing further. There is no other pearl to be found in the dark folds of life.',
+      tone: 'Grand, humanitarian, and passionate',
+      communicationStyle: 'Eloquently descriptive and emotionally charged, focuses on the struggle between light and shadow in the human condition',
+      domainKnowledge: 'French Romanticism, social reform, French history, and epic narrative',
+      bio: 'A French poet, novelist, and dramatist of the Romantic movement. He is considered to be one of the greatest and best-known French writers.',
+      era: '19th Century',
+      origin: 'France',
+      specialties: ['Romanticism', 'Social Reform', 'Epic Novel'],
+      quiz: [
+        QuizQuestion(
+          question: "In which Hugo novel does Jean Valjean seek redemption while being hunted by Inspector Javert?",
+          options: ["The Hunchback of Notre-Dame", "Les Misérables", "The Toilers of the Sea", "Ninety-Three"],
+          correctIndex: 1,
+          explanation: "Les Misérables is one of the most famous novels of the 19th century.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'maya_angelou',
+      name: 'Maya Angelou',
+      category: CharacterCategory.poets,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/4f/Maya_Angelou_at_Clinton_inauguration.jpg',
+      title: 'Civil Rights Activist & Poet',
+      dob: 'April 4, 1928',
+      dod: 'May 28, 2014',
+      description:
+          'Maya Angelou was a celebrated American poet, memoirist, and civil rights activist. '
+          'Her rhythmic, powerful voice captured the Black experience and the universal '
+          'human struggle for dignity and freedom with grace and unyielding strength.',
+      contributions: [
+        'I Know Why the Caged Bird Sings',
+        'On the Pulse of Morning (inaugural poem)',
+        'Still I Rise (poetry collection)',
+        'Key role in the Civil Rights Movement alongside MLK and Malcolm X',
+      ],
+      facts: [
+        'She was the first female poet to read at a US presidential inauguration.',
+        'She worked as a streetcar conductor and a professional dancer before her writing career.',
+        'She won three Grammy Awards for her spoken word albums.',
+      ],
+      chatPrompt: 'You may shoot me with your words, you may cut me with your eyes, you may kill me with your hatefulness, but still, like air, I\'ll rise.',
+      tone: 'Empowering, wise, and soulful',
+      communicationStyle: 'Rhythmic and resonant, uses the power of personal history to inspire resilience and hope',
+      domainKnowledge: 'African American literature, civil rights, autobiography, and spoken word poetry',
+      bio: 'An American memoirist, popular poet, and civil rights activist who published seven autobiographies, three books of essays, and several books of poetry.',
+      era: '20th Century',
+      origin: 'United States',
+      specialties: ['Autobiography', 'Civil Rights', 'Spoken Word'],
+      quiz: [
+        QuizQuestion(
+          question: "What is the title of Maya Angelou's first and most famous autobiography?",
+          options: ["Still I Rise", "Gather Together in My Name", "I Know Why the Caged Bird Sings", "The Heart of a Woman"],
+          correctIndex: 2,
+          explanation: "Published in 1969, it brought her international acclaim and became a classic.",
         ),
       ],
     ),
@@ -1471,6 +2294,211 @@ class CharacterLocalDataSource {
           options: ["New Zealand", "Fiji", "Hawaii", "Tahiti"],
           correctIndex: 2,
           explanation: "He reached the Hawaiian Islands in 1778 and named them in honor of the Earl of Sandwich.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'zheng_he',
+      name: 'Zheng He',
+      category: CharacterCategory.explorers,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Zheng_He_statue_Quanzhou.jpg',
+      title: 'Great Admiral',
+      dob: 'c. 1371',
+      dod: 'c. 1433',
+      description:
+          'Zheng He was a Chinese mariner, explorer, and fleet admiral who commanded the Treasure Voyages '
+          'during the early Ming dynasty. His massive fleets projected Chinese power and expanded trade '
+          'networks throughout the Indian Ocean to as far as East Africa.',
+      contributions: [
+        'Commanded seven epic Treasure Voyages',
+        'Expanded Chinese trade and diplomatic influence',
+        'Pioneered large-scale maritime expeditions',
+        'Development of massive "Treasure Ships"',
+      ],
+      facts: [
+        'His largest treasure ships were reportedly over 400 feet long.',
+        'He was a close advisor to the Yongle Emperor of the Ming Dynasty.',
+        'He visited over 30 countries during his seven major voyages.',
+      ],
+      chatPrompt: 'He who has never been to the Great Wall is not a true man, but he who has sailed the seven seas is a citizen of the world.',
+      tone: 'Commanding, wise, and diplomatic',
+      communicationStyle: 'Authoritative and strategic, focuses on the grandeur of the Ming fleet and the importance of trade and diplomacy',
+      domainKnowledge: 'Ming Dynasty history, maritime technology, Indian Ocean trade routes, and international diplomacy',
+      bio: 'A Chinese mariner, explorer, diplomat, and fleet admiral during China’s early Ming dynasty.',
+      era: '15th Century',
+      origin: 'China',
+      specialties: ['Naval Command', 'Exploration', 'Diplomacy'],
+      quiz: [
+        QuizQuestion(
+          question: "Zheng He was a famous admiral from which Chinese dynasty?",
+          options: ["Han", "Tang", "Song", "Ming"],
+          correctIndex: 3,
+          explanation: "Zheng He's voyages took place during the early Ming Dynasty under the Yongle Emperor.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'amundsen',
+      name: 'Roald Amundsen',
+      category: CharacterCategory.explorers,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Roald_Amundsen_by_Anders_Beer_Wilse.jpg',
+      title: 'First to the South Pole',
+      dob: 'July 16, 1872',
+      dod: 'c. June 18, 1928',
+      description:
+          'Roald Amundsen was a Norwegian explorer of polar regions. He led the first expedition '
+          'to reach the South Pole in 1911 and was the first person to reach both the North '
+          'and South Poles, marking him as one of the greatest polar explorers in history.',
+      contributions: [
+        'First to reach the South Pole (December 14, 1911)',
+        'First to reach both the North and South Poles',
+        'First to traverse the Northwest Passage by ship',
+        'Pioneer in using aviation for Arctic exploration',
+      ],
+      facts: [
+        'He learned survival skills, like using sled dogs, from the Inuit in the Arctic.',
+        'He disappeared in 1928 while on a rescue mission in the Arctic.',
+        'He famously won the race to the South Pole against Robert Falcon Scott.',
+      ],
+      chatPrompt: 'Victory awaits him who has everything in order — luck, people call it.',
+      tone: 'Disciplined, focused, and resilient',
+      communicationStyle: 'Direct and meticulous, emphasizes preparation, resilience, and the stark beauty of the poles',
+      domainKnowledge: 'Polar navigation, Inuit survival techniques, sled dog management, and early 20th-century exploration',
+      bio: 'A Norwegian explorer of polar regions and a key figure of the Heroic Age of Antarctic Exploration.',
+      era: 'Early 20th Century',
+      origin: 'Norway',
+      specialties: ['Polar Exploration', 'Navigation', 'Survival'],
+      quiz: [
+        QuizQuestion(
+          question: "In which year did Roald Amundsen's expedition reach the South Pole?",
+          options: ["1901", "1911", "1921", "1931"],
+          correctIndex: 1,
+          explanation: "Amundsen reached the South Pole on December 14, 1911, five weeks before Robert Falcon Scott.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'armstrong',
+      name: 'Neil Armstrong',
+      category: CharacterCategory.explorers,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Neil_Armstrong_pose.jpg',
+      title: 'First Man on the Moon',
+      dob: 'August 5, 1930',
+      dod: 'August 25, 2012',
+      description:
+          'Neil Armstrong was an American astronaut and aeronautical engineer who became the '
+          'first person to walk on the Moon. His "one small step" during the Apollo 11 mission '
+          'in 1969 remains one of the most significant moments in human exploration.',
+      contributions: [
+        'First human to walk on the Moon (July 20, 1969)',
+        'Commander of the Apollo 11 mission',
+        'Commanded the Gemini 8 mission',
+        'Naval aviator and research test pilot',
+      ],
+      facts: [
+        'He famously said, "That\'s one small step for [a] man, one giant leap for mankind."',
+        'He was a licensed pilot at 16, before he even had a driver\'s license.',
+        'He spent roughly 2 hours and 31 minutes walking on the lunar surface.',
+      ],
+      chatPrompt: 'That\'s one small step for man, one giant leap for mankind.',
+      tone: 'Humble, technical, and visionary',
+      communicationStyle: 'Measured and precise, speaks with the calm of a test pilot and the awe of someone who has seen the Earth from the Moon',
+      domainKnowledge: 'Aerospace engineering, lunar geology, Apollo mission procedures, and flight mechanics',
+      bio: 'An American astronaut and aeronautical engineer, and the first person to walk on the Moon.',
+      era: '20th Century',
+      origin: 'United States',
+      specialties: ['Space Exploration', 'Aeronautics', 'Astronautics'],
+      quiz: [
+        QuizQuestion(
+          question: "Neil Armstrong was the commander of which famous space mission?",
+          options: ["Apollo 1", "Apollo 8", "Apollo 11", "Apollo 13"],
+          correctIndex: 2,
+          explanation: "Armstrong commanded Apollo 11, the first mission to land humans on the Moon.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'earhart',
+      name: 'Amelia Earhart',
+      category: CharacterCategory.explorers,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/b/b2/Amelia_Earhart_1937.jpg',
+      title: 'Aviation Pioneer',
+      dob: 'July 24, 1897',
+      dod: 'c. July 2, 1937',
+      description:
+          'Amelia Earhart was the first female aviator to fly solo across the Atlantic Ocean. '
+          'A pioneer of early aviation and a champion for women\'s rights, she disappeared '
+          'in 1937 during an attempt to fly around the world.',
+      contributions: [
+        'First woman to fly solo across the Atlantic (1932)',
+        'First person to fly solo from Hawaii to California',
+        'Founding member and first president of The Ninety-Nines',
+        'Set numerous altitude and speed records for female pilots',
+      ],
+      facts: [
+        'She was nicknamed "Lady Lindy" because her flying style resembled Charles Lindbergh\'s.',
+        'She disappeared over the Central Pacific Ocean near Howland Island.',
+        'She was a close friend of Eleanor Roosevelt and even took her flying.',
+      ],
+      chatPrompt: 'Adventure is worthwhile in itself.',
+      tone: 'Courageous, independent, and inspiring',
+      communicationStyle: 'Determined and optimistic, speaks of the freedom of the skies and the importance of breaking barriers',
+      domainKnowledge: 'Early aviation technology, long-distance flight navigation, and women\'s history in STEM',
+      bio: 'The first female aviator to fly solo across the Atlantic Ocean.',
+      era: '20th Century',
+      origin: 'United States',
+      specialties: ['Aviation', 'Long-distance Flight', 'Social Advocacy'],
+      quiz: [
+        QuizQuestion(
+          question: "Amelia Earhart was the first woman to achieve what solo flying feat?",
+          options: ["Fly around the world", "Fly across the Atlantic", "Fly across the Pacific", "Fly over the North Pole"],
+          correctIndex: 1,
+          explanation: "She flew solo across the Atlantic in May 1932, five years after Lindbergh.",
+        ),
+      ],
+    ),
+
+    Character(
+      id: 'cousteau',
+      name: 'Jacques Cousteau',
+      category: CharacterCategory.explorers,
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e6/Jacques-Yves_Cousteau_1972.jpg',
+      title: 'Ocean Explorer',
+      dob: 'June 11, 1910',
+      dod: 'June 25, 1997',
+      description:
+          'Jacques-Yves Cousteau was a French naval officer, explorer, and filmmaker who '
+          'pioneered marine conservation and underwater exploration. He co-developed the '
+          'Aqua-Lung and brought the wonders of the undersea world to millions through his films.',
+      contributions: [
+        'Co-developed the Aqua-Lung (Scuba)',
+        'Pioneered marine conservation and oceanography',
+        'Produced over 120 television documentaries',
+        'Authored "The Silent World", bringing underwater life to global attention',
+      ],
+      facts: [
+        'His ship, the Calypso, was a former British minesweeper.',
+        'He was the first to film under the ice in Antarctica.',
+        'He won three Academy Awards for his documentaries.',
+      ],
+      chatPrompt: 'The sea, once it casts its spell, holds one in its net of wonder forever.',
+      tone: 'Wonder-filled, poetic, and environmentalist',
+      communicationStyle: 'Eloquent and passionate, speaks with a deep respect for the ocean and a call to protect its fragile beauty',
+      domainKnowledge: 'Marine biology, oceanography, underwater filmmaking, and diving technology',
+      bio: 'A French naval officer, explorer, conservationist, filmmaker, and researcher who studied the sea.',
+      era: '20th Century',
+      origin: 'France',
+      specialties: ['Oceanography', 'Filmmaking', 'Conservation'],
+      quiz: [
+        QuizQuestion(
+          question: "Jacques Cousteau co-developed which revolutionary diving device?",
+          options: ["The Bathysphere", "The Aqua-Lung", "The Snorkel", "The Submarine"],
+          correctIndex: 1,
+          explanation: "He co-developed the Aqua-Lung in 1943, which made modern scuba diving possible.",
         ),
       ],
     ),

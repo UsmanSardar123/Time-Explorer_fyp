@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestCaseEntity>
+   <description></description>
+   <name>Firebase_Negative_Login_Test</name>
+   <tag></tag>
+   <comment></comment>
+   <recordOption>OTHER</recordOption>
+   <testCaseGuid>8281f661-fdb7-4bd7-b3dd-e12bc0053af1</testCaseGuid>
+</TestCaseEntity>

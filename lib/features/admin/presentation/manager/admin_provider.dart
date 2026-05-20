@@ -15,6 +15,7 @@ import 'package:timeexplorer/features/event_explorer/domain/entities/historical_
 import 'package:timeexplorer/features/places/data/datasources/wikimedia_image_service.dart';
 import 'package:timeexplorer/features/personalities/data/civilizations/classical_greece_civilization.dart';
 import 'package:timeexplorer/features/personalities/data/services/civilization_seeder.dart';
+import 'package:timeexplorer/features/personalities/data/civilizations/ancient_egypt_civilization.dart';
 
 class AdminProvider with ChangeNotifier {
   final AdminRepository _repository;
@@ -497,6 +498,10 @@ class AdminProvider with ChangeNotifier {
       CivilizationRegistry.register(CivilizationEntry(
         metadata: ClassicalGreeceCivilization.metadata,
         personalities: ClassicalGreeceCivilization.personalities,
+      ));
+      CivilizationRegistry.register(CivilizationEntry(
+        metadata: AncientEgyptCivilization.metadata,
+        personalities: AncientEgyptCivilization.personalities,
       ));
       await CivilizationRegistry.seedAll();
       _civilizationSeedDone = true;

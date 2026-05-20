@@ -1,3 +1,35 @@
+import '../models/historical_personality_model.dart';
+
+abstract class AncientEgyptCivilization {
+  static const Map<String, dynamic> metadata = ancientEgyptCivilization;
+
+  static List<HistoricalPersonality> get personalities =>
+      ancientEgyptCharacters.map((char) {
+        return HistoricalPersonality(
+          id: char['id'] as String,
+          name: char['name'] as String,
+          title: char['title'] as String,
+          civilization: char['civilizationId'] as String,
+          era: char['era'] as String,
+          period: char['era'] as String,
+          category: char['category'] as String,
+          styleTag: char['tone'] as String,
+          keywords: (char['specialties'] as List<dynamic>).cast<String>(),
+          chronologicalOrder: char['chronologicalOrder'] as int,
+          description: char['description'] as String,
+          bio: char['bio'] as String,
+          origin: char['origin'] as String,
+          chatPrompt: char['chatPrompt'] as String,
+          knowledgeCutoffYear: char['knowledgeCutoffYear'] as int?,
+          domainKnowledge: char['domainKnowledge'] as String? ?? '',
+          specialties: (char['specialties'] as List<dynamic>?)?.cast<String>() ?? [],
+          emotionalTriggers: (char['emotionalTriggers'] as List<dynamic>?)?.cast<String>() ?? [],
+          fallbackResponses: (char['fallbackResponses'] as List<dynamic>?)?.cast<String>() ?? [],
+          imageUrl: char['imageUrl'] as String? ?? '',
+        );
+      }).toList();
+}
+
 const Map<String, dynamic> ancientEgyptCivilization = {
   'id': 'ancient_egypt',
   'name': 'Ancient Egypt',

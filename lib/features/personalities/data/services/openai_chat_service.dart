@@ -25,8 +25,8 @@ class OpenAIChatService {
   }) async {
     final cleanedKey = _apiKey;
     if (cleanedKey.isEmpty || !AppConfig.isAiEnabled) {
-      throw const GeminiChatException(
-          GeminiError.unknownError, 'GEMINI_API_KEY is missing.');
+      // Return a user‑friendly message when the API key is not provided.
+      return kAiUnavailableMessage;
     }
 
     final model = GenerativeModel(
@@ -59,8 +59,9 @@ class OpenAIChatService {
   }) async* {
     final cleanedKey = _apiKey;
     if (cleanedKey.isEmpty || !AppConfig.isAiEnabled) {
-      throw const GeminiChatException(
-          GeminiError.unknownError, 'GEMINI_API_KEY is missing.');
+      // Emit a single chunk with the unavailable message.
+      yield kAiUnavailableMessage;
+      return;
     }
 
     final model = GenerativeModel(

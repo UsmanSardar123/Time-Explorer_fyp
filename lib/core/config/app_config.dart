@@ -11,7 +11,15 @@ class AppConfig {
     defaultValue: '53527064-edf2dfe298a58b020b583beec',
   );
 
-  static String get geminiApiKey => _geminiKey.trim();
+  // Runtime override (e.g., for testing or dynamic injection)
+  static String? _runtimeGeminiKey;
+
+  /// Allows setting the Gemini API key at runtime (e.g., from a secure storage).
+  static void setGeminiKey(String key) {
+    _runtimeGeminiKey = key;
+  }
+
+  static String get geminiApiKey => (_runtimeGeminiKey ?? _geminiKey).trim();
   static String get pixabayApiKey => _pixabayKey.trim();
 
   /// True when Gemini API key is present. Use this to gate all AI features.
@@ -23,7 +31,7 @@ class AppConfig {
       debugPrint('[AppConfig] ✅ GEMINI_API_KEY present (${geminiApiKey.length} chars)');
     } else {
       debugPrint('[AppConfig] ⚠️  GEMINI_API_KEY missing — AI features disabled. '
-          'Provide via --dart-define=GEMINI_API_KEY=<key>');
+          'Provide via --dart-define=GEMINI_API_KEY=<key> or set at runtime via AppConfig.setGeminiKey().');
     }
     debugPrint('[AppConfig] Pixabay key length: ${pixabayApiKey.length}');
   }
