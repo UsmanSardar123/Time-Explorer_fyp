@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeexplorer/models/storyboard_model.dart';
 import 'package:timeexplorer/services/storyboard_service.dart';
 
@@ -17,6 +19,8 @@ class StoryboardView extends StatefulWidget {
 
 class _StoryboardViewState extends State<StoryboardView> {
   late final PageController _pageController;
+  late final AudioPlayer _audioPlayer;
+  bool _isPlaying = false;
   int _activePanelIndex = 0;
 
   // ── Dark Theme Palette ────────────────────────────────────────────────────
@@ -33,11 +37,16 @@ class _StoryboardViewState extends State<StoryboardView> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _audioPlayer = AudioPlayer();
+    _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) setState(() => _isPlaying = false);
+    });
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -160,8 +169,12 @@ class _StoryboardViewState extends State<StoryboardView> {
     return PageView.builder(
       controller: _pageController,
       itemCount: _panels.length,
-      onPageChanged: (index) {
-        setState(() => _activePanelIndex = index);
+      onPageChanged: (index) async {
+        await _audioPlayer.stop();
+        setState(() {
+          _isPlaying = false;
+          _activePanelIndex = index;
+        });
       },
       itemBuilder: (context, index) => _buildPanel(_panels[index]),
     );
@@ -191,10 +204,19 @@ class _StoryboardViewState extends State<StoryboardView> {
               child: panel.imageUrl.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(20),
-                      child: Image.network(
-                        panel.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                      child: ColorFiltered(
+                        colorFilter: const ColorFilter.mode(
+                          Colors.black26, 
+                          BlendMode.darken,
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl: panel.imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => const Center(
+                            child: CircularProgressIndicator(color: _accent),
+                          ),
+                          errorWidget: (_, __, ___) => _imagePlaceholder(),
+                        ),
                       ),
                     )
                   : _imagePlaceholder(),
@@ -284,12 +306,22 @@ class _StoryboardViewState extends State<StoryboardView> {
 
   Widget _buildAudioButton(StoryboardPanel panel) {
     final hasAudio = panel.audioUrl.isNotEmpty;
+    final isCurrentPlaying = _isPlaying && _panels[_activePanelIndex].panelNumber == panel.panelNumber;
+
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton.icon(
         key: const Key('audio-button'),
-        onPressed: hasAudio ? () {} : null,
+        onPressed: hasAudio ? () async {
+          if (isCurrentPlaying) {
+            await _audioPlayer.pause();
+            setState(() => _isPlaying = false);
+          } else {
+            await _audioPlayer.play(UrlSource(panel.audioUrl));
+            setState(() => _isPlaying = true);
+          }
+        } : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: hasAudio ? _accent : _surfaceHigh,
           foregroundColor: Colors.white,
@@ -299,11 +331,19 @@ class _StoryboardViewState extends State<StoryboardView> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         icon: Icon(
-          hasAudio ? Icons.play_arrow_rounded : Icons.volume_off_rounded,
+          !hasAudio
+              ? Icons.volume_off_rounded
+              : isCurrentPlaying
+                  ? Icons.pause_rounded
+                  : Icons.play_arrow_rounded,
           size: 24,
         ),
         label: Text(
-          hasAudio ? 'Play Narration' : 'No Audio Available',
+          !hasAudio
+              ? 'No Audio Available'
+              : isCurrentPlaying
+                  ? 'Pause Narration'
+                  : 'Play Narration',
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         ),
       ),
