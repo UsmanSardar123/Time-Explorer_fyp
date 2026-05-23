@@ -24,6 +24,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'event_expert_chat_page.dart';
 import '../widgets/narrator_sheet.dart';
 import 'package:timeexplorer/core/services/ambient_audio_service.dart';
+import 'package:timeexplorer/views/storyboard_card.dart';
 
 class EventDetailPage extends StatefulWidget {
   final HistoricalEvent event;
@@ -228,6 +229,22 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
           _InteractiveMapSection(event: event),
           _VideoBriefingSection(event: event),
+
+          // ── Storyboard Section ───────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceMD),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SectionHeader(label: 'VISUAL STORYBOARD', accent: accent),
+                  const SizedBox(height: 16),
+                  StoryboardCard(storyboardId: 'event_${event.id}'),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ),
 
           // ── Context & Related ────────────────────────────────────────────────
           SliverPadding(

@@ -8,9 +8,20 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:timeexplorer/features/explore/domain/entities/place_entity.dart';
 import 'package:timeexplorer/features/personalities/data/datasources/character_local_data_source.dart';
 import 'package:timeexplorer/features/personalities/domain/entities/character.dart';
+import 'package:timeexplorer/features/event_explorer/data/datasources/event_static_data_source.dart';
+import 'package:timeexplorer/features/event_explorer/domain/entities/historical_event.dart';
 
 class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
+  final FirebaseFirestore? firestore;
+  final CharacterLocalDataSource? characterDataSource;
+  final EventStaticDataSource? eventDataSource;
+
+  const SearchPage({
+    super.key,
+    this.firestore,
+    this.characterDataSource,
+    this.eventDataSource,
+  });
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -25,13 +36,24 @@ class _SearchPageState extends State<SearchPage> {
   static const _textHint = AppTheme.outlineVariant;
 
   final TextEditingController _controller = TextEditingController();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final _dataSource = CharacterLocalDataSource();
+  
+  late final FirebaseFirestore _firestore;
+  late final CharacterLocalDataSource _characterDataSource;
+  late final EventStaticDataSource _eventDataSource;
 
   List<PlaceEntity> _placeResults = [];
   List<Character> _characterResults = [];
+  List<HistoricalEvent> _eventResults = [];
   bool _isLoading = false;
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _firestore = widget.firestore ?? FirebaseFirestore.instance;
+    _characterDataSource = widget.characterDataSource ?? CharacterLocalDataSource();
+    _eventDataSource = widget.eventDataSource ?? EventStaticDataSource();
+  }
 
   @override
   void dispose() {
@@ -42,7 +64,12 @@ class _SearchPageState extends State<SearchPage> {
   Future<void> _search(String query) async {
     final q = query.trim();
     if (q.isEmpty) {
-      setState(() { _placeResults = []; _characterResults = []; _query = ''; });
+      setState(() {
+        _placeResults = [];
+        _characterResults = [];
+        _eventResults = [];
+        _query = '';
+      });
       return;
     }
 
@@ -51,10 +78,28 @@ class _SearchPageState extends State<SearchPage> {
     final lower = q.toLowerCase();
 
     // Character search is local — instant.
-    final chars = _dataSource.getAll().where((c) =>
+    final chars = _characterDataSource.getAll().where((c) =>
         c.name.toLowerCase().contains(lower) ||
         c.category.displayName.toLowerCase().contains(lower) ||
-        c.title.toLowerCase().contains(lower)).toList();
+        c.title.toLowerCase().contains(lower) ||
+        c.description.toLowerCase().contains(lower) ||
+        c.era.toLowerCase().contains(lower) ||
+        c.bio.toLowerCase().contains(lower)).toList();
+
+    // Event search is local — instant.
+    List<HistoricalEvent> events = [];
+    try {
+      final allEvents = await _eventDataSource.fetchAll();
+      events = allEvents.where((e) =>
+          e.title.toLowerCase().contains(lower) ||
+          e.location.toLowerCase().contains(lower) ||
+          e.description.toLowerCase().contains(lower) ||
+          e.period.toLowerCase().contains(lower) ||
+          e.category.displayName.toLowerCase().contains(lower) ||
+          e.keyFacts.any((fact) => fact.toLowerCase().contains(lower))).toList();
+    } catch (e) {
+      debugPrint('[Search] Event search error: $e');
+    }
 
     // Places search runs against Firestore.
     List<PlaceEntity> places = [];
@@ -77,7 +122,9 @@ class _SearchPageState extends State<SearchPage> {
           .where((p) =>
               p.name.toLowerCase().contains(lower) ||
               p.location.toLowerCase().contains(lower) ||
-              p.category.toLowerCase().contains(lower))
+              p.category.toLowerCase().contains(lower) ||
+              p.description.toLowerCase().contains(lower) ||
+              (p.era ?? '').toLowerCase().contains(lower))
           .toList();
     } catch (e) {
       debugPrint('[Search] Firestore error: $e');
@@ -87,6 +134,7 @@ class _SearchPageState extends State<SearchPage> {
       setState(() {
         _characterResults = chars;
         _placeResults = places;
+        _eventResults = events;
         _isLoading = false;
       });
     }
@@ -141,7 +189,7 @@ class _SearchPageState extends State<SearchPage> {
       );
     }
 
-    final hasResults = _placeResults.isNotEmpty || _characterResults.isNotEmpty;
+    final hasResults = _placeResults.isNotEmpty || _characterResults.isNotEmpty || _eventResults.isNotEmpty;
     if (!hasResults) {
       return _buildEmptyState(
         Icons.search_off_rounded,
@@ -153,16 +201,22 @@ class _SearchPageState extends State<SearchPage> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       children: [
-        if (_characterResults.isNotEmpty) ...[
-          _sectionHeader(Icons.person_rounded, 'Historical Figures', _characterResults.length),
-          const SizedBox(height: 10),
-          ..._characterResults.map(_buildCharacterTile),
-          const SizedBox(height: 24),
-        ],
         if (_placeResults.isNotEmpty) ...[
           _sectionHeader(Icons.place_rounded, 'Historical Places', _placeResults.length),
           const SizedBox(height: 10),
           ..._placeResults.map(_buildPlaceTile),
+          const SizedBox(height: 24),
+        ],
+        if (_eventResults.isNotEmpty) ...[
+          _sectionHeader(Icons.event_note_rounded, 'Historical Events', _eventResults.length),
+          const SizedBox(height: 10),
+          ..._eventResults.map(_buildEventTile),
+          const SizedBox(height: 24),
+        ],
+        if (_characterResults.isNotEmpty) ...[
+          _sectionHeader(Icons.person_rounded, 'Historical Figures', _characterResults.length),
+          const SizedBox(height: 10),
+          ..._characterResults.map(_buildCharacterTile),
         ],
       ],
     );
@@ -322,6 +376,100 @@ class _SearchPageState extends State<SearchPage> {
                                 color: const Color(0xFF6F4600))),
                       ),
                     ],
+                  ],
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(right: 14),
+              child: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: _textHint),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEventTile(HistoricalEvent event) {
+    return GestureDetector(
+      onTap: () => context.push('/event-detail', extra: event),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3))],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(14), bottomLeft: Radius.circular(14)),
+              child: SizedBox(
+                width: 72,
+                height: 72,
+                child: DynamicPlaceImage(
+                  query: event.title,
+                  placeId: event.id,
+                  fallbackUrl: event.heroImageUrl,
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(event.title,
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14, fontWeight: FontWeight.w700, color: _textDark),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 12, color: _textHint),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(event.location,
+                              style: GoogleFonts.beVietnamPro(fontSize: 12, color: _textMuted),
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(event.category.displayName,
+                              style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10, fontWeight: FontWeight.w700, color: _primary)),
+                        ),
+                        if (event.period.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEB246).withValues(alpha: 0.20),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(event.period,
+                                style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10, fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF6F4600))),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ),

@@ -31,6 +31,7 @@ import 'package:timeexplorer/features/gamification/presentation/providers/gamifi
 import 'package:timeexplorer/features/quiz/domain/entities/quiz_topic.dart';
 import 'package:timeexplorer/features/quiz/presentation/widgets/difficulty_selection_section.dart';
 import 'package:timeexplorer/core/models/quick_fact_item.dart';
+import 'package:timeexplorer/views/storyboard_card.dart';
 
 class PlaceDetailsPage extends StatefulWidget {
   final String placeId;
@@ -122,6 +123,13 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
                           _buildAnimatedSection(child: _buildHistoricalOverview(place), delay: 200),
                           const SizedBox(height: 24),
                           _buildAnimatedSection(child: _buildTalkToLocalButton(context, place), delay: 250),
+                          const SizedBox(height: 32),
+                          _buildAnimatedSection(child: _buildSectionTitle('Visual Storyboard'), delay: 260),
+                          const SizedBox(height: 16),
+                          _buildAnimatedSection(
+                            child: StoryboardCard(storyboardId: 'place_${place.id}'),
+                            delay: 280,
+                          ),
                           const SizedBox(height: 32),
                           _buildAnimatedSection(child: _buildSectionTitle('Gallery'), delay: 300),
                           const SizedBox(height: 16),

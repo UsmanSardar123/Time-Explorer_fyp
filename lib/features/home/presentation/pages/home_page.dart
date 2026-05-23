@@ -326,26 +326,29 @@ class _TimeExplorerDashboardState extends State<_TimeExplorerDashboard> {
   }
 
   Widget _buildSearchBar(BuildContext context) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceLowest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.outlineVariant, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 14),
-          const Icon(Icons.search_rounded, color: AppTheme.onSurfaceVariant, size: 20),
-          const SizedBox(width: 10),
-          Text(
-            'Search places, eras, figures…',
-            style: GoogleFonts.beVietnamPro(
-              fontSize: 14,
-              color: AppTheme.outlineVariant,
+    return GestureDetector(
+      onTap: () => context.push('/search'),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceLowest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.outlineVariant, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            const SizedBox(width: 14),
+            const Icon(Icons.search_rounded, color: AppTheme.onSurfaceVariant, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              'Search places, eras, figures…',
+              style: GoogleFonts.beVietnamPro(
+                fontSize: 14,
+                color: AppTheme.outlineVariant,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

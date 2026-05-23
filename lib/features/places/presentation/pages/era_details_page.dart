@@ -9,6 +9,7 @@ import 'package:timeexplorer/core/widgets/dynamic_place_image.dart';
 import 'package:timeexplorer/core/widgets/themed_loading.dart';
 import 'package:timeexplorer/features/bookmarks/presentation/providers/bookmark_provider.dart';
 import 'package:timeexplorer/features/explore/domain/entities/place_entity.dart';
+import 'package:timeexplorer/views/storyboard_card.dart';
 
 class EraDetailsPage extends StatefulWidget {
   final Era era;
@@ -107,6 +108,20 @@ class _EraDetailsPageState extends State<EraDetailsPage> {
                       ),
                     ),
                   ],
+
+                  const SizedBox(height: 48),
+
+                  // Storyboard Section
+                  Text(
+                    'Era Storyboard',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: _textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  StoryboardCard(storyboardId: 'era_${widget.era.id}'),
 
                   const SizedBox(height: 48),
 
