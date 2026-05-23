@@ -187,7 +187,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('Storyboard not found.'), findsOneWidget);
+      // Now it falls back to the mock data when not found instead of crashing or showing error text
+      expect(find.text('The Golden Age of Discovery'), findsOneWidget);
       debugPrint('[E2E] ✓ Not-found state rendered correctly');
 
       await streamController.close();

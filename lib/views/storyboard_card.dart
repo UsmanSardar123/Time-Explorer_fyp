@@ -15,7 +15,7 @@ class StoryboardCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       // Fix visibility by providing explicit height constraint
-      height: 400,
+      height: 500,
       decoration: BoxDecoration(
         color: const Color(0xFF0F0E1A), // Dark mode background
         borderRadius: BorderRadius.circular(24),

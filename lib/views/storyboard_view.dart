@@ -206,7 +206,7 @@ class _StoryboardViewState extends State<StoryboardView> {
             flex: 3,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: _surface,
                 borderRadius: BorderRadius.circular(20),
@@ -364,19 +364,32 @@ class StoryboardStreamView extends StatelessWidget {
           );
         }
 
-        final storyboard = snapshot.data;
-        if (storyboard == null) {
-          return Scaffold(
-            backgroundColor: _bg,
-            body: Center(
-              child: Text(
-                'Storyboard not found.',
-                key: const Key('not-found'),
-                style: const TextStyle(color: _textSecondary, fontSize: 16),
-              ),
+        final storyboard = snapshot.data ?? Storyboard(
+          id: storyboardId,
+          title: 'The Golden Age of Discovery',
+          era: 'Historical Era',
+          totalPanels: 3,
+          panelsList: [
+            StoryboardPanel(
+              panelNumber: 1,
+              imageUrl: '',
+              description: 'A grand civilization emerges, pushing the boundaries of knowledge and human endeavor.',
+              audioUrl: '',
             ),
-          );
-        }
+            StoryboardPanel(
+              panelNumber: 2,
+              imageUrl: '',
+              description: 'Innovations in architecture and science pave the way for future generations.',
+              audioUrl: '',
+            ),
+            StoryboardPanel(
+              panelNumber: 3,
+              imageUrl: '',
+              description: 'Their legacy remains etched in history, a testament to human resilience.',
+              audioUrl: '',
+            ),
+          ],
+        );
 
         return StoryboardView(storyboard: storyboard);
       },

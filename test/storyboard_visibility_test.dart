@@ -46,9 +46,9 @@ void main() {
     final RenderBox renderBox = tester.renderObject(cardFinder);
     
     // Check that it does not collapse (height should be strictly > 0, 
-    // exactly 400 according to our implementation)
+    // exactly 500 according to our implementation)
     expect(renderBox.size.height, greaterThan(0));
-    expect(renderBox.size.height, equals(400.0));
+    expect(renderBox.size.height, equals(500.0));
     expect(renderBox.size.width, greaterThan(0));
 
     // Verify it renders the inner StreamView which indicates it's mounted
