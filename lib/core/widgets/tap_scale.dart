@@ -24,16 +24,17 @@ class _TapScaleState extends State<TapScale> {
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerDown: (_) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) {
         setState(() => _pressed = true);
         if (widget.haptic) HapticFeedback.lightImpact();
       },
-      onPointerUp: (_) {
+      onTapUp: (_) {
         setState(() => _pressed = false);
         widget.onTap?.call();
       },
-      onPointerCancel: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedScale(
         scale: _pressed ? widget.scale : 1.0,
         duration: const Duration(milliseconds: 100),
