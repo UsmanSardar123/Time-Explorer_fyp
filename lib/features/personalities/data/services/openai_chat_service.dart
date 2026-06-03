@@ -11,7 +11,7 @@ import 'memory_scorer.dart';
 import '../../domain/entities/character.dart';
 
 class OpenAIChatService {
-  static const _modelName = 'gemini-flash-latest';
+  static String get _modelName => AppConfig.geminiModel;
   static String get _apiKey => AppConfig.geminiApiKey;
   static const int _tokenThreshold = 3000;
   static const Duration _streamTimeout = Duration(seconds: 15);

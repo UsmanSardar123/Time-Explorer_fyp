@@ -8,7 +8,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:timeexplorer/core/config/app_config.dart';
 
 class LocalGuideService {
-  static const String _model = 'gemini-flash-latest';
+  static String get _model => AppConfig.geminiModel;
   static const Duration _timeout = Duration(seconds: 15);
 
   const LocalGuideService();

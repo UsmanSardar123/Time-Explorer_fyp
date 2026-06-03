@@ -9,7 +9,7 @@ class PlaceImageService {
   static const int _maxRaw = 20;   // collected before filtering
   static const int _maxFinal = 10; // kept after filtering
   static const int _perQueryLimit = 6;
-  static const String _geminiModel = 'gemini-1.5-flash';
+  static String get _geminiModel => AppConfig.geminiModel;
 
   static const String _userAgent =
       'TimeExplorer/1.0 (Flutter educational app; usmansardar037@gmail.com)';

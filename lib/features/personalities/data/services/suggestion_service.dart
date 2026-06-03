@@ -10,7 +10,7 @@ import '../models/message_model.dart';
 import '../../domain/entities/character.dart';
 
 class SuggestionService {
-  static const _modelName = 'gemini-flash-latest';
+  static const _modelName = AppConfig.geminiModel;
 
   const SuggestionService();
 

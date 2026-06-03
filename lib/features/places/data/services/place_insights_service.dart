@@ -10,7 +10,7 @@ import 'package:timeexplorer/features/places/domain/entities/place.dart';
 
 class PlaceInsightsService {
   static const _collection = 'aiInsightsCache';
-  static const _modelName = 'gemini-1.5-flash-latest';
+  static const _modelName = AppConfig.geminiModel;
 
   final FirebaseFirestore _firestore;
 

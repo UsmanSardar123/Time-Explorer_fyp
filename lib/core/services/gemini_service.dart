@@ -24,7 +24,7 @@ class GeminiChatException implements Exception {
 }
 
 class GeminiService {
-  static const _modelName = 'gemini-flash-latest';
+  static const _modelName = AppConfig.geminiModel;
 
   static String get apiKey => AppConfig.geminiApiKey;
 

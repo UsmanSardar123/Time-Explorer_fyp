@@ -12,7 +12,7 @@ import '../models/message_model.dart';
 import '../services/conversation_manager.dart';
 
 class ConversationRepository {
-  static const _modelName = 'gemini-flash-latest';
+  static const _modelName = AppConfig.geminiModel;
   static const int _messageLoadLimit = 20;
 
   final FirebaseFirestore _firestore;

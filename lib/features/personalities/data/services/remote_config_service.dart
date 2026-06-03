@@ -1,6 +1,7 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timeexplorer/core/config/app_config.dart';
 import '../repositories/character_firestore_repository.dart';
 
 /// Central Firebase Remote Config service.
@@ -24,7 +25,7 @@ class RemoteConfigService {
   // ── Safe defaults (used when RC is unavailable) ───────────────────────────
   static const _defaults = {
     _keyCharacterPromptsVersion: '',
-    _keyGeminiModel: 'gemini-1.5-flash-latest',
+    _keyGeminiModel: AppConfig.geminiModel,
     _keyMaintenanceMode: false,
     _keyAiRetryLimit: 2,
     _keyXpMultiplier: 1.0,

@@ -19,6 +19,9 @@ class AppConfig {
     _runtimeGeminiKey = key;
   }
 
+  /// Centralized Gemini model name.
+  static const String geminiModel = 'gemini-3.5-flash';
+
   static String get geminiApiKey => (_runtimeGeminiKey ?? _geminiKey).trim();
   static String get pixabayApiKey => _pixabayKey.trim();
 
