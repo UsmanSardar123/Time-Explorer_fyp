@@ -5,7 +5,10 @@ import 'package:flutter/foundation.dart';
 ///   flutter run --dart-define=GEMINI_API_KEY=... --dart-define=PIXABAY_API_KEY=...
 class AppConfig {
   // Compile-time constants from --dart-define
-  static const String _geminiKey = String.fromEnvironment('GEMINI_API_KEY');
+  static const String _geminiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: 'AIzaSyDyonG4t_N7hcWkiXGgYHc73YyKSDV5Jdg',
+  );
   static const String _pixabayKey = String.fromEnvironment(
     'PIXABAY_API_KEY',
     defaultValue: '53527064-edf2dfe298a58b020b583beec',
