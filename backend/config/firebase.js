@@ -1,30 +1,42 @@
 var admin = require('firebase-admin');
 
 var serviceAccount;
-try {
-  serviceAccount = require('../serviceAccountKey.json');
-} catch (e) {
-  throw new Error(
-    'serviceAccountKey.json not found in backend/. ' +
-    'Download it from Firebase Console → Project Settings → Service Accounts → Generate new private key.'
-  );
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+  // Production (Render / Railway): service account JSON stored as env var string
+  try {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+  } catch (e) {
+    throw new Error(
+      'FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. ' +
+      'Paste the entire service account JSON as a single-line string in the env var.'
+    );
+  }
+} else {
+  // Development: read from local file (never committed to git)
+  try {
+    serviceAccount = require('../serviceAccountKey.json');
+  } catch (e) {
+    throw new Error(
+      'No Firebase credentials found.\n' +
+      '  Development: place serviceAccountKey.json in backend/\n' +
+      '  Production:  set FIREBASE_SERVICE_ACCOUNT_KEY env var to the JSON string.\n' +
+      '  Download key: Firebase Console → Project Settings → Service Accounts → Generate new private key.'
+    );
+  }
+}
+
+// Normalize escaped newlines in private_key — happens when JSON is stored in env vars
+if (serviceAccount.private_key) {
+  serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 }
 
 if (!serviceAccount.private_key) {
-  throw new Error(
-    'serviceAccountKey.json is missing the private_key field. ' +
-    'Ensure you downloaded the correct service account JSON from Firebase Console.'
-  );
+  throw new Error('Service account is missing private_key. Verify the JSON is complete.');
 }
-
 if (!serviceAccount.client_email) {
-  throw new Error(
-    'serviceAccountKey.json is missing the client_email field. ' +
-    'Ensure you downloaded the correct service account JSON from Firebase Console.'
-  );
+  throw new Error('Service account is missing client_email. Verify the JSON is complete.');
 }
-
-serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -33,6 +45,6 @@ admin.initializeApp({
 var db = admin.firestore();
 var auth = admin.auth();
 
-console.log('Firebase initialized successfully');
+console.log('[Firebase] Initialized — project:', serviceAccount.project_id || 'unknown');
 
 module.exports = { admin: admin, db: db, auth: auth };

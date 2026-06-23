@@ -12,7 +12,17 @@ var routes = require('./routes/index');
 var app = express();
 
 app.use(helmet());
-app.use(cors({ origin: env.ALLOWED_ORIGINS, credentials: true }));
+
+// CORS — allow all origins when ALLOWED_ORIGINS=* (production mobile backend)
+// otherwise restrict to the explicit list (development / web clients)
+var allowedOrigins = env.ALLOWED_ORIGINS;
+var isWildcard = allowedOrigins.length === 1 && allowedOrigins[0] === '*';
+app.use(cors(
+  isWildcard
+    ? { origin: '*' }
+    : { origin: allowedOrigins, credentials: true }
+));
+
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(rateLimiter.globalLimiter);
 app.use(express.json());
@@ -21,7 +31,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use('/api', routes);
 
 app.get('/', function(_req, res) {
-  res.json({ status: 'ok', service: 'Time Explorer API' });
+  res.json({ status: 'ok', service: 'Time Explorer API', environment: env.NODE_ENV });
 });
 
 app.use(function(_req, res) {
@@ -31,5 +41,6 @@ app.use(function(_req, res) {
 app.use(errorHandler);
 
 app.listen(env.PORT, function() {
-  console.log('Time Explorer API running on port ' + env.PORT + ' [' + env.NODE_ENV + ']');
+  console.log('[Server] Time Explorer API running on port ' + env.PORT + ' [' + env.NODE_ENV + ']');
+  console.log('[Server] CORS: ' + (isWildcard ? '* (all origins)' : allowedOrigins.join(', ')));
 });
