@@ -57,12 +57,14 @@ function getTimeline(req, res, next) {
 }
 
 function createPlace(req, res, next) {
-  var name = req.body.name;
-  var era = req.body.era;
-  var coordinates = req.body.coordinates;
-  var description = req.body.description;
-  var mediaUrls = req.body.mediaUrls;
-  db.collection('places').add({ name: name, era: era, coordinates: coordinates, description: description, mediaUrls: mediaUrls })
+  var doc = {
+    name: req.body.name,
+    era: req.body.era,
+    coordinates: req.body.coordinates || null,
+    description: req.body.description || '',
+    mediaUrls: req.body.mediaUrls || [],
+  };
+  db.collection('places').add(doc)
     .then(function(docRef) {
       res.status(201).json({ id: docRef.id, message: 'Place created' });
     })
@@ -71,10 +73,16 @@ function createPlace(req, res, next) {
 
 function updatePlace(req, res, next) {
   var id = req.params.id;
-  // Strip Firestore-specific fields that cannot be serialized back
-  var body = Object.assign({}, req.body);
-  delete body.id;
-  db.collection('places').doc(id).update(body)
+  // Whitelist updatable fields — prevents arbitrary Firestore field injection
+  var allowed = ['name', 'era', 'coordinates', 'description', 'mediaUrls', 'category', 'eraId'];
+  var update = {};
+  allowed.forEach(function(key) {
+    if (req.body[key] !== undefined) update[key] = req.body[key];
+  });
+  if (Object.keys(update).length === 0) {
+    return res.status(400).json({ error: 'No valid fields provided for update' });
+  }
+  db.collection('places').doc(id).update(update)
     .then(function() {
       res.json({ message: 'Place updated' });
     })
