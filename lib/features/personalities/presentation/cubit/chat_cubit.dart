@@ -45,7 +45,7 @@ class ChatCubit extends Cubit<ChatState> {
         _manager = ConversationManager(),
         _repo = ConversationRepository(),
         _promptBuilder = const PromptBuilderService(),
-        _suggestionService = const SuggestionService(),
+        _suggestionService = SuggestionService(),
         _contextFactService = ContextFactService(),
         _rateLimitService = RateLimitService(),
         _cacheService = ResponseCacheService(),
