@@ -6,7 +6,9 @@ function getPlaces(req, res, next) {
   var category = req.query.category;
   var eraId = req.query.eraId;
   var ids = req.query.ids ? req.query.ids.split(',').filter(Boolean).slice(0, 10) : null;
-  var limit = req.query.limit ? parseInt(req.query.limit, 10) : null;
+  var MAX_LIMIT = 50;
+  var requestedLimit = req.query.limit ? parseInt(req.query.limit, 10) : null;
+  var limit = requestedLimit ? Math.min(requestedLimit, MAX_LIMIT) : MAX_LIMIT;
 
   var query = db.collection('places');
 

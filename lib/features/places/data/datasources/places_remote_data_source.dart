@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:timeexplorer/core/services/api_service.dart';
 import 'package:timeexplorer/features/places/data/models/place_model.dart';
 import 'package:timeexplorer/features/places/domain/entities/timeline_event.dart';
 
@@ -9,7 +9,7 @@ abstract class PlacesRemoteDataSource {
   Future<List<PlaceModel>> getPlacesByEra(String eraId);
   Future<void> updatePlace(PlaceModel place);
   Future<void> deletePlace(String placeId);
-  
+
   // Sprint 1 Additions
   Future<List<PlaceModel>> fetchAllPlaces();
   Future<PlaceModel?> fetchPlaceById(String id);
@@ -18,17 +18,29 @@ abstract class PlacesRemoteDataSource {
 }
 
 class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
-  final FirebaseFirestore _firestore;
+  final ApiService _api;
 
-  PlacesRemoteDataSourceImpl({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  PlacesRemoteDataSourceImpl({ApiService? api}) : _api = api ?? ApiService();
+
+  PlaceModel _mapToPlace(Map<String, dynamic> data) {
+    final id = data['id'] as String? ?? '';
+    return PlaceModel.fromMap(data, id);
+  }
+
+  Map<String, dynamic> _placeToApiBody(PlaceModel place) {
+    final map = place.toMap();
+    // GeoPoint is not JSON-serializable; lat/lng are stored as separate fields too
+    map.remove('coordinates');
+    return map;
+  }
 
   @override
   Future<PlaceModel> getPlaceDetails(String placeId) async {
     try {
-      final doc = await _firestore.collection('places').doc(placeId).get();
-      if (!doc.exists) throw Exception('Place not found');
-      return PlaceModel.fromMap(doc.data()!, doc.id);
+      final data = await _api.get('/places/$placeId') as Map<String, dynamic>;
+      return _mapToPlace(data);
+    } on ApiException {
+      rethrow;
     } catch (e) {
       throw Exception('Failed to fetch place details: $e');
     }
@@ -37,40 +49,34 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
   @override
   Future<List<PlaceModel>> getNearbyPlaces(String category, String excludeId) async {
     try {
-      final querySnapshot = await _firestore.collection('places')
-          .where('category', isEqualTo: category)
-          .limit(6)
-          .get();
-      
-      return querySnapshot.docs
-          .where((doc) => doc.id != excludeId)
+      final raw = await _api.get('/places?category=${Uri.encodeComponent(category)}&limit=6') as List;
+      return raw
+          .cast<Map<String, dynamic>>()
+          .where((d) => (d['id'] as String? ?? '') != excludeId)
           .take(5)
-          .map((doc) => PlaceModel.fromMap(doc.data(), doc.id))
+          .map(_mapToPlace)
           .toList();
     } catch (e) {
-      throw Exception('Failed to fetch nearby places: $e');
+      debugPrint('[PlacesDataSource] Error fetching nearby places: $e');
+      return [];
     }
   }
 
   @override
   Future<List<PlaceModel>> getPlacesByEra(String eraId) async {
     try {
-      final querySnapshot = await _firestore.collection('places')
-          .where('eraId', isEqualTo: eraId)
-          .get();
-      
-      return querySnapshot.docs
-          .map((doc) => PlaceModel.fromMap(doc.data(), doc.id))
-          .toList();
+      final raw = await _api.get('/places?eraId=${Uri.encodeComponent(eraId)}') as List;
+      return raw.cast<Map<String, dynamic>>().map(_mapToPlace).toList();
     } catch (e) {
-      throw Exception('Failed to fetch places by era: $e');
+      debugPrint('[PlacesDataSource] Error fetching places by era: $e');
+      return [];
     }
   }
 
   @override
   Future<void> updatePlace(PlaceModel place) async {
     try {
-      await _firestore.collection('places').doc(place.id).update(place.toMap());
+      await _api.put('/places/${place.id}', _placeToApiBody(place));
     } catch (e) {
       throw Exception('Failed to update place: $e');
     }
@@ -79,7 +85,7 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
   @override
   Future<void> deletePlace(String placeId) async {
     try {
-      await _firestore.collection('places').doc(placeId).delete();
+      await _api.delete('/places/$placeId');
     } catch (e) {
       throw Exception('Failed to delete place: $e');
     }
@@ -88,10 +94,8 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
   @override
   Future<List<PlaceModel>> fetchAllPlaces() async {
     try {
-      final querySnapshot = await _firestore.collection('places').get();
-      return querySnapshot.docs
-          .map((doc) => PlaceModel.fromMap(doc.data(), doc.id))
-          .toList();
+      final raw = await _api.get('/places') as List;
+      return raw.cast<Map<String, dynamic>>().map(_mapToPlace).toList();
     } catch (e) {
       debugPrint('[PlacesDataSource] Error fetching all places: $e');
       return [];
@@ -101,9 +105,11 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
   @override
   Future<PlaceModel?> fetchPlaceById(String id) async {
     try {
-      final doc = await _firestore.collection('places').doc(id).get();
-      if (!doc.exists) return null;
-      return PlaceModel.fromMap(doc.data()!, doc.id);
+      final data = await _api.get('/places/$id') as Map<String, dynamic>;
+      return _mapToPlace(data);
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
     } catch (e) {
       debugPrint('[PlacesDataSource] Error fetching place by id: $e');
       return null;
@@ -113,14 +119,10 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
   @override
   Future<List<TimelineEvent>> fetchTimeline(String placeId) async {
     try {
-      final querySnapshot = await _firestore.collection('places')
-          .doc(placeId)
-          .collection('timeline')
-          .orderBy('orderIndex')
-          .get();
-      
-      return querySnapshot.docs
-          .map((doc) => TimelineEvent.fromMap(doc.data()))
+      final raw = await _api.get('/places/$placeId/timeline') as List;
+      return raw
+          .cast<Map<String, dynamic>>()
+          .map(TimelineEvent.fromMap)
           .toList();
     } catch (e) {
       debugPrint('[PlacesDataSource] Error fetching timeline: $e');
@@ -132,15 +134,9 @@ class PlacesRemoteDataSourceImpl implements PlacesRemoteDataSource {
   Future<List<PlaceModel>> fetchNearbyPlacesByIds(List<String> ids) async {
     if (ids.isEmpty) return [];
     try {
-      // Firestore 'whereIn' limits to 10 items
-      final limitedIds = ids.take(10).toList();
-      final querySnapshot = await _firestore.collection('places')
-          .where(FieldPath.documentId, whereIn: limitedIds)
-          .get();
-      
-      return querySnapshot.docs
-          .map((doc) => PlaceModel.fromMap(doc.data(), doc.id))
-          .toList();
+      final limited = ids.take(10).join(',');
+      final raw = await _api.get('/places?ids=${Uri.encodeComponent(limited)}') as List;
+      return raw.cast<Map<String, dynamic>>().map(_mapToPlace).toList();
     } catch (e) {
       debugPrint('[PlacesDataSource] Error fetching nearby places by ids: $e');
       return [];

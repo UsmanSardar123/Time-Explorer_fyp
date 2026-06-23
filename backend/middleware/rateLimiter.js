@@ -16,4 +16,13 @@ var authLimiter = rateLimit({
   message: { error: 'Too many auth attempts, please try again later.' },
 });
 
-module.exports = { globalLimiter: globalLimiter, authLimiter: authLimiter };
+// Stricter limit for the AI endpoint — each request hits an external paid API
+var aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'AI rate limit exceeded, please wait before sending another request.' },
+});
+
+module.exports = { globalLimiter: globalLimiter, authLimiter: authLimiter, aiLimiter: aiLimiter };

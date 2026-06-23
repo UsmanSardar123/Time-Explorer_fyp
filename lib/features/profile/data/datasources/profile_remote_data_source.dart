@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io' as io;
+import 'package:timeexplorer/core/services/api_service.dart';
 import 'package:timeexplorer/features/profile/domain/entities/profile_entity.dart';
 import 'package:timeexplorer/features/profile/data/services/profile_image_service.dart';
 
@@ -19,24 +19,37 @@ abstract class ProfileRemoteDataSource {
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
-  final FirebaseFirestore _firestore;
+  final ApiService _api;
   final FirebaseAuth _firebaseAuth;
   final FirebaseStorage _firebaseStorage;
 
   ProfileRemoteDataSourceImpl({
-    FirebaseFirestore? firestore,
+    ApiService? api,
     FirebaseAuth? firebaseAuth,
     FirebaseStorage? firebaseStorage,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+  })  : _api = api ?? ApiService(),
         _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
         _firebaseStorage = firebaseStorage ?? FirebaseStorage.instance;
 
   @override
   Future<ProfileEntity> getProfile(String userId) async {
     try {
-      final doc = await _firestore.collection('users').doc(userId).get();
-      if (!doc.exists) {
-        // Return default if not exists yet
+      final data = await _api.get('/users/$userId') as Map<String, dynamic>;
+      return ProfileEntity(
+        id: userId,
+        email: data['email'] as String? ?? '',
+        displayName: data['displayName'] as String? ?? '',
+        username: data['username'] as String?,
+        photoUrl: data['photoUrl'] as String?,
+        bio: data['bio'] as String?,
+        dob: data['dob'] as String?,
+        phoneNumber: data['phoneNumber'] as String?,
+        address: data['address'] as String?,
+        gender: data['gender'] as String?,
+        privacySettings: data['privacySettings']?.toString(),
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
         final user = _firebaseAuth.currentUser;
         if (user != null && user.uid == userId) {
           return ProfileEntity(
@@ -48,21 +61,8 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         }
         throw Exception('Profile not found');
       }
-      
-      final data = doc.data()!;
-      return ProfileEntity(
-        id: userId,
-        email: data['email'] ?? '',
-        displayName: data['displayName'] ?? '',
-        username: data['username'],
-        photoUrl: data['photoUrl'],
-        bio: data['bio'],
-        dob: data['dob'],
-        phoneNumber: data['phoneNumber'],
-        address: data['address'],
-        gender: data['gender'],
-        privacySettings: data['privacySettings']?.toString(),
-      );
+      debugPrint('[PROFILE] getProfile API error: $e');
+      throw Exception('Failed to get profile: ${e.message}');
     } catch (e) {
       debugPrint('[PROFILE] getProfile error: $e');
       throw Exception('Failed to get profile: $e');
@@ -72,7 +72,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   @override
   Future<void> updateProfile(ProfileEntity profile) async {
     try {
-      await _firestore.collection('users').doc(profile.id).set({
+      await _api.put('/users/${profile.id}', {
         'displayName': profile.displayName,
         'username': profile.username,
         'photoUrl': profile.photoUrl,
@@ -83,8 +83,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         'gender': profile.gender,
         'privacySettings': profile.privacySettings,
         'email': profile.email,
-        'id': profile.id,
-      }, SetOptions(merge: true));
+      });
     } catch (e) {
       debugPrint('[PROFILE] updateProfile error: $e');
       throw Exception('Failed to update profile: $e');
@@ -97,12 +96,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       final user = _firebaseAuth.currentUser;
       if (user == null) throw Exception('No authenticated user found');
 
-      // Re-authenticate user before changing password
-      AuthCredential credential = EmailAuthProvider.credential(
+      final credential = EmailAuthProvider.credential(
         email: user.email!,
         password: currentPassword,
       );
-
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(newPassword);
     } on FirebaseAuthException catch (e) {
@@ -121,7 +118,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       if (user == null) throw Exception('No authenticated user found');
 
       if (currentPassword != null) {
-        AuthCredential credential = EmailAuthProvider.credential(
+        final credential = EmailAuthProvider.credential(
           email: user.email!,
           password: currentPassword,
         );
@@ -129,11 +126,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       }
 
       await user.verifyBeforeUpdateEmail(newEmail);
-      
-      // Update email in firestore
-      await _firestore.collection('users').doc(user.uid).update({
-        'email': newEmail,
-      });
+
+      // Persist new email to Firestore via API
+      await _api.put('/users/${user.uid}', {'email': newEmail});
     } on FirebaseAuthException catch (e) {
       debugPrint('[PROFILE] updateEmail Firebase error: ${e.code}');
       throw Exception(_mapFirebaseErrorCode(e.code));
@@ -147,17 +142,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   Future<bool> checkUsernameUniqueness(String username) async {
     try {
       final currentUid = _firebaseAuth.currentUser?.uid;
-
-      final query = await _firestore
-          .collection('users')
-          .where('username', isEqualTo: username)
-          .limit(1)
-          .get();
-
-      if (query.docs.isEmpty) return true;
-
-      // The only match is the current user's own document — allow saving same username
-      return query.docs.first.id == currentUid;
+      final raw = await _api.get('/users?username=${Uri.encodeComponent(username)}') as List;
+      if (raw.isEmpty) return true;
+      final match = raw.first as Map<String, dynamic>;
+      return (match['uid'] as String?) == currentUid;
     } catch (e) {
       debugPrint('[PROFILE] checkUsernameUniqueness error: $e');
       return true;
@@ -170,7 +158,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       throw Exception('Couldn\'t update your profile photo right now.');
     }
 
-    // Derive safe extension from filename
     String ext = 'jpg';
     if (imageData is ProfileImageResult) {
       final raw = imageData.fileName.split('.').last.toLowerCase();
@@ -184,7 +171,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
     final ref = _firebaseStorage.ref().child(storagePath);
 
-    // Resolve upload task — all failures here are real upload failures
     UploadTask uploadTask;
     if (imageData is ProfileImageResult) {
       final mime = _mimeFromFileName(imageData.fileName);
@@ -202,24 +188,18 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     }
 
     try {
-      // ── Step 1: upload ────────────────────────────────────────────────────
       debugPrint('[PROFILE] ⬆️ Upload started');
       final snapshot = await uploadTask;
 
-      // ── Step 2: fetch URL ─────────────────────────────────────────────────
       debugPrint('[PROFILE] ✅ Upload complete, fetching URL...');
       final downloadUrl = await snapshot.ref.getDownloadURL();
       debugPrint('[PROFILE] 🔗 URL fetched successfully');
 
-      // ── Step 3: persist to Firestore ─────────────────────────────────────
-      debugPrint('[PROFILE] 💾 Updating Firestore...');
-      await _firestore.collection('users').doc(userId).set(
-        {'photoUrl': downloadUrl},
-        SetOptions(merge: true),
-      );
-      debugPrint('[PROFILE] ✅ Firestore updated — UI refresh triggered');
+      // Persist photoUrl via API instead of direct Firestore
+      debugPrint('[PROFILE] 💾 Updating profile via API...');
+      await _api.put('/users/$userId', {'photoUrl': downloadUrl});
+      debugPrint('[PROFILE] ✅ Profile updated via API');
 
-      // ── Step 4: sync to Firebase Auth (best-effort, fully isolated) ───────
       try {
         final user = _firebaseAuth.currentUser;
         if (user != null && user.uid == userId) {

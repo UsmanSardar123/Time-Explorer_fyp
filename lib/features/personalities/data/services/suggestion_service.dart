@@ -1,40 +1,25 @@
-// FILE: lib/features/personalities/data/services/suggestion_service.dart
-// PURPOSE: Generates 3 follow-up question chips via a lightweight Gemini call after each response.
-// SPRINT: 4
-
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:timeexplorer/core/config/app_config.dart';
+import 'package:timeexplorer/core/services/api_service.dart';
 import '../models/message_model.dart';
 import '../../domain/entities/character.dart';
 
 class SuggestionService {
-  static const _modelName = AppConfig.geminiModel;
+  final ApiService _api;
 
-  const SuggestionService();
+  SuggestionService({ApiService? api}) : _api = api ?? ApiService();
 
   Future<List<String>> getSuggestions({
     required Character character,
     required List<MessageModel> recentMessages,
   }) async {
-    final key = AppConfig.geminiApiKey;
-    if (key.isEmpty) return [];
-
     try {
-      final model = GenerativeModel(
-        model: _modelName,
-        apiKey: key,
-        generationConfig: GenerationConfig(maxOutputTokens: 150),
-      );
-
       final transcript = recentMessages
           .reversed
           .take(6)
           .toList()
           .reversed
-          .map((m) =>
-              '${m.role == MessageRole.user ? "User" : character.name}: ${m.content}')
+          .map((m) => '${m.role == MessageRole.user ? "User" : character.name}: ${m.content}')
           .join('\n');
 
       final prompt =
@@ -42,11 +27,8 @@ class SuggestionService {
           'follow-up questions a curious student might ask. Each question max 8 words. '
           'Return as JSON array of strings only. No other text.\n\n$transcript';
 
-      final response = await model
-          .generateContent([Content.text(prompt)]).timeout(
-              const Duration(seconds: 10));
-
-      final raw = response.text?.trim() ?? '';
+      final data = await _api.post('/ai/ask', {'prompt': prompt});
+      final raw = (data['response'] as String? ?? '').trim();
       if (raw.isEmpty) return [];
 
       final cleaned = raw

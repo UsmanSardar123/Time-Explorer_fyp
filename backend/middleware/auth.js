@@ -12,10 +12,12 @@ function verifyToken(req, res, next) {
 
   var authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.warn('[auth] Missing/malformed Authorization header', { method: req.method, url: req.url, ip: req.ip });
     return res.status(401).json({ error: 'Missing or invalid Authorization header' });
   }
   var token = authHeader.slice(7).trim();
   if (!token) {
+    console.warn('[auth] Empty token', { method: req.method, url: req.url, ip: req.ip });
     return res.status(401).json({ error: 'Missing or invalid Authorization header' });
   }
   auth.verifyIdToken(token)
@@ -23,7 +25,8 @@ function verifyToken(req, res, next) {
       req.user = decoded;
       next();
     })
-    .catch(function() {
+    .catch(function(err) {
+      console.warn('[auth] Token verification failed', { url: req.url, ip: req.ip, reason: err.code || err.message });
       res.status(401).json({ error: 'Invalid or expired token' });
     });
 }

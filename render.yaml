@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: time-explorer-api
+    env: node
+    region: oregon          # Free tier region; change to frankfurt for closer EU latency
+    plan: free
+    rootDir: backend        # Node app lives in backend/ subdirectory
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      # Set these two in the Render dashboard (not here — they are secrets):
+      #   GEMINI_API_KEY        — your Gemini API key
+      #   FIREBASE_SERVICE_ACCOUNT_KEY — full service account JSON as one-line string

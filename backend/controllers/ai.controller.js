@@ -1,3 +1,4 @@
+var env = require('../config/env');
 var GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 var TIMEOUT_MS = 15000;
 
@@ -8,14 +9,14 @@ function ask(req, res, next) {
     return res.status(400).json({ error: 'prompt is required and must be a non-empty string' });
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!env.GEMINI_API_KEY) {
     return res.status(500).json({ error: 'AI service is not configured' });
   }
 
   var controller = new AbortController();
   var timeoutId = setTimeout(function() { controller.abort(); }, TIMEOUT_MS);
 
-  fetch(GEMINI_URL + '?key=' + process.env.GEMINI_API_KEY, {
+  fetch(GEMINI_URL + '?key=' + env.GEMINI_API_KEY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt.trim() }] }] }),

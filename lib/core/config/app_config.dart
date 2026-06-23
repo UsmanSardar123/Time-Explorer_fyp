@@ -28,6 +28,13 @@ class AppConfig {
   static String get geminiApiKey => (_runtimeGeminiKey ?? _geminiKey).trim();
   static String get pixabayApiKey => _pixabayKey.trim();
 
+  // Node.js backend base URL — override via --dart-define=BACKEND_URL=http://192.168.x.x:5000/api
+  static const String _defaultBackendUrl = String.fromEnvironment(
+    'BACKEND_URL',
+    defaultValue: 'http://10.0.2.2:5000/api',
+  );
+  static String get backendBaseUrl => _defaultBackendUrl;
+
   /// True when Gemini API key is present. Use this to gate all AI features.
   static bool get isAiEnabled => geminiApiKey.isNotEmpty;
 

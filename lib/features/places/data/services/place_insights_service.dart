@@ -1,65 +1,40 @@
 // FILE: lib/features/places/data/services/place_insights_service.dart
-// PURPOSE: Fetches AI-generated insights for a place, using Firestore as a 7-day cache.
-// SPRINT: 3 — TASK 3.5
+// PURPOSE: Fetches AI-generated insights for a place via backend API, with in-memory 7-day cache.
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:timeexplorer/core/config/app_config.dart';
+import 'package:timeexplorer/core/services/api_service.dart';
 import 'package:timeexplorer/features/places/domain/entities/place.dart';
 
 class PlaceInsightsService {
-  static const _collection = 'aiInsightsCache';
-  static const _modelName = AppConfig.geminiModel;
+  static final Map<String, _InsightCacheEntry> _cache = {};
 
-  final FirebaseFirestore _firestore;
-
-  PlaceInsightsService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  PlaceInsightsService();
 
   Future<List<String>> getInsights(Place place) async {
     final cacheKey = place.aiInsightsCacheKey ?? place.id;
+    final cached = _cache[cacheKey];
+    if (cached != null && !cached.isExpired) return cached.insights;
+
     try {
-      final cached = await _loadFromCache(cacheKey);
-      if (cached != null) return cached;
-      return await _fetchFromGemini(place, cacheKey);
+      return await _fetchFromApi(place, cacheKey);
     } catch (e) {
       debugPrint('[PlaceInsightsService] Failed for ${place.id}: $e');
-      return [];
+      return cached?.insights ?? [];
     }
   }
 
-  Future<List<String>?> _loadFromCache(String cacheKey) async {
-    try {
-      final doc = await _firestore.collection(_collection).doc(cacheKey).get();
-      if (!doc.exists) return null;
-      final data = doc.data()!;
-      final expiresAt = (data['expiresAt'] as Timestamp?)?.toDate();
-      if (expiresAt == null || DateTime.now().isAfter(expiresAt)) return null;
-      final raw = data['insights'] as List<dynamic>?;
-      return raw?.map((e) => e.toString()).toList();
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<List<String>> _fetchFromGemini(Place place, String cacheKey) async {
-    if (!AppConfig.isAiEnabled) return [];
-    final apiKey = AppConfig.geminiApiKey;
-
-    final model = GenerativeModel(model: _modelName, apiKey: apiKey);
+  Future<List<String>> _fetchFromApi(Place place, String cacheKey) async {
     final prompt =
         'Give me exactly 3 surprising, lesser-known facts about ${place.name} '
         'in ${place.country ?? place.location}. Each fact must be historically accurate, '
         'max 25 words, and begin with a number (1., 2., 3.). '
         'Return only the 3 facts, no intro text.';
 
-    final response = await model
-        .generateContent([Content.text(prompt)]).timeout(
-            const Duration(seconds: 15));
-    final text = response.text ?? '';
+    final api = ApiService();
+    final data = await api.post('/ai/ask', {'prompt': prompt});
+    final text = (data['response'] as String? ?? '').trim();
     final facts = _parseFacts(text);
-    if (facts.isNotEmpty) await _writeToCache(cacheKey, place.id, facts);
+    if (facts.isNotEmpty) _cache[cacheKey] = _InsightCacheEntry(facts);
     return facts;
   }
 
@@ -77,15 +52,13 @@ class PlaceInsightsService {
     }
     return facts;
   }
+}
 
-  Future<void> _writeToCache(
-      String cacheKey, String placeId, List<String> insights) async {
-    final now = DateTime.now();
-    await _firestore.collection(_collection).doc(cacheKey).set({
-      'placeId': placeId,
-      'insights': insights,
-      'generatedAt': Timestamp.fromDate(now),
-      'expiresAt': Timestamp.fromDate(now.add(const Duration(days: 7))),
-    });
-  }
+class _InsightCacheEntry {
+  final List<String> insights;
+  final DateTime _createdAt;
+
+  _InsightCacheEntry(this.insights) : _createdAt = DateTime.now();
+
+  bool get isExpired => DateTime.now().difference(_createdAt).inDays >= 7;
 }

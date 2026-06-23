@@ -1,15 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:http/http.dart' as http;
-import 'package:timeexplorer/core/config/app_config.dart';
+import 'package:timeexplorer/core/services/api_service.dart';
 
 class PlaceImageService {
   static const int _thumbWidth = 800;
   static const int _maxRaw = 20;   // collected before filtering
   static const int _maxFinal = 10; // kept after filtering
   static const int _perQueryLimit = 6;
-  static String get _geminiModel => AppConfig.geminiModel;
 
   static const String _userAgent =
       'TimeExplorer/1.0 (Flutter educational app; usmansardar037@gmail.com)';
@@ -159,12 +157,6 @@ class PlaceImageService {
 
   static Future<List<String>> _geminiExpandQueries(String placeName) async {
     try {
-      final apiKey = AppConfig.geminiApiKey;
-      if (apiKey.isEmpty) {
-        debugPrint('[Gallery] Gemini key empty — skipping');
-        return [];
-      }
-      final model = GenerativeModel(model: _geminiModel, apiKey: apiKey);
       final prompt =
           'You are a photo search assistant. Given a place name, return exactly '
           '4 short image search queries for Wikimedia Commons that would find '
@@ -172,11 +164,9 @@ class PlaceImageService {
           'detail view). Return ONLY the 4 queries, one per line, no numbering, '
           'no extra text.\nPlace: $placeName';
 
-      final response = await model
-          .generateContent([Content.text(prompt)])
-          .timeout(const Duration(seconds: 12));
-
-      final text = response.text ?? '';
+      final api = ApiService();
+      final data = await api.post('/ai/ask', {'prompt': prompt});
+      final text = (data['response'] as String? ?? '').trim();
       return text
           .split('\n')
           .map((l) => l.trim())
@@ -184,7 +174,7 @@ class PlaceImageService {
           .take(4)
           .toList();
     } catch (e) {
-      debugPrint('[Gallery] Gemini EXCEPTION: $e');
+      debugPrint('[Gallery] AI query expansion failed (non-fatal): $e');
       return [];
     }
   }

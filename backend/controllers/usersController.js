@@ -33,7 +33,7 @@ function getUserByUid(req, res, next) {
 function createUser(req, res, next) {
   var email = req.body.email;
   var name = req.body.name;
-  var role = req.body.role;
+  var role = req.body.role || 'user';
   db.collection('users').add({ email: email, name: name, role: role, progress: {} })
     .then(function(docRef) {
       res.status(201).json({ uid: docRef.id, message: 'User created' });
@@ -43,9 +43,16 @@ function createUser(req, res, next) {
 
 function updateUser(req, res, next) {
   var uid = req.params.uid;
-  var body = Object.assign({}, req.body);
-  delete body.uid;
-  db.collection('users').doc(uid).set(body, { merge: true })
+  // Whitelist updatable fields — prevents arbitrary Firestore field injection
+  var allowed = ['email', 'name', 'role', 'progress', 'avatarUrl'];
+  var update = {};
+  allowed.forEach(function(key) {
+    if (req.body[key] !== undefined) update[key] = req.body[key];
+  });
+  if (Object.keys(update).length === 0) {
+    return res.status(400).json({ error: 'No valid fields provided for update' });
+  }
+  db.collection('users').doc(uid).set(update, { merge: true })
     .then(function() {
       res.json({ message: 'User updated' });
     })

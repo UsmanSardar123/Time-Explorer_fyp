@@ -1,58 +1,44 @@
-// FILE: lib/features/places/data/services/local_guide_service.dart
-// PURPOSE: Lightweight Gemini streaming service for the Talk to Local guide chat.
-// SPRINT: local-guide
-
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:timeexplorer/core/config/app_config.dart';
+import 'package:timeexplorer/core/services/api_service.dart';
 
 class LocalGuideService {
-  static String get _model => AppConfig.geminiModel;
-  static const Duration _timeout = Duration(seconds: 15);
-
   const LocalGuideService();
 
+  // Keep Stream<String> — LocalGuideCubit uses `await for` over the stream.
+  // The backend returns a single batch response, yielded as one chunk.
   Stream<String> sendStream({
     required String systemPrompt,
     required List<Map<String, String>> history,
   }) async* {
-    if (AppConfig.geminiApiKey.isEmpty) {
-      throw Exception('Gemini API key is missing.');
-    }
-
-    final model = GenerativeModel(
-      model: _model,
-      apiKey: AppConfig.geminiApiKey,
-      systemInstruction: Content.system(systemPrompt),
-    );
-
-    final priorTurns = history.length > 1
-        ? history.sublist(0, history.length - 1)
-        : const <Map<String, String>>[];
-    final currentMessage = history.last['content'] ?? '';
-
-    final geminiHistory = priorTurns.map((h) {
-      return h['role'] == 'user'
-          ? Content.text(h['content'] ?? '')
-          : Content('model', [TextPart(h['content'] ?? '')]);
-    }).toList();
-
+    final api = ApiService();
     try {
-      final chat =
-          model.startChat(history: geminiHistory.isEmpty ? null : geminiHistory);
-      final stream = chat
-          .sendMessageStream(Content.text(currentMessage))
-          .timeout(_timeout);
+      final currentMessage = history.isNotEmpty ? (history.last['content'] ?? '') : '';
+      final priorTurns = history.length > 1
+          ? history.sublist(0, history.length - 1)
+          : <Map<String, String>>[];
 
-      await for (final response in stream) {
-        final text = response.text;
-        if (text != null && text.isNotEmpty) yield text;
+      final buffer = StringBuffer();
+      buffer.writeln('ROLE:\n$systemPrompt\n');
+      if (priorTurns.isNotEmpty) {
+        buffer.writeln('CONVERSATION HISTORY:');
+        for (final h in priorTurns) {
+          final role = h['role'] == 'user' ? 'Visitor' : 'Guide';
+          buffer.writeln('$role: ${h['content']}');
+        }
+        buffer.writeln();
       }
-    } on TimeoutException {
+      buffer.writeln('Visitor: $currentMessage');
+      buffer.writeln('\nRespond as the local guide:');
+
+      final data = await api.post('/ai/ask', {'prompt': buffer.toString()});
+      final text = (data['response'] as String? ?? '').trim();
+      if (text.isNotEmpty) yield text;
+    } on ApiException catch (e) {
+      debugPrint('[LocalGuideService] API error: $e');
+      throw Exception(e.isUnauthorized ? 'Please sign in again.' : 'Something went wrong. Please try again.');
+    } on ApiNetworkException {
       throw Exception('Response timed out. Please try again.');
-    } on InvalidApiKey {
-      throw Exception('Invalid Gemini API key.');
     } catch (e) {
       debugPrint('[LocalGuideService] error: $e');
       rethrow;
