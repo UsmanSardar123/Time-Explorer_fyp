@@ -49,6 +49,10 @@ app.*.map.json
 # Environment secrets
 .env
 
+# Firebase Admin SDK service account keys — NEVER commit these
+*firebase-adminsdk*.json
+serviceAccountKey.json
+
 # Android signing — NEVER commit these
 android/key.properties
 *.jks

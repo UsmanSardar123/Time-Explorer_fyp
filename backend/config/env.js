@@ -1,12 +1,5 @@
 require('dotenv').config();
 
-const required = ['FIREBASE_SERVICE_ACCOUNT_KEY'];
-
-required.forEach(function(key) {
-  if (!process.env[key]) {
-    throw new Error('Missing required env variable: ' + key);
-  }
-});
 
 module.exports = {
   PORT: process.env.PORT || 5000,

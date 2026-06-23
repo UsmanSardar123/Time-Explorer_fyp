@@ -1,0 +1,6 @@
+# Firebase service account key — contains private credentials, never commit
+serviceAccountKey.json
+*firebase-adminsdk*.json
+
+# Environment secrets
+.env

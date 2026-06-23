@@ -1,13 +1,30 @@
 var admin = require('firebase-admin');
 
-if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+var serviceAccount;
+try {
+  serviceAccount = require('../serviceAccountKey.json');
+} catch (e) {
   throw new Error(
-    'Missing FIREBASE_SERVICE_ACCOUNT_KEY env var. ' +
-    'See backend/.env.example for setup instructions.'
+    'serviceAccountKey.json not found in backend/. ' +
+    'Download it from Firebase Console → Project Settings → Service Accounts → Generate new private key.'
   );
 }
 
-var serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+if (!serviceAccount.private_key) {
+  throw new Error(
+    'serviceAccountKey.json is missing the private_key field. ' +
+    'Ensure you downloaded the correct service account JSON from Firebase Console.'
+  );
+}
+
+if (!serviceAccount.client_email) {
+  throw new Error(
+    'serviceAccountKey.json is missing the client_email field. ' +
+    'Ensure you downloaded the correct service account JSON from Firebase Console.'
+  );
+}
+
+serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -15,5 +32,7 @@ admin.initializeApp({
 
 var db = admin.firestore();
 var auth = admin.auth();
+
+console.log('Firebase initialized successfully');
 
 module.exports = { admin: admin, db: db, auth: auth };
