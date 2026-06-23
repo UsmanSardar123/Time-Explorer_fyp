@@ -20,6 +20,10 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/api', routes);
 
+app.get('/', function(_req, res) {
+  res.json({ status: 'ok', service: 'Time Explorer API' });
+});
+
 app.use(function(_req, res) {
   res.status(404).json({ error: 'Route not found' });
 });
