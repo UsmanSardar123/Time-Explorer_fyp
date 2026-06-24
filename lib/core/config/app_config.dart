@@ -31,7 +31,7 @@ class AppConfig {
   // Node.js backend base URL — override via --dart-define=BACKEND_URL=http://192.168.x.x:5000/api
   static const String _defaultBackendUrl = String.fromEnvironment(
     'BACKEND_URL',
-    defaultValue: 'http://10.0.2.2:5000/api',
+    defaultValue: 'http://127.0.0.1:3000/api',
   );
   static String get backendBaseUrl => _defaultBackendUrl;
 
