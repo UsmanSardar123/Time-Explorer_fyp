@@ -335,7 +335,7 @@ class _ChatBody extends StatelessWidget {
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
                       ),
-                      itemBuilder: (_, __) => const Icon(Icons.auto_stories_rounded, size: 80),
+                      itemBuilder: (_, _) => const Icon(Icons.auto_stories_rounded, size: 80),
                     ),
                   ),
                 ),

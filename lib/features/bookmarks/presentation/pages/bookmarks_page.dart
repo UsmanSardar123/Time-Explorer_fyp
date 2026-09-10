@@ -186,7 +186,7 @@ class _PlacesTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
       physics: const BouncingScrollPhysics(),
       itemCount: places.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (_, i) =>
           _PlaceCard(place: places[i], provider: provider),
     );
@@ -314,7 +314,7 @@ class _EventsTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
       physics: const BouncingScrollPhysics(),
       itemCount: events.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (_, i) => _EventCard(event: events[i]),
     );
   }
@@ -445,7 +445,7 @@ class _CharactersTab extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
       physics: const BouncingScrollPhysics(),
       itemCount: characters.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (_, i) =>
           _CharacterCard(character: characters[i], provider: provider),
     );
@@ -507,11 +507,11 @@ class _CharacterCard extends StatelessWidget {
                       width: 56,
                       height: 56,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
+                      placeholder: (_, _) => Container(
                           width: 56,
                           height: 56,
                           color: AppTheme.surfaceLow),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: (_, _, _) => Container(
                         width: 56,
                         height: 56,
                         color: AppTheme.surfaceLow,

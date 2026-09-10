@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:timeexplorer/models/storyboard_model.dart';
 import 'package:timeexplorer/services/storyboard_service.dart';
 import 'package:timeexplorer/views/storyboard_view.dart';
 

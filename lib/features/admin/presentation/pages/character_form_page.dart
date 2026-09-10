@@ -327,7 +327,7 @@ class _CharacterFormPageState extends State<CharacterFormPage> {
 
   Widget _categoryDropdown() {
     return DropdownButtonFormField<CharacterCategory>(
-      value: _category,
+      initialValue: _category,
       style: GoogleFonts.plusJakartaSans(fontSize: 14, color: _dark),
       decoration: InputDecoration(
         labelText: 'Category *',

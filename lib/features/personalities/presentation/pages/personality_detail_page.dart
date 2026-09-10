@@ -167,8 +167,8 @@ class _HeroBanner extends StatelessWidget {
                     'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
                   },
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(color: AppTheme.surfaceLow),
-                  errorWidget: (_, __, ___) => Container(
+                  placeholder: (_, _) => Container(color: AppTheme.surfaceLow),
+                  errorWidget: (_, _, _) => Container(
                     color: AppTheme.surfaceLow,
                     child: const Icon(Icons.person_rounded, color: Colors.white24, size: 80),
                   ),
@@ -270,7 +270,7 @@ class _PulsingChatButtonState extends State<_PulsingChatButton>
     final name = widget.character.name.split(' ').last;
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) => Transform.scale(
+      builder: (_, _) => Transform.scale(
         scale: _scale.value,
         child: GestureDetector(
           onTap: () {

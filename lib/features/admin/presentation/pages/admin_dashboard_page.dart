@@ -340,7 +340,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       decoration: BoxDecoration(
         color: const Color(0xFF5B7FA6).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF5Ba7FA6).withValues(alpha: 0.25)),
+        border: Border.all(color: const Color(0xff5ba7fa6).withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

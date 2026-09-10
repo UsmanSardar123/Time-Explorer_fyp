@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeexplorer/core/services/gamification_service.dart';
-import 'package:timeexplorer/features/gamification/domain/entities/user_progress.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

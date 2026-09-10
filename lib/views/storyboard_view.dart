@@ -212,10 +212,10 @@ class _StoryboardViewState extends State<StoryboardView> {
                         child: CachedNetworkImage(
                           imageUrl: panel.imageUrl,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => const Center(
+                          placeholder: (_, _) => const Center(
                             child: CircularProgressIndicator(color: _accent),
                           ),
-                          errorWidget: (_, __, ___) => _imagePlaceholder(),
+                          errorWidget: (_, _, _) => _imagePlaceholder(),
                         ),
                       ),
                     )

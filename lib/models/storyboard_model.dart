@@ -2,6 +2,7 @@
 ///
 /// [StoryboardPanel] represents a single visual panel in a storyboard sequence.
 /// [Storyboard] is the master model that groups panels into a navigable story.
+library;
 
 class StoryboardPanel {
   final int panelNumber;

@@ -103,7 +103,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
       child: IgnorePointer(
         child: AnimatedBuilder(
           animation: _pulseCtrl,
-          builder: (_, __) {
+          builder: (_, _) {
             return Stack(
               children: [
                 Positioned(
@@ -147,7 +147,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   Widget _buildLogo() {
     return AnimatedBuilder(
       animation: _pulseCtrl,
-      builder: (_, __) {
+      builder: (_, _) {
         return Container(
           width: 100,
           height: 100,

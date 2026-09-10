@@ -120,7 +120,7 @@ class _TimePortalEntryState extends State<TimePortalEntry>
           const _SpaceBackground(),
           AnimatedBuilder(
             animation: Listenable.merge([_pulseCtrl, _orbitCtrl, _orbTapCtrl]),
-            builder: (_, __) => CustomPaint(
+            builder: (_, _) => CustomPaint(
               painter: _PortalPainter(
                 pulse: _pulseCtrl.value,
                 orbit: _orbitCtrl.value,

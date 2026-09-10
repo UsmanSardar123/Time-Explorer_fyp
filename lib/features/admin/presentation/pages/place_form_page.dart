@@ -374,7 +374,7 @@ class _PlaceFormPageState extends State<PlaceFormPage> {
 
   Widget _categoryDropdown() {
     return DropdownButtonFormField<String>(
-      value: _category,
+      initialValue: _category,
       style: GoogleFonts.plusJakartaSans(fontSize: 14, color: _dark),
       decoration: InputDecoration(
         labelText: 'Category *',

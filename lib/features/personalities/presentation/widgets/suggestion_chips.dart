@@ -26,7 +26,7 @@ class SuggestionChips extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: suggestions.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, i) =>
             _Chip(text: suggestions[i], onTap: () => onChipTapped(suggestions[i])),
       ),

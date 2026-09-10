@@ -79,7 +79,7 @@ class _CharactersManagementPageState extends State<CharactersManagementPage> {
         children: [
           _buildSearchBar(),
           Consumer<AdminProvider>(
-            builder: (_, provider, __) => _buildCivFilters(provider.civilizations),
+            builder: (_, provider, _) => _buildCivFilters(provider.civilizations),
           ),
           Expanded(
             child: Consumer<AdminProvider>(

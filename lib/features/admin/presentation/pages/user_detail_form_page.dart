@@ -329,7 +329,7 @@ class _UserDetailFormPageState extends State<UserDetailFormPage> {
 
   Widget _buildGenderDropdown() {
     return DropdownButtonFormField<String>(
-      value: _gender,
+      initialValue: _gender,
       style: GoogleFonts.plusJakartaSans(color: _dark, fontSize: 14),
       decoration: InputDecoration(
         labelText: 'Gender',

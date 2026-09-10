@@ -640,7 +640,7 @@ class _ContextRow extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: events.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (_, i) => _ContextChip(
               event: events[i],
               onTap: () => onTap(events[i]),

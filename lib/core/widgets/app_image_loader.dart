@@ -138,7 +138,7 @@ class _AppImageLoaderState extends State<AppImageLoader> {
         fit: widget.fit,
         width: widget.width,
         height: widget.height,
-        errorBuilder: (_, __, ___) {
+        errorBuilder: (_, _, _) {
           WidgetsBinding.instance.addPostFrameCallback((_) => _handleError());
           return _buildLoading();
         },
@@ -153,7 +153,7 @@ class _AppImageLoaderState extends State<AppImageLoader> {
           fit: widget.fit,
           width: widget.width,
           height: widget.height,
-          errorBuilder: (_, __, ___) {
+          errorBuilder: (_, _, _) {
             WidgetsBinding.instance.addPostFrameCallback((_) => _handleError());
             return _buildLoading();
           },
@@ -169,8 +169,8 @@ class _AppImageLoaderState extends State<AppImageLoader> {
           fit: widget.fit,
           width: widget.width,
           height: widget.height,
-          placeholder: (_, __) => _buildLoading(),
-          errorWidget: (_, __, ___) {
+          placeholder: (_, _) => _buildLoading(),
+          errorWidget: (_, _, _) {
             // Silently rotate to the next fallback without crashing the UI.
             WidgetsBinding.instance.addPostFrameCallback((_) => _handleError());
             return _buildLoading();

@@ -54,7 +54,7 @@ class XPBar extends StatelessWidget {
                 tween: Tween(begin: 0, end: p.xpProgress),
                 duration: const Duration(milliseconds: 600),
                 curve: Curves.easeOut,
-                builder: (_, value, __) => LinearProgressIndicator(
+                builder: (_, value, _) => LinearProgressIndicator(
                   value: value,
                   minHeight: 8,
                   borderRadius: BorderRadius.circular(6),

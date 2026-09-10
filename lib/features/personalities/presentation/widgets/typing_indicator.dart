@@ -75,7 +75,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
         .animate(CurvedAnimation(parent: _ctrl, curve: curve));
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) => Opacity(
+      builder: (_, _) => Opacity(
         opacity: opacity.value,
         child: Transform.scale(
           scale: scale.value,

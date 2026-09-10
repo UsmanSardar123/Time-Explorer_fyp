@@ -38,7 +38,7 @@ class _ChronoLoaderState extends State<ChronoLoader>
       children: [
         AnimatedBuilder(
           animation: _ctrl,
-          builder: (_, __) => CustomPaint(
+          builder: (_, _) => CustomPaint(
             size: Size(widget.size, widget.size),
             painter: _ChronoPainter(
               progress: _ctrl.value,

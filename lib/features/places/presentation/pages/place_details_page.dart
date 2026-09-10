@@ -463,7 +463,7 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
       if (place.historicalSignificance != null) place.historicalSignificance!,
     ].where((f) => f.trim().isNotEmpty).take(5).toList();
 
-    QuickFactItem _fact(IconData icon, String label, String value, String desc) =>
+    QuickFactItem fact(IconData icon, String label, String value, String desc) =>
         QuickFactItem(
           title: label,
           value: value,
@@ -532,9 +532,9 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
         children: [
           Row(
             children: [
-              _buildInfoTile(_fact(Icons.account_balance_rounded, 'CIVILIZATION',
+              _buildInfoTile(fact(Icons.account_balance_rounded, 'CIVILIZATION',
                   place.civilization ?? 'Unknown', civilizationDesc)),
-              _buildInfoTile(_fact(Icons.architecture_rounded, 'STYLE',
+              _buildInfoTile(fact(Icons.architecture_rounded, 'STYLE',
                   place.architecturalStyle ?? 'Classical', styleDesc)),
             ],
           ),
@@ -544,9 +544,9 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
           ),
           Row(
             children: [
-              _buildInfoTile(_fact(Icons.person_rounded, 'BUILT BY',
+              _buildInfoTile(fact(Icons.person_rounded, 'BUILT BY',
                   place.builtBy ?? 'Unknown', builtByDesc)),
-              _buildInfoTile(_fact(Icons.calendar_today_rounded, 'DATE',
+              _buildInfoTile(fact(Icons.calendar_today_rounded, 'DATE',
                   place.constructionDate ?? 'TBA', dateDesc)),
             ],
           ),
@@ -556,9 +556,9 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
           ),
           Row(
             children: [
-              _buildInfoTile(_fact(Icons.public_rounded, 'COUNTRY',
+              _buildInfoTile(fact(Icons.public_rounded, 'COUNTRY',
                   place.country ?? 'Unknown', countryDesc)),
-              _buildInfoTile(_fact(Icons.verified_rounded, 'UNESCO',
+              _buildInfoTile(fact(Icons.verified_rounded, 'UNESCO',
                   place.unescoStatus ?? 'Not Listed', unescoDesc)),
             ],
           ),

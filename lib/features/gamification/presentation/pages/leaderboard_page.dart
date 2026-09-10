@@ -172,7 +172,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 4,
                     ),
                   ],
@@ -204,7 +204,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: _primary.withOpacity(0.1),
+            color: _primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
@@ -260,15 +260,15 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isCurrentUser ? _primary.withOpacity(0.08) : Colors.white,
+        color: isCurrentUser ? _primary.withValues(alpha: 0.08) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isCurrentUser ? _primary.withOpacity(0.3) : _surfaceLow,
+          color: isCurrentUser ? _primary.withValues(alpha: 0.3) : _surfaceLow,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -412,12 +412,12 @@ class _UserAvatar extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.cover,
-        errorWidget: (_, __, ___) => _InitialsAvatar(
+        errorWidget: (_, _, _) => _InitialsAvatar(
           initials: _initials,
           bgColor: _bgColor,
           size: size,
         ),
-        placeholder: (_, __) => _InitialsAvatar(
+        placeholder: (_, _) => _InitialsAvatar(
           initials: _initials,
           bgColor: _bgColor,
           size: size,

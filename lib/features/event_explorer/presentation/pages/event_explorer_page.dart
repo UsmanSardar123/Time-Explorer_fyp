@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timeexplorer/core/router/app_transitions.dart';
@@ -133,176 +134,186 @@ class _EventExplorerViewState extends State<_EventExplorerView> {
             child: SafeArea(
               child: Column(
                 children: [
-                _Header(controller: _searchController, onSearch: _onSearch),
-            BlocBuilder<EventExplorerCubit, EventExplorerState>(
-              buildWhen: (prev, next) =>
-                  next is EventExplorerLoaded || next is EventExplorerLoading,
-              builder: (context, state) {
-                final selected = state is EventExplorerLoaded
-                    ? state.selectedCategory
-                    : null;
-                return Row(
-                  children: [
-                    Expanded(
-                      child: CategoryFilterBar(
-                        selected: selected,
-                        onSelect: (cat) {
-                          _searchController.clear();
-                          context
-                              .read<EventExplorerCubit>()
-                              .filterByCategory(cat);
-                        },
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: _ViewToggle(
-                        isTimeline: _timelineView,
-                        onToggle: () =>
-                            setState(() => _timelineView = !_timelineView),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: BlocBuilder<EventExplorerCubit, EventExplorerState>(
-                builder: (context, state) {
-                  if (state is EventExplorerLoading ||
-                      state is EventExplorerInitial) {
-                    return const EventShimmerList();
-                  }
-                  if (state is EventExplorerError) {
-                    return _ErrorView(message: state.message);
-                  }
-                  if (state is EventExplorerLoaded) {
-                    if (state.events.isEmpty) {
-                      return const _EmptyView();
-                    }
-                    final progress =
-                        context.watch<GamificationProvider>().progress;
-                    final allEvents = EventStaticDataSource.allEvents;
-
-                    if (_seenLoaded && !_bootstrapped) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!mounted) return;
-                        final unlockedNow = allEvents
-                            .where((e) => EventUnlockService.isUnlocked(
-                                  event: e,
-                                  allEvents: allEvents,
-                                  progress: progress,
-                                ))
-                            .map((e) => e.id);
-                        _bootstrapSeenIfNeeded(unlockedNow);
-                      });
-                    }
-
-                    void openLocked(event) {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => MemoryLockScreen(
-                          event: event,
-                          required: EventUnlockService.xpThreshold(
-                              event, allEvents),
-                          hint: EventUnlockService.unlockHint(
-                            event: event,
-                            allEvents: allEvents,
+                  _Header(controller: _searchController, onSearch: _onSearch),
+                  BlocBuilder<EventExplorerCubit, EventExplorerState>(
+                    buildWhen: (prev, next) =>
+                        next is EventExplorerLoaded ||
+                        next is EventExplorerLoading,
+                    builder: (context, state) {
+                      final selected = state is EventExplorerLoaded
+                          ? state.selectedCategory
+                          : null;
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: CategoryFilterBar(
+                              selected: selected,
+                              onSelect: (cat) {
+                                _searchController.clear();
+                                context
+                                    .read<EventExplorerCubit>()
+                                    .filterByCategory(cat);
+                              },
+                            ),
                           ),
-                        ),
-                      ));
-                    }
-
-                    void openDetail(event) {
-                      Navigator.of(context).push(
-                        AppTransitions.categoryReveal(
-                          BlocProvider.value(
-                            value: context.read<EventExplorerCubit>(),
-                            child: EventDetailPage(event: event),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: _ViewToggle(
+                              isTimeline: _timelineView,
+                              onToggle: () => setState(
+                                () => _timelineView = !_timelineView,
+                              ),
+                            ),
                           ),
-                          event.category.color,
-                        ),
+                        ],
                       );
-                    }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: BlocBuilder<EventExplorerCubit, EventExplorerState>(
+                      builder: (context, state) {
+                        if (state is EventExplorerLoading ||
+                            state is EventExplorerInitial) {
+                          return const EventShimmerList();
+                        }
+                        if (state is EventExplorerError) {
+                          return _ErrorView(message: state.message);
+                        }
+                        if (state is EventExplorerLoaded) {
+                          if (state.events.isEmpty) {
+                            return const _EmptyView();
+                          }
+                          final progress = context
+                              .watch<GamificationProvider>()
+                              .progress;
+                          final allEvents = EventStaticDataSource.allEvents;
 
-                    if (_timelineView) {
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: GamePathTimeline(
-                          events: state.events,
-                          onTap: (event) {
-                            if (!EventUnlockService.isUnlocked(
-                              event: event,
-                              allEvents: allEvents,
-                              progress: progress,
-                            )) {
-                              openLocked(event);
-                              return;
-                            }
-                            openDetail(event);
-                          },
-                        ),
-                      );
-                    }
-                    return ListView.builder(
-                      padding: const EdgeInsets.only(top: 4, bottom: 24),
-                      cacheExtent: 600,
-                      itemCount: state.events.length,
-                      itemBuilder: (context, i) {
-                        final event = state.events[i];
-                        final unlocked = EventUnlockService.isUnlocked(
-                          event: event,
-                          allEvents: allEvents,
-                          progress: progress,
-                        );
-                        final reqLvl = EventUnlockService.xpThreshold(
-                            event, allEvents);
-                        final card = EventCard(
-                          key: ValueKey(event.id),
-                          event: event,
-                          isFavorite: state.isFavorite(event.id),
-                          searchQuery: state.searchQuery,
-                          onTap: () => unlocked
-                              ? openDetail(event)
-                              : openLocked(event),
-                        );
+                          if (_seenLoaded && !_bootstrapped) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (!mounted) return;
+                              final unlockedNow = allEvents
+                                  .where(
+                                    (e) => EventUnlockService.isUnlocked(
+                                      event: e,
+                                      allEvents: allEvents,
+                                      progress: progress,
+                                    ),
+                                  )
+                                  .map((e) => e.id);
+                              _bootstrapSeenIfNeeded(unlockedNow);
+                            });
+                          }
 
-                        Widget content = unlocked
-                            ? card
-                            : LockedCardOverlay(
-                                requiredLevel: reqLvl,
-                                accent: event.category.color,
-                                child: card,
+                          void openLocked(event) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => MemoryLockScreen(
+                                  event: event,
+                                  required: EventUnlockService.xpThreshold(
+                                    event,
+                                    allEvents,
+                                  ),
+                                  hint: EventUnlockService.unlockHint(
+                                    event: event,
+                                    allEvents: allEvents,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          void openDetail(event) {
+                            Navigator.of(context).push(
+                              AppTransitions.categoryReveal(
+                                BlocProvider.value(
+                                  value: context.read<EventExplorerCubit>(),
+                                  child: EventDetailPage(event: event),
+                                ),
+                                event.category.color,
+                              ),
+                            );
+                          }
+
+                          if (_timelineView) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 12),
+                              child: GamePathTimeline(
+                                events: state.events,
+                                onTap: (event) {
+                                  if (!EventUnlockService.isUnlocked(
+                                    event: event,
+                                    allEvents: allEvents,
+                                    progress: progress,
+                                  )) {
+                                    openLocked(event);
+                                    return;
+                                  }
+                                  openDetail(event);
+                                },
+                              ),
+                            );
+                          }
+                          return ListView.builder(
+                            scrollCacheExtent: ScrollCacheExtent.pixels(600),
+                            padding: const EdgeInsets.only(top: 4, bottom: 24),
+                            itemCount: state.events.length,
+                            itemBuilder: (context, i) {
+                              final event = state.events[i];
+                              final unlocked = EventUnlockService.isUnlocked(
+                                event: event,
+                                allEvents: allEvents,
+                                progress: progress,
+                              );
+                              final reqLvl = EventUnlockService.xpThreshold(
+                                event,
+                                allEvents,
+                              );
+                              final card = EventCard(
+                                key: ValueKey(event.id),
+                                event: event,
+                                isFavorite: state.isFavorite(event.id),
+                                searchQuery: state.searchQuery,
+                                onTap: () => unlocked
+                                    ? openDetail(event)
+                                    : openLocked(event),
                               );
 
-                        if (unlocked && !_seenUnlocked.contains(event.id)) {
-                          content = UnlockRevealAnimation(
-                            accent: event.category.color,
-                            onShown: () => _markRevealed(event.id),
-                            child: content,
+                              Widget content = unlocked
+                                  ? card
+                                  : LockedCardOverlay(
+                                      requiredLevel: reqLvl,
+                                      accent: event.category.color,
+                                      child: card,
+                                    );
+
+                              if (unlocked &&
+                                  !_seenUnlocked.contains(event.id)) {
+                                content = UnlockRevealAnimation(
+                                  accent: event.category.color,
+                                  onShown: () => _markRevealed(event.id),
+                                  child: content,
+                                );
+                              }
+
+                              return RepaintBoundary(child: content);
+                            },
                           );
                         }
-
-                        return RepaintBoundary(child: content);
+                        return const SizedBox.shrink();
                       },
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: TimeGuide(message: 'Tap any story to start exploring! 🗺️'),
+          ),
+        ],
       ),
-    ),
-    Align(
-      alignment: Alignment.bottomRight,
-      child: TimeGuide(
-        message: 'Tap any story to start exploring! 🗺️',
-      ),
-    ),
-  ],
-),
     );
   }
 }
@@ -327,8 +338,12 @@ class _ViewToggle extends StatelessWidget {
           border: Border.all(color: AppTheme.outlineVariant),
         ),
         child: Icon(
-          isTimeline ? Icons.format_list_bulleted_rounded : Icons.timeline_rounded,
-          color: isTimeline ? AppTheme.primaryContainer : AppTheme.onSurfaceVariant,
+          isTimeline
+              ? Icons.format_list_bulleted_rounded
+              : Icons.timeline_rounded,
+          color: isTimeline
+              ? AppTheme.primaryContainer
+              : AppTheme.onSurfaceVariant,
           size: 20,
         ),
       ),
@@ -346,10 +361,17 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline_rounded,
-              color: AppTheme.onSurfaceVariant, size: 48),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppTheme.onSurfaceVariant,
+            size: 48,
+          ),
           const SizedBox(height: 12),
-          Text(message, style: AppTheme.bodySubtle, textAlign: TextAlign.center),
+          Text(
+            message,
+            style: AppTheme.bodySubtle,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 16),
           TextButton.icon(
             onPressed: () => context.read<EventExplorerCubit>().loadAll(),
@@ -371,8 +393,11 @@ class _EmptyView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.search_off_rounded,
-              color: AppTheme.onSurfaceVariant, size: 48),
+          const Icon(
+            Icons.search_off_rounded,
+            color: AppTheme.onSurfaceVariant,
+            size: 48,
+          ),
           const SizedBox(height: 12),
           Text('No events found', style: AppTheme.bodySubtle),
         ],
@@ -392,7 +417,11 @@ class _Header extends StatelessWidget {
     final canPop = Navigator.of(context).canPop();
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppTheme.spaceMD, AppTheme.spaceMD, AppTheme.spaceMD, AppTheme.spaceSM),
+        AppTheme.spaceMD,
+        AppTheme.spaceMD,
+        AppTheme.spaceMD,
+        AppTheme.spaceSM,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -430,11 +459,13 @@ class _Header extends StatelessWidget {
             onChanged: onSearch,
             decoration: InputDecoration(
               hintText: 'Search events, places, periods…',
-              prefixIcon: const Icon(Icons.search_rounded,
-                  color: AppTheme.onSurfaceVariant),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: AppTheme.onSurfaceVariant,
+              ),
               suffixIcon: ValueListenableBuilder<TextEditingValue>(
                 valueListenable: controller,
-                builder: (_, v, __) => v.text.isNotEmpty
+                builder: (_, v, _) => v.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.close_rounded, size: 18),
                         onPressed: () {
@@ -444,8 +475,10 @@ class _Header extends StatelessWidget {
                       )
                     : const SizedBox.shrink(),
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 12,
+                horizontal: 16,
+              ),
             ),
             style: GoogleFonts.beVietnamPro(fontSize: 14),
           ),

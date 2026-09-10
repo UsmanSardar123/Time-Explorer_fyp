@@ -170,7 +170,7 @@ class _LocalGuideAppBar extends StatelessWidget
                   child: CachedNetworkImage(
                     imageUrl: place.imageUrl,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => const Icon(
+                    errorWidget: (_, _, _) => const Icon(
                       Icons.location_on_rounded,
                       color: AppTheme.primaryColor,
                       size: 20,
@@ -455,7 +455,7 @@ class _TypingBubbleState extends State<_TypingBubble>
         .animate(CurvedAnimation(parent: _ctrl, curve: curve));
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) => Opacity(
+      builder: (_, _) => Opacity(
         opacity: opacity.value,
         child: Transform.scale(
           scale: scale.value,

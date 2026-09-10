@@ -39,8 +39,8 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
   String? _fullDescription;
   bool _isLoadingDescription = false;
   final WikimediaService _wikimediaService = WikimediaService();
-  int _currentFactIndex = 0;
-  int _userRating = 0;
+  final int _currentFactIndex = 0;
+  final int _userRating = 0;
   bool _isPlaying = false;
   bool _xpRewarded = false;
   Timer? _xpTimer;
@@ -433,7 +433,7 @@ class _PlaceDetailsPageState extends State<PlaceDetailsPage> {
               ),
             ],
           );
-        }).toList(),
+        }),
       ],
     );
   }

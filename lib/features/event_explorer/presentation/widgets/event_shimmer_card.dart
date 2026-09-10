@@ -57,7 +57,7 @@ class EventShimmerList extends StatelessWidget {
       padding: const EdgeInsets.only(top: 4, bottom: 24),
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 4,
-      itemBuilder: (_, __) => const EventShimmerCard(),
+      itemBuilder: (_, _) => const EventShimmerCard(),
     );
   }
 }

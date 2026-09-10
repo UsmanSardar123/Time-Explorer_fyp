@@ -51,7 +51,7 @@ class AdminSectionCard extends StatelessWidget {
                   const Divider(height: 1, indent: 64), // indent matches leading icon
               ],
             );
-          }).toList(),
+          }),
         ],
       ),
     );

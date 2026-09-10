@@ -52,7 +52,7 @@ class _TimelineMapPageState extends State<TimelineMapPage>
             flex: 3,
             child: AnimatedBuilder(
               animation: _pulseCtrl,
-              builder: (_, __) => CustomPaint(
+              builder: (_, _) => CustomPaint(
                 painter: _MapPainter(
                   active: _active,
                   pulse: _pulseCtrl.value,

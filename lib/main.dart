@@ -22,8 +22,7 @@ import 'package:timeexplorer/features/personalities/data/repositories/character_
 import 'package:timeexplorer/features/personalities/data/services/remote_config_service.dart';
 import 'package:timeexplorer/features/event_explorer/domain/entities/event_category.dart';
 import 'package:timeexplorer/features/event_explorer/domain/entities/historical_event.dart';
-import 'package:timeexplorer/features/gamification/presentation/providers/leaderboard_provider.dart';
-import 'package:timeexplorer/features/notifications/presentation/providers/notification_provider.dart';
+import 'package:timeexplorer/features/gamification/presentation/providers/leaderboard_provider.dart';import 'package:timeexplorer/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:timeexplorer/core/services/notification_service.dart';
 import 'package:timeexplorer/core/services/content_watch_service.dart';
 import 'package:timeexplorer/core/services/ambient_audio_service.dart';

@@ -87,7 +87,7 @@ class _LevelUpAnimationState extends State<_LevelUpAnimation>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) => Opacity(
+      builder: (_, _) => Opacity(
         opacity: _opacity.value,
         child: Container(
           color: Colors.black.withValues(alpha: 0.55),

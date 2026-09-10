@@ -106,8 +106,8 @@ class AppTransitions {
     return PageRouteBuilder<T>(
       transitionDuration: const Duration(milliseconds: 360),
       reverseTransitionDuration: const Duration(milliseconds: 260),
-      pageBuilder: (_, __, ___) => child,
-      transitionsBuilder: (_, animation, __, child) {
+      pageBuilder: (_, _, _) => child,
+      transitionsBuilder: (_, animation, _, child) {
         final scale = Tween<double>(begin: 0.88, end: 1.0)
             .chain(CurveTween(curve: Curves.easeOutBack));
         final fade = Tween<double>(begin: 0.0, end: 1.0)
