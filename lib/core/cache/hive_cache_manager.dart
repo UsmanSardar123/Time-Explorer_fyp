@@ -66,6 +66,7 @@ class CacheTtl {
   static const placeDetails = Duration(hours: 24);
   static const characters = Duration(hours: 24);
   static const aiInsights = Duration(days: 7);
+  static const storyboard = Duration(days: 7);
   static const quizQuestions = Duration(days: 30);
   static const chatSummary = Duration(hours: 6);
 }
@@ -74,6 +75,7 @@ class CacheTtl {
 class CacheKeys {
   static const placesList = 'places_list_v1';
   static String placeDetail(String id) => 'place_detail_v1_$id';
+  static String storyboard(String id) => 'place_storyboard_v1_$id';
   static const charactersList = 'characters_list_v1';
   static String characterDetail(String id) => 'character_v1_$id';
 }

@@ -6,5 +6,6 @@ var validate = require('../middleware/validate');
 var aiController = require('../controllers/ai.controller');
 
 router.post('/ask', aiLimiter, verifyToken, validate.aiAsk, aiController.ask);
+router.post('/storyboard', aiLimiter, verifyToken, aiController.storyboard);
 
 module.exports = router;

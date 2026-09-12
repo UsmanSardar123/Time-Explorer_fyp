@@ -10,32 +10,35 @@ class OfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isOffline = context.watch<ConnectivityProvider>().isOffline;
-    return Column(
-      children: [
-        AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          child: isOffline
-              ? Container(
-                  width: double.infinity,
-                  color: Colors.orange.shade700,
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.wifi_off, color: Colors.white, size: 16),
-                      SizedBox(width: 6),
-                      Text(
-                        'You are offline — showing cached content',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-        Expanded(child: child),
-      ],
+    return Material(
+      color: Colors.transparent,
+      child: Column(
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: isOffline
+                ? Container(
+                    width: double.infinity,
+                    color: Colors.orange.shade700,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.wifi_off, color: Colors.white, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'You are offline — showing cached content',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          Expanded(child: child),
+        ],
+      ),
     );
   }
 }

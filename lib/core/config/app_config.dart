@@ -7,7 +7,7 @@ class AppConfig {
   // Compile-time constants from --dart-define
   static const String _geminiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
-    defaultValue: 'AIzaSyDyonG4t_N7hcWkiXGgYHc73YyKSDV5Jdg',
+    defaultValue: 'AQ.Ab8RN6KWcSOe7E97j5xcV_-4QpGoE9zUeBIRPL0wBkHIBkkB6A',
   );
   static const String _pixabayKey = String.fromEnvironment(
     'PIXABAY_API_KEY',
@@ -23,17 +23,21 @@ class AppConfig {
   }
 
   /// Centralized Gemini model name.
-  static const String geminiModel = 'gemini-3.5-flash';
+  static const String geminiModel = 'gemini-2.5-flash';
 
   static String get geminiApiKey => (_runtimeGeminiKey ?? _geminiKey).trim();
   static String get pixabayApiKey => _pixabayKey.trim();
 
-  // Node.js backend base URL — override via --dart-define=BACKEND_URL=http://192.168.x.x:5000/api
-  static const String _defaultBackendUrl = String.fromEnvironment(
-    'BACKEND_URL',
-    defaultValue: 'http://127.0.0.1:3000/api',
-  );
-  static String get backendBaseUrl => _defaultBackendUrl;
+  // Android emulator reaches the host machine through 10.0.2.2.
+  // Override via --dart-define=BACKEND_URL=... for a deployed or physical-device backend.
+  static const String _configuredBackendUrl = String.fromEnvironment('BACKEND_URL');
+  static String get backendBaseUrl {
+    if (_configuredBackendUrl.isNotEmpty) return _configuredBackendUrl;
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      return 'http://localhost:5000/api';
+    }
+    return 'http://10.0.2.2:5000/api';
+  }
 
   /// True when Gemini API key is present. Use this to gate all AI features.
   static bool get isAiEnabled => geminiApiKey.isNotEmpty;

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -36,16 +37,6 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  AppConfig.validate();
-
-  debugPrint('[App] Initializing Firebase...');
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  debugPrint('[App] Firebase initialized.');
-
-  await AppLogger.init();
-
   // Capture Flutter framework errors → Crashlytics.
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
@@ -53,14 +44,44 @@ void main() async {
         reason: details.exceptionAsString());
   };
 
-  await NotificationService.init();
-  await AmbientAudioService.instance.init();
+  // Capture unhandled async errors in the root zone → Crashlytics.
+  PlatformDispatcher.instance.onError = (error, stack) {
+    AppLogger.fatal(error, stack, reason: 'Uncaught async error');
+    return true;
+  };
 
-  // Capture async zone errors → Crashlytics.
-  runZonedGuarded(
-    () => runApp(const ProviderScope(child: MyApp())),
-    (error, stack) => AppLogger.fatal(error, stack, reason: 'Uncaught async error'),
-  );
+  AppConfig.validate();
+
+  try {
+    debugPrint('[App] Initializing Firebase...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('[App] Firebase initialized.');
+  } catch (e, st) {
+    debugPrint('[App] Firebase initialization failed: $e');
+    AppLogger.fatal(e, st, reason: 'Firebase.initializeApp failed');
+  }
+
+  try {
+    await AppLogger.init();
+  } catch (e) {
+    debugPrint('[App] AppLogger.init failed: $e');
+  }
+
+  try {
+    await NotificationService.init();
+  } catch (e) {
+    debugPrint('[App] NotificationService.init failed: $e');
+  }
+
+  try {
+    await AmbientAudioService.instance.init();
+  } catch (e) {
+    debugPrint('[App] AmbientAudioService.init failed: $e');
+  }
+
+  runApp(const ProviderScope(child: MyApp()));
 
   // Defer platform-channel-heavy init to after first frame to prevent
   // the "Width is zero" viewport freeze on Android. Hive.initFlutter()
