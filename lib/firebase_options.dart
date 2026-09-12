@@ -50,7 +50,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AQ.Ab8RN6KWcSOe7E97j5xcV_-4QpGoE9zUeBIRPL0wBkHIBkkB6A',
+    apiKey: 'AIzaSyDD7JUpwBHX9TuVWDMpWasQMjoXQre2oUk',
     appId: '1:622783495290:android:f57934b4e1af653ffc8fc3',
     messagingSenderId: '622783495290',
     projectId: 'timeexplorer-fyp',

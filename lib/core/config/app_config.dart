@@ -7,7 +7,7 @@ class AppConfig {
   // Compile-time constants from --dart-define
   static const String _geminiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
-    defaultValue: 'AQ.Ab8RN6KWcSOe7E97j5xcV_-4QpGoE9zUeBIRPL0wBkHIBkkB6A',
+    defaultValue: 'AIzaSyDD7JUpwBHX9TuVWDMpWasQMjoXQre2oUk',
   );
   static const String _pixabayKey = String.fromEnvironment(
     'PIXABAY_API_KEY',
