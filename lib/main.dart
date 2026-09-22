@@ -81,26 +81,25 @@ void main() async {
     debugPrint('[App] AmbientAudioService.init failed: $e');
   }
 
-  runApp(const ProviderScope(child: MyApp()));
-
-  // Defer platform-channel-heavy init to after first frame to prevent
-  // the "Width is zero" viewport freeze on Android. Hive.initFlutter()
-  // calls path_provider under the hood; running it before runApp() causes
-  // the FlutterView to resize before it has stable dimensions.
-  WidgetsBinding.instance.addPostFrameCallback((_) async {
-    debugPrint('[App] Post-frame: initializing Hive cache...');
+  try {
+    debugPrint('[App] Initializing Hive cache...');
     await Hive.initFlutter();
     Hive.registerAdapter(EventCategoryAdapter());
     Hive.registerAdapter(TimelinePointAdapter());
     Hive.registerAdapter(HistoricalEventAdapter());
     await Hive.openBox<String>('wikipedia_cache');
     await HiveCacheManager.init();
-    debugPrint('[App] Post-frame: Hive cache ready.');
+    debugPrint('[App] Hive cache ready.');
     unawaited(
       RemoteConfigService.checkForUpdates(CharacterFirestoreRepository()),
     );
     ContentWatchService.instance.startWatching();
-  });
+  } catch (e, st) {
+    debugPrint('[App] Hive initialization failed: $e');
+    AppLogger.fatal(e, st, reason: 'Hive initialization failed');
+  }
+
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class ProviderScope extends StatelessWidget {

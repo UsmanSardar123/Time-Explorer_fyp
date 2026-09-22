@@ -52,8 +52,9 @@ class _PlaceImageGalleryState extends State<PlaceImageGallery> {
             .getImageUrls(widget.query, limit: 4)
             .timeout(const Duration(seconds: 6));
         urls.addAll(pixabayUrls);
+        debugPrint('[Gallery] Final Pixabay images: ${pixabayUrls.length}');
       } catch (e) {
-        debugPrint('PlaceImageGallery: Pixabay error: $e');
+        debugPrint('[Gallery] Pixabay error: $e');
       }
 
       // 2. If we have few images, try Wikimedia (with timeout)
@@ -65,6 +66,7 @@ class _PlaceImageGalleryState extends State<PlaceImageGallery> {
           if (wikiUrl != null && wikiUrl.isNotEmpty) {
             urls.add(wikiUrl);
           }
+          debugPrint('[Gallery] Wikimedia fallback images: ${wikiUrl == null ? 0 : 1}');
         } catch (e) {
           debugPrint('PlaceImageGallery: Wikimedia error: $e');
         }
@@ -142,6 +144,7 @@ class _PlaceImageGalleryState extends State<PlaceImageGallery> {
               });
             },
             itemBuilder: (context, index) {
+              debugPrint('[Gallery UI] Loading image: ${_imageUrls[index]}');
               return CachedNetworkImage(
                 imageUrl: _imageUrls[index],
                 fit: BoxFit.cover,
@@ -155,9 +158,11 @@ class _PlaceImageGalleryState extends State<PlaceImageGallery> {
                     child: CircularProgressIndicator(color: AppTheme.primaryContainer),
                   ),
                 ),
-                errorWidget: (context, url, error) => const ColoredBox(
-                  color: AppTheme.surfaceLow,
-                  child: Column(
+                errorWidget: (context, url, error) {
+                  debugPrint('[Gallery UI] Image failed: $error');
+                  return const ColoredBox(
+                    color: AppTheme.surfaceLow,
+                    child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.history_edu_rounded, color: Color(0xFF8D7168), size: 40),
@@ -167,8 +172,9 @@ class _PlaceImageGalleryState extends State<PlaceImageGallery> {
                         style: TextStyle(color: Color(0xFF8D7168), fontSize: 12),
                       ),
                     ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               );
             },
           ),

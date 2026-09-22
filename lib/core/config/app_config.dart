@@ -11,7 +11,7 @@ class AppConfig {
   );
   static const String _pixabayKey = String.fromEnvironment(
     'PIXABAY_API_KEY',
-    defaultValue: '53527064-edf2dfe298a58b020b583beec',
+    defaultValue: '',
   );
 
   // Runtime override (e.g., for testing or dynamic injection)
@@ -50,6 +50,6 @@ class AppConfig {
       debugPrint('[AppConfig] ⚠️  GEMINI_API_KEY missing — AI features disabled. '
           'Provide via --dart-define=GEMINI_API_KEY=<key> or set at runtime via AppConfig.setGeminiKey().');
     }
-    debugPrint('[AppConfig] Pixabay key length: ${pixabayApiKey.length}');
+    debugPrint('[Pixabay] API key loaded: ${pixabayApiKey.isNotEmpty}');
   }
 }

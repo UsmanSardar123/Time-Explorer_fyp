@@ -16,3 +16,15 @@ For help getting started with Flutter development, view the
 samples, guidance on mobile development, and a full API reference.
 
 API keys are stored in environment variables.
+
+## Running With Pixabay
+
+Flutter does not load `backend/.env` into the mobile app. Pass the Pixabay key
+at build/run time instead:
+
+```powershell
+flutter run --dart-define=PIXABAY_API_KEY=$env:PIXABAY_API_KEY
+```
+
+The app logs only whether the key is present. If Pixabay is unavailable or the
+key is missing, the gallery continues with Wikimedia/Wikipedia images.
