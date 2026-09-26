@@ -169,8 +169,8 @@ class _StoryboardViewState extends State<StoryboardView> {
     return PageView.builder(
       controller: _pageController,
       itemCount: _panels.length,
-      onPageChanged: (index) async {
-        await _audioPlayer.stop();
+      onPageChanged: (index) {
+        _audioPlayer.stop();
         setState(() {
           _isPlaying = false;
           _activePanelIndex = index;

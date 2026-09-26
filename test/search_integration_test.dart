@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -12,45 +12,6 @@ import 'package:timeexplorer/features/event_explorer/domain/entities/historical_
 import 'package:timeexplorer/features/event_explorer/domain/entities/event_category.dart';
 
 // ── Light Fakes for Data Sources ─────────────────────────────────────────────
-
-class FakeCollectionReference extends Fake implements CollectionReference<Map<String, dynamic>> {
-  final List<QueryDocumentSnapshot<Map<String, dynamic>>> _docs;
-  FakeCollectionReference(this._docs);
-
-  @override
-  Future<QuerySnapshot<Map<String, dynamic>>> get([GetOptions? options]) async {
-    return FakeQuerySnapshot(_docs);
-  }
-}
-
-class FakeQuerySnapshot extends Fake implements QuerySnapshot<Map<String, dynamic>> {
-  @override
-  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
-  FakeQuerySnapshot(this.docs);
-}
-
-class FakeQueryDocumentSnapshot extends Fake implements QueryDocumentSnapshot<Map<String, dynamic>> {
-  @override
-  final String id;
-  final Map<String, dynamic> _data;
-  FakeQueryDocumentSnapshot(this.id, this._data);
-
-  @override
-  Map<String, dynamic> data() => _data;
-}
-
-class FakeFirestore extends Fake implements FirebaseFirestore {
-  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
-  FakeFirestore(this.docs);
-
-  @override
-  CollectionReference<Map<String, dynamic>> collection(String path) {
-    if (path == 'places') {
-      return FakeCollectionReference(docs);
-    }
-    throw UnimplementedError();
-  }
-}
 
 class FakeCharacterLocalDataSource extends CharacterLocalDataSource {
   final List<Character> _fakeCharacters;
@@ -82,8 +43,7 @@ class FakeEventStaticDataSource extends EventStaticDataSource {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // Unique Mock Data
-  final mockPlaceData = FakeQueryDocumentSnapshot('xanthos_place', {
+  final mockPlaceMap = {
     'name': 'Xanthos Ancient City',
     'description': 'A beautiful ancient Lycian capital city.',
     'imageUrl': 'https://example.com/xanthos.jpg',
@@ -91,7 +51,7 @@ void main() {
     'rating': 4.8,
     'location': 'Antalya, Turkey',
     'era': 'Ancient Era',
-  });
+  };
 
   const mockCharacter = Character(
     id: 'hypatia',
@@ -125,12 +85,13 @@ void main() {
     keyFacts: ['Ended WWI', 'Signed in Hall of Mirrors'],
   );
 
-  late FakeFirestore fakeFirestore;
+  late FakeFirebaseFirestore fakeFirestore;
   late FakeCharacterLocalDataSource fakeCharacterDataSource;
   late FakeEventStaticDataSource fakeEventDataSource;
 
-  setUp(() {
-    fakeFirestore = FakeFirestore([mockPlaceData]);
+  setUp(() async {
+    fakeFirestore = FakeFirebaseFirestore();
+    await fakeFirestore.collection('places').doc('xanthos_place').set(mockPlaceMap);
     fakeCharacterDataSource = FakeCharacterLocalDataSource([mockCharacter]);
     fakeEventDataSource = FakeEventStaticDataSource([mockEvent]);
   });
