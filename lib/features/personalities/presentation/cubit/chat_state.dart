@@ -48,6 +48,7 @@ class ChatState extends Equatable {
   }) {
     return ChatState(
       messages: messages ?? this.messages,
+      //isTyping: isTyping ?? this.isTyping,
       isTyping: isTyping ?? this.isTyping,
       error: clearError ? null : error ?? this.error,
       isOffline: isOffline ?? this.isOffline,

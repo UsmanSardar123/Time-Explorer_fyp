@@ -71,10 +71,7 @@ class ChatCubit extends Cubit<ChatState> {
     final contextFacts = results[1] as Map<String, String>;
 
     if (_manager.hasMessages) {
-      emit(state.copyWith(
-        messages: _manager.getHistory().map((m) => m.toChatMessage()).toList(),
-        contextFacts: contextFacts,
-      ));
+      emit(state.copyWith());
     } else {
       emit(state.copyWith(messages: [_greeting()], contextFacts: contextFacts));
     }
