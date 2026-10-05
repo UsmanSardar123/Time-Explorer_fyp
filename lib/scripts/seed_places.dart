@@ -185,3 +185,4 @@ Future<void> seedPlaces(FirebaseFirestore firestore) async {
   await batch.commit();
   print('✅ Seed completed successfully. Seeded ${places.length} places.');
 }
+
