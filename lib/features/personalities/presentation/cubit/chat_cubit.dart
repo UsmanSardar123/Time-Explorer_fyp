@@ -1,6 +1,3 @@
-// FILE: lib/features/personalities/presentation/cubit/chat_cubit.dart
-// PURPOSE: Chat session cubit — wires rate limiting, response caching, streaming, and analytics.
-// SPRINT: 5
 
 import 'dart:async';
 import 'dart:math';
